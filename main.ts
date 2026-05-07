@@ -37,3 +37,9 @@ console.log(`You hit the goblin for ${sampleHit} damage.`);
 console.log(`Goblin HP: ${goblin.hp}`);
 console.log(`Goblin hits you for ${goblinHit} damage.`);
 console.log(`Player HP: ${player.hp}`);
+
+if (goblin.hp <= 0) {
+  console.log("You win!");
+} else if (player.hp <= 0) {
+  console.log("You lose!");
+}
