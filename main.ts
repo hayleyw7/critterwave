@@ -22,5 +22,12 @@ const goblin: Enemy = {
   attack: 3
 };
 
+function randomDamage(max: number): number {
+  return Math.floor(Math.random() * max) + 1;
+}
+
+const sampleHit = randomDamage(player.attack);
+
 console.log("Player:", player);
 console.log("Enemy:", goblin);
+console.log(`You hit the goblin for ${sampleHit} damage.`);
