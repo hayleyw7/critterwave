@@ -31,7 +31,7 @@ console.log("Enemy:", goblin);
 
 while (player.hp > 0 && goblin.hp > 0) {
   const playerHit = randomDamage(player.attack);
-  goblin.hp = goblin.hp - playerHit;
+  goblin.hp = Math.max(0, goblin.hp - playerHit);
   console.log(`You hit the goblin for ${playerHit} damage.`);
   console.log(`Goblin HP: ${goblin.hp}`);
 
@@ -40,7 +40,7 @@ while (player.hp > 0 && goblin.hp > 0) {
   }
 
   const goblinHit = randomDamage(goblin.attack);
-  player.hp = player.hp - goblinHit;
+  player.hp = Math.max(0, player.hp - goblinHit);
   console.log(`Goblin hits you for ${goblinHit} damage.`);
   console.log(`Player HP: ${player.hp}`);
   console.log("---");
