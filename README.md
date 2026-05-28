@@ -1,59 +1,65 @@
 # Goblinwave
 
-**Goblinewave** is a tiny terminal RPG written in TypeScript.
+A tiny browser RPG: fight goblins, heal, dance, and survive as many waves as you can.
 
-Fight goblins, heal yourself, dance with reckless confidence, and survive as many waves as possible.
+Play online after you enable [GitHub Pages](#github-pages) (Settings → Pages → **GitHub Actions**).
 
 ## Features
 
-- Turn-based combat
-- Random goblin reactions
-- Dancing
-- Gold collection
-- Wave system
-- Terminal UI
+- Turn-based combat in the browser
+- 8 goblin moods with swappable art
+- Random dance reactions
+- Gold and wave scoring
+- **Scores persist** in `localStorage` (best wave, best gold in a run, lifetime gold, run count)
+- **Mid-run save** — refresh the page and your current fight continues
 
-## Requirements
-
-- Node.js
-- npm
-
-## Install
+## Local play
 
 ```bash
 npm install
+npm run build
+npm run dev
 ```
 
-## Run
+Open [http://localhost:3000](http://localhost:3000).
 
-Compile the TypeScript:
+## GitHub Pages
 
-```bash
-npx tsc
-```
+1. Push this repo to GitHub.
+2. **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions**.
+3. Push to `main` (or `master`). The workflow builds TypeScript and deploys the site.
 
-Run the game:
+Your game will be at `https://<username>.github.io/<repo-name>/`.
 
-```bash
-node main.js
-```
+## Goblin images (8 placeholders)
+
+Replace the placeholder SVGs in `assets/goblins/` with your own art. Keep the same filenames, or use PNG/WebP and update `GOBLIN_IMAGES` in `game.ts`.
+
+| File | When it shows |
+|------|----------------|
+| `goblin-default.svg` | Combat idle |
+| `goblin-angry.svg` | Goblin attacks you |
+| `goblin-happy.svg` | Positive dance reactions, gold toss |
+| `goblin-confused.svg` | Confused / wary reactions |
+| `goblin-impressed.svg` | Impressed / emotional reactions |
+| `goblin-disappointed.svg` | Boos, tomatoes, game over |
+| `goblin-silly.svg` | Funny dance outcomes |
+| `goblin-dancing.svg` | Goblin joins your dance |
+
+Suggested ChatGPT prompt: *"Pixel-art goblin RPG sprite, green skin, single character, transparent background, 200x200, mood: [happy/angry/etc.]"*
 
 ## Controls
 
-```txt
-1 = Attack
-2 = Heal
-3 = Dance
-4 = Run
-Q = Quit
-```
+| Action | Button |
+|--------|--------|
+| Attack | ⚔️ |
+| Heal (+3 HP) | 💚 |
+| Dance | 🕺 |
+| Run (skip to next wave) | 🏃 |
 
-## Example
+## What gets saved
 
-```txt
-⚔️ ATTACK
-You hit the goblin for 4 damage.
+Stored under `goblinwave-v1` in the browser:
 
-👹 GOBLIN TURN
-Goblin hits you for 2 damage.
-```
+- **Records:** best wave reached, best gold in one run, total gold earned across all runs, number of runs
+- **Active run:** player HP, gold, current goblin, wave, and turn (until game over)

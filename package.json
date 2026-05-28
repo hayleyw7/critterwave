@@ -1,17 +1,14 @@
 {
-  "name": "ts-rpg",
+  "name": "goblinwave",
   "version": "1.0.0",
-  "main": "main.js",
+  "private": true,
+  "description": "Browser goblin wave RPG",
   "scripts": {
     "build": "tsc",
-    "start": "node main.js"
+    "dev": "npx --yes serve . -p 3000"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
-    "@types/node": "^25.6.0",
     "typescript": "^6.0.3"
   }
 }
