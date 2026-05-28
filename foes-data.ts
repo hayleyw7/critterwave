@@ -310,7 +310,7 @@ export const FOES = [
   },
   {
     "id": "slothful-sloth",
-    "name": "Slothful Sloth",
+    "name": "Sleepy Sloth",
     "emoji": "🦥",
     "baseHp": 10,
     "baseAtk": 2

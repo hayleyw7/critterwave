@@ -49,10 +49,16 @@ type DanceResponse = {
   playerHype?: number;
 };
 
+const FOE_COLOR_THEMES = ["amber", "rose", "violet", "sky", "coral", "fuchsia"] as const;
+type FoeColorTheme = (typeof FOE_COLOR_THEMES)[number];
+
 type SaveData = {
   bestWave: number;
   runsPlayed: number;
   playerEmoji?: string;
+  /** Custom display name chosen by the player. */
+  heroName?: string;
+  /** @deprecated Legacy — creature label; use heroName when present. */
   heroLabel?: string;
 };
 
@@ -66,10 +72,13 @@ type GameSnapshot = {
   foeHypeLevel: number;
   /** Shuffled foe sequence for this run (foe template ids). */
   foeOrderIds?: string[];
+  foeColorTheme?: FoeColorTheme;
 };
 
 const STORAGE_KEY = "critterwave-v1";
 const LEGACY_STORAGE_KEYS = ["goblinwave-v4", "goblinwave-v1"] as const;
+const CAMPAIGN_WAVES = 100;
+const HERO_NAME_MAX_LENGTH = 16;
 const HYPE_ATTACK_PER_LEVEL = 1;
 const DEFAULT_HERO_EMOJI = "🐱";
 const DEFAULT_HERO_LABEL = "Cat";
@@ -125,7 +134,7 @@ function buildFoeOrder(heroEmoji: string): FoeTemplate[] {
 }
 
 function getCampaignLength(): number {
-  return foeOrder.length > 0 ? foeOrder.length : foesForHero(player.emoji).length;
+  return CAMPAIGN_WAVES;
 }
 
 function restoreFoeOrder(ids: string[] | undefined, heroEmoji: string): FoeTemplate[] {
@@ -222,6 +231,8 @@ let phase: GameSnapshot["phase"] = "combat";
 let actionsLocked = false;
 let pendingHeroEmoji = DEFAULT_HERO_EMOJI;
 let pendingHeroLabel = DEFAULT_HERO_LABEL;
+let foeColorTheme: FoeColorTheme = "amber";
+let lastFoeColorTheme: FoeColorTheme | null = null;
 
 const el = {
   arena: document.getElementById("arena")!,
@@ -262,6 +273,7 @@ const el = {
   confirmCancel: document.getElementById("confirm-cancel")!,
   setupOverlay: document.getElementById("character-setup")!,
   heroPicker: document.getElementById("hero-picker")!,
+  heroNameInput: document.getElementById("hero-name-input") as HTMLInputElement,
   setupStartBtn: document.getElementById("setup-start-btn")!,
   gameShell: document.querySelector(".game-shell")!,
 };
@@ -344,6 +356,7 @@ function loadSave(): SaveData {
       bestWave: parsed.bestWave ?? 0,
       runsPlayed: parsed.runsPlayed ?? 0,
       playerEmoji: parsed.playerEmoji,
+      heroName: parsed.heroName,
       heroLabel: parsed.heroLabel,
     };
   } catch {
@@ -405,7 +418,7 @@ function persistStatsOnly(): void {
       bestWave: save.bestWave,
       runsPlayed: save.runsPlayed,
       playerEmoji: player.emoji,
-      heroLabel: getHeroLabelForEmoji(player.emoji),
+      heroName: player.name,
     })
   );
 }
@@ -419,16 +432,36 @@ function persist(snapshot?: GameSnapshot): void {
         bestWave: save.bestWave,
         runsPlayed: save.runsPlayed,
         playerEmoji: player.emoji,
-        heroLabel: getHeroLabelForEmoji(player.emoji),
+        heroName: player.name,
         snapshot: activeSnapshot,
       }
     : {
         bestWave: save.bestWave,
         runsPlayed: save.runsPlayed,
         playerEmoji: player.emoji,
-        heroLabel: getHeroLabelForEmoji(player.emoji),
+        heroName: player.name,
       };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function pickNextFoeColor(): FoeColorTheme {
+  const options =
+    lastFoeColorTheme === null
+      ? [...FOE_COLOR_THEMES]
+      : FOE_COLOR_THEMES.filter((theme) => theme !== lastFoeColorTheme);
+  const picked = options[Math.floor(Math.random() * options.length)] ?? "amber";
+  lastFoeColorTheme = picked;
+  foeColorTheme = picked;
+  return picked;
+}
+
+function applyFoeColorTheme(theme: FoeColorTheme): void {
+  const panel = el.foePanel.querySelector(".enemy-status");
+  if (!panel) return;
+  for (const name of FOE_COLOR_THEMES) {
+    panel.classList.remove(`foe-theme-${name}`);
+  }
+  panel.classList.add(`foe-theme-${theme}`);
 }
 
 function getSnapshot(): GameSnapshot {
@@ -441,6 +474,7 @@ function getSnapshot(): GameSnapshot {
     hypeLevel,
     foeHypeLevel,
     foeOrderIds: foeOrder.map((f) => f.id),
+    foeColorTheme,
   };
 }
 
@@ -453,10 +487,31 @@ function applySnapshot(snapshot: GameSnapshot): void {
   hypeLevel = snapshot.hypeLevel ?? 0;
   foeHypeLevel = snapshot.foeHypeLevel ?? 0;
   foeOrder = restoreFoeOrder(snapshot.foeOrderIds, snapshot.player.emoji);
+  foeColorTheme = snapshot.foeColorTheme ?? "amber";
+  lastFoeColorTheme = foeColorTheme;
+  if (wave > CAMPAIGN_WAVES) {
+    wave = CAMPAIGN_WAVES;
+  }
 }
 
 function getHeroLabelForEmoji(emoji: string): string {
   return HEROES.find((h) => h.emoji === emoji)?.label ?? DEFAULT_HERO_LABEL;
+}
+
+function normalizeHeroName(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ").slice(0, HERO_NAME_MAX_LENGTH);
+}
+
+function resolveSavedHeroName(save: SaveData, emoji: string): string {
+  return save.heroName ?? save.heroLabel ?? getHeroLabelForEmoji(emoji);
+}
+
+function readHeroNameFromSetup(): string {
+  const typed = normalizeHeroName(el.heroNameInput.value);
+  if (typed.length > 0) {
+    return typed;
+  }
+  return getHeroLabelForEmoji(pendingHeroEmoji);
 }
 
 function getPlayerHypeBonus(): number {
@@ -555,10 +610,9 @@ function pulseWaveHud(): void {
 }
 
 function renderHeroSprite(): void {
-  const label = getHeroLabelForEmoji(player.emoji);
   el.playerEmoji.textContent = player.emoji;
-  el.playerEmoji.setAttribute("aria-label", label);
-  el.playerName.textContent = label.toUpperCase();
+  el.playerEmoji.setAttribute("aria-label", player.name);
+  el.playerName.textContent = player.name.toUpperCase();
 }
 
 function render(): void {
@@ -577,6 +631,7 @@ function render(): void {
   playerHpBar?.classList.toggle("hp-low", player.hp / player.maxHp < 0.3);
 
   if (foe) {
+    applyFoeColorTheme(foeColorTheme);
     el.foeName.textContent = foe.name.toUpperCase();
     el.foeAttack.textContent = String(getEffectiveFoeAttack());
     el.foeBuff.textContent = formatHypeLabel(foeHypeLevel);
@@ -611,7 +666,7 @@ function clearLog(): void {
 }
 
 function pickFoeTemplate(w: number): FoeTemplate {
-  const idx = Math.min(w - 1, foeOrder.length - 1);
+  const idx = (w - 1) % foeOrder.length;
   return foeOrder[idx]!;
 }
 
@@ -638,6 +693,7 @@ function randomDanceResponse(): DanceResponse {
 }
 
 function startWave(): void {
+  pickNextFoeColor();
   foe = makeFoeForWave(wave);
   foeHypeLevel = 0;
   setFoeMood("default");
@@ -659,7 +715,7 @@ function updateRecordsOnGameOver(): void {
       bestWave: save.bestWave,
       runsPlayed: save.runsPlayed,
       playerEmoji: player.emoji,
-      heroLabel: getHeroLabelForEmoji(player.emoji),
+      heroName: player.name,
     })
   );
 
@@ -678,11 +734,11 @@ function updateRecordsOnVictory(): void {
       bestWave: save.bestWave,
       runsPlayed: save.runsPlayed,
       playerEmoji: player.emoji,
-      heroLabel: getHeroLabelForEmoji(player.emoji),
+      heroName: player.name,
     })
   );
 
-  el.gameOverSummary.textContent = `You defeated all ${getCampaignLength()} foes!`;
+  el.gameOverSummary.textContent = `You survived all ${CAMPAIGN_WAVES} waves!`;
 }
 
 function endGame(): void {
@@ -699,7 +755,7 @@ function winCampaign(): void {
   phase = "victory";
   clearAllHype();
   setFoeMood("happy");
-  logLine("Every foe defeated! Total victory!", "win");
+  logLine(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`, "win");
   updateRecordsOnVictory();
   persist();
   render();
@@ -847,12 +903,17 @@ function buildHeroPicker(): void {
       btn.classList.add("selected");
     }
     btn.addEventListener("click", () => {
+      const previousDefault = getHeroLabelForEmoji(pendingHeroEmoji);
+      const currentName = normalizeHeroName(el.heroNameInput.value);
       for (const other of el.heroPicker.querySelectorAll(".emoji-pick")) {
         other.classList.remove("selected");
       }
       btn.classList.add("selected");
       pendingHeroEmoji = hero.emoji;
       pendingHeroLabel = hero.label;
+      if (!currentName || currentName === previousDefault) {
+        el.heroNameInput.value = hero.label;
+      }
     });
     el.heroPicker.appendChild(btn);
   }
@@ -863,6 +924,7 @@ function showSetup(): void {
   pendingHeroEmoji = save.playerEmoji ?? player.emoji;
   pendingHeroLabel = getHeroLabelForEmoji(pendingHeroEmoji);
   buildHeroPicker();
+  el.heroNameInput.value = resolveSavedHeroName(save, pendingHeroEmoji);
   el.setupOverlay.classList.remove("hidden");
   el.gameShell.classList.add("setup-active");
 }
@@ -873,7 +935,9 @@ function hideSetup(): void {
 }
 
 function confirmHeroAndStart(): void {
-  applyHeroChoice(pendingHeroEmoji, pendingHeroLabel);
+  const heroName = readHeroNameFromSetup();
+  el.heroNameInput.value = heroName;
+  applyHeroChoice(pendingHeroEmoji, heroName);
   hideSetup();
   persistStatsOnly();
   if (foe) {
@@ -887,6 +951,7 @@ function resetGame(): void {
   wave = 1;
   foeOrder = buildFoeOrder(player.emoji);
   clearAllHype();
+  lastFoeColorTheme = null;
   phase = "combat";
   el.gameOver.classList.add("hidden");
   clearLog();
@@ -1003,7 +1068,10 @@ function bindActions(): void {
 function beginGame(): void {
   const save = loadSave();
   if (save.playerEmoji) {
-    applyHeroChoice(save.playerEmoji, getHeroLabelForEmoji(save.playerEmoji));
+    applyHeroChoice(
+      save.playerEmoji,
+      resolveSavedHeroName(save, save.playerEmoji)
+    );
   }
 
   const snapshot = loadSnapshot();

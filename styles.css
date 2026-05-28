@@ -271,7 +271,44 @@ body::before {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr));
   gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.setup-name-field {
   margin-bottom: var(--space-4);
+  text-align: left;
+}
+
+.setup-name-label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+}
+
+.setup-name-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  background: var(--cmd-bg);
+  border: 2px solid var(--panel-edge);
+  outline: none;
+}
+
+.setup-name-input::placeholder {
+  color: var(--text-dim);
+  opacity: 0.75;
+}
+
+.setup-name-input:focus {
+  border-color: var(--highlight);
+  box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.35);
 }
 
 .emoji-pick {
@@ -482,8 +519,71 @@ body::before {
 }
 
 .enemy-status {
-  border-color: var(--enemy);
-  background: rgba(133, 77, 14, 0.2);
+  --foe-accent: #facc15;
+  --foe-accent-dark: #854d0e;
+  --foe-panel-bg: rgba(133, 77, 14, 0.2);
+  --foe-plate-bg: rgba(133, 77, 14, 0.9);
+  --foe-plate-text: #fef9c3;
+  --foe-buff-bg: rgba(133, 77, 14, 0.55);
+  --foe-hp-wrap-bg: rgba(133, 77, 14, 0.35);
+  --foe-divider: rgba(250, 204, 21, 0.4);
+  border-color: var(--foe-accent);
+  background: var(--foe-panel-bg);
+}
+
+.enemy-status.foe-theme-rose {
+  --foe-accent: #fb7185;
+  --foe-accent-dark: #881337;
+  --foe-panel-bg: rgba(136, 19, 55, 0.22);
+  --foe-plate-bg: rgba(136, 19, 55, 0.92);
+  --foe-plate-text: #ffe4e6;
+  --foe-buff-bg: rgba(190, 18, 60, 0.5);
+  --foe-hp-wrap-bg: rgba(136, 19, 55, 0.38);
+  --foe-divider: rgba(251, 113, 133, 0.45);
+}
+
+.enemy-status.foe-theme-violet {
+  --foe-accent: #a78bfa;
+  --foe-accent-dark: #5b21b6;
+  --foe-panel-bg: rgba(91, 33, 182, 0.22);
+  --foe-plate-bg: rgba(91, 33, 182, 0.92);
+  --foe-plate-text: #ede9fe;
+  --foe-buff-bg: rgba(109, 40, 217, 0.5);
+  --foe-hp-wrap-bg: rgba(91, 33, 182, 0.38);
+  --foe-divider: rgba(167, 139, 250, 0.45);
+}
+
+.enemy-status.foe-theme-sky {
+  --foe-accent: #38bdf8;
+  --foe-accent-dark: #0c4a6e;
+  --foe-panel-bg: rgba(12, 74, 110, 0.22);
+  --foe-plate-bg: rgba(12, 74, 110, 0.92);
+  --foe-plate-text: #e0f2fe;
+  --foe-buff-bg: rgba(3, 105, 161, 0.5);
+  --foe-hp-wrap-bg: rgba(12, 74, 110, 0.38);
+  --foe-divider: rgba(56, 189, 248, 0.45);
+}
+
+.enemy-status.foe-theme-coral {
+  --foe-accent: #fb923c;
+  --foe-accent-dark: #9a3412;
+  --foe-panel-bg: rgba(154, 52, 18, 0.22);
+  --foe-plate-bg: rgba(154, 52, 18, 0.92);
+  --foe-plate-text: #ffedd5;
+  --foe-buff-bg: rgba(194, 65, 12, 0.5);
+  --foe-hp-wrap-bg: rgba(154, 52, 18, 0.38);
+  --foe-divider: rgba(251, 146, 60, 0.45);
+}
+
+.enemy-status.foe-theme-fuchsia {
+  --foe-accent: #e879f9;
+  --foe-accent-dark: #86198f;
+  --foe-panel-bg: rgba(134, 25, 143, 0.22);
+  --foe-plate-bg: rgba(134, 25, 143, 0.92);
+  --foe-plate-text: #fae8ff;
+  --foe-buff-bg: rgba(162, 28, 175, 0.5);
+  --foe-hp-wrap-bg: rgba(134, 25, 143, 0.38);
+  --foe-divider: rgba(232, 121, 249, 0.45);
 }
 
 .status-panel > .name-plate,
@@ -502,7 +602,7 @@ body::before {
 }
 
 .enemy-status > * + * {
-  border-top-color: rgba(250, 204, 21, 0.4);
+  border-top-color: var(--foe-divider);
 }
 
 .name-plate {
@@ -552,13 +652,13 @@ body::before {
 }
 
 .enemy-plate {
-  background: rgba(133, 77, 14, 0.9);
-  color: #fef9c3;
+  background: var(--foe-plate-bg);
+  color: var(--foe-plate-text);
 }
 
 .enemy-buff {
-  background: rgba(133, 77, 14, 0.55);
-  color: #fef9c3;
+  background: var(--foe-buff-bg);
+  color: var(--foe-plate-text);
 }
 
 .stat-mini {
@@ -611,7 +711,7 @@ body::before {
 }
 
 .enemy-hp-wrap {
-  background: rgba(133, 77, 14, 0.35);
+  background: var(--foe-hp-wrap-bg);
 }
 
 .hp-row {
@@ -643,7 +743,7 @@ body::before {
 }
 
 .hp-tag-enemy {
-  color: var(--enemy);
+  color: var(--foe-accent);
 }
 
 .hp-bar {
@@ -684,10 +784,10 @@ body::before {
 .foe-hp {
   background: repeating-linear-gradient(
     90deg,
-    var(--enemy-dark),
-    var(--enemy-dark) 4px,
-    var(--enemy) 4px,
-    var(--enemy) 8px
+    var(--foe-accent-dark),
+    var(--foe-accent-dark) 4px,
+    var(--foe-accent) 4px,
+    var(--foe-accent) 8px
   );
 }
 
@@ -861,6 +961,12 @@ body::before {
   width: 100%;
   max-width: 220px;
   box-shadow: 0 2px 0 #0a0612;
+  gap: 0.5rem;
+}
+
+.cmd-restart .cmd-icon {
+  display: inline-block;
+  margin-right: 0.15rem;
 }
 
 .records-bar {
@@ -876,10 +982,18 @@ body::before {
   border-top: 1px solid rgba(90, 61, 138, 0.45);
 }
 
+.records-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  line-height: 1;
+}
+
 .records-stat strong {
   color: var(--highlight);
   font-weight: normal;
   font-size: 1.05rem;
+  line-height: 1;
 }
 
 .meta-actions {
