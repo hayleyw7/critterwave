@@ -2,88 +2,170 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Goblinwave</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Critterwave</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app">
-      <header class="header">
-        <h1 class="title">Goblinwave</h1>
-        <p class="tagline">Survive the goblins. Collect gold. Dance with confidence.</p>
+    <div class="crt-overlay" aria-hidden="true"></div>
+
+    <div class="confirm-overlay hidden" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="confirm-panel" id="confirm-panel">
+        <h2 class="confirm-title" id="confirm-title"></h2>
+        <p class="confirm-message" id="confirm-message"></p>
+        <div class="confirm-actions">
+          <button type="button" class="cmd cmd-confirm-cancel" id="confirm-cancel">Cancel</button>
+          <button type="button" class="cmd cmd-confirm-ok" id="confirm-ok">Yes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="character-setup hidden" id="character-setup">
+      <div class="setup-panel">
+        <h2 class="setup-title">Pick your hero</h2>
+        <p class="setup-hint">Same roster as foes — 115 critters and fantasy creatures.</p>
+        <div class="emoji-picker" id="hero-picker" role="listbox" aria-label="Hero emoji"></div>
+        <button type="button" class="cmd cmd-start" id="setup-start-btn">Fight!</button>
+      </div>
+    </div>
+
+    <div class="game-shell">
+      <header class="title-bar">
+        <h1 class="title">Critterwave</h1>
       </header>
 
-      <aside class="stats-panel" aria-label="Lifetime stats">
-        <h2>Records</h2>
-        <dl class="records">
-          <div>
-            <dt>Best wave</dt>
-            <dd id="stat-best-wave">0</dd>
+      <div class="playfield">
+        <div class="hud">
+          <div class="hud-block hud-wave">
+            <span class="hud-label">Wave</span>
+            <span class="hud-value" id="wave-banner">1</span>
           </div>
-          <div>
-            <dt>Best gold (run)</dt>
-            <dd id="stat-best-gold">0</dd>
+          <div class="hud-block hud-turn">
+            <span class="hud-label">Turn</span>
+            <span class="hud-value" id="turn-label">1</span>
           </div>
-          <div>
-            <dt>Total gold</dt>
-            <dd id="stat-total-gold">0</dd>
+          <div class="hud-block hud-records">
+            <span class="hud-label">Best</span>
+            <span class="hud-value" id="stat-best-wave">0</span>
           </div>
-          <div>
-            <dt>Runs played</dt>
-            <dd id="stat-runs">0</dd>
-          </div>
-        </dl>
-      </aside>
-
-      <main class="arena">
-        <div class="wave-banner" id="wave-banner">Wave 1</div>
-
-        <div class="combatants">
-          <section class="fighter player-panel" aria-label="Player">
-            <h2>You</h2>
-            <div class="hp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="20" aria-valuenow="20">
-              <div class="hp-fill player-hp" id="player-hp-fill"></div>
-            </div>
-            <p class="hp-text" id="player-hp-text">20 / 20 HP</p>
-            <p class="meta">Attack: <span id="player-attack">5</span></p>
-            <p class="meta gold-line">Gold: <span id="player-gold">0</span></p>
-          </section>
-
-          <section class="fighter goblin-panel" aria-label="Goblin">
-            <h2 id="goblin-name">Goblin</h2>
-            <figure class="goblin-portrait">
-              <img
-                id="goblin-image"
-                src="assets/goblins/goblin-default.svg"
-                alt="Goblin"
-                width="200"
-                height="200"
-              />
-            </figure>
-            <div class="hp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="12" aria-valuenow="12">
-              <div class="hp-fill goblin-hp" id="goblin-hp-fill"></div>
-            </div>
-            <p class="hp-text" id="goblin-hp-text">12 / 12 HP</p>
-          </section>
         </div>
 
-        <p class="turn-label" id="turn-label">Turn 1</p>
+        <main class="arena" id="arena">
+        <div class="battle-stage">
+          <div class="stage-floor"></div>
+          <div class="stage-vignette"></div>
 
-        <div class="log" id="log" role="log" aria-live="polite"></div>
+          <section class="combatant hero-side" id="player-panel" aria-label="Player">
+            <div class="status-panel hero-status">
+              <div class="name-plate hero-plate">
+                <span class="name" id="hero-name">HERO</span>
+              </div>
+              <span class="buff-badge hero-buff hidden" id="player-buff" aria-label="Active buff"></span>
+              <div class="hp-wrap hero-hp-wrap">
+                <div class="hp-row">
+                  <span class="hp-tag hp-tag-hero">HP</span>
+                  <div
+                    class="hp-bar"
+                    role="progressbar"
+                    aria-label="Hero health"
+                    aria-valuemin="0"
+                    aria-valuemax="20"
+                    aria-valuenow="20"
+                  >
+                    <div class="hp-fill player-hp" id="player-hp-fill"></div>
+                  </div>
+                  <span class="hp-numbers" id="player-hp-text">20/20</span>
+                  <span class="stat-mini">ATK <span id="player-attack">5</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="sprite-wrap">
+              <span class="emoji-sprite hero-emoji" id="hero-emoji" role="img" aria-label="Hero">🦊</span>
+            </div>
+          </section>
 
-        <nav class="actions" id="actions" aria-label="Combat actions">
-          <button type="button" data-action="attack" class="btn btn-attack">Attack</button>
-          <button type="button" data-action="heal" class="btn btn-heal">Heal</button>
-          <button type="button" data-action="dance" class="btn btn-dance">Dance</button>
-          <button type="button" data-action="run" class="btn btn-run">Run</button>
-        </nav>
+          <div class="vs-badge" aria-hidden="true">VS</div>
+
+          <section class="combatant enemy-side" id="foe-panel" aria-label="Foe">
+            <div class="status-panel enemy-status">
+              <div class="name-plate enemy-plate">
+                <span class="name" id="foe-name">FOE</span>
+              </div>
+              <span class="buff-badge enemy-buff hidden" id="foe-buff" aria-label="Foe hype"></span>
+              <div class="hp-wrap enemy-hp-wrap">
+                <div class="hp-row">
+                  <span class="hp-tag hp-tag-enemy">HP</span>
+                  <div
+                    class="hp-bar"
+                    role="progressbar"
+                    aria-label="Foe health"
+                    aria-valuemin="0"
+                    aria-valuemax="12"
+                    aria-valuenow="12"
+                  >
+                    <div class="hp-fill foe-hp" id="foe-hp-fill"></div>
+                  </div>
+                  <span class="hp-numbers" id="foe-hp-text">12/12</span>
+                  <span class="stat-mini">ATK <span id="foe-attack">3</span></span>
+                </div>
+              </div>
+            </div>
+            <div class="sprite-wrap foe-sprite-wrap">
+              <span class="emoji-sprite foe-emoji" id="foe-emoji" role="img" aria-label="Foe">👺</span>
+              <span class="foe-mood-badge hidden" id="foe-mood-badge" aria-hidden="true"></span>
+            </div>
+          </section>
+
+          <div class="damage-layer" id="damage-layer" aria-hidden="true"></div>
+        </div>
+
+        <div class="action-panel">
+          <div class="dialog-box">
+            <p class="battle-text" id="battle-text" role="status" aria-live="polite">
+              What will you do?
+            </p>
+          </div>
+
+          <nav class="command-menu" id="actions" aria-label="Combat actions">
+            <button type="button" data-action="attack" class="cmd cmd-attack">Attack</button>
+            <button type="button" data-action="heal" class="cmd cmd-heal">Heal</button>
+            <button type="button" data-action="dance" class="cmd cmd-dance">Dance</button>
+            <button type="button" data-action="run" class="cmd cmd-run">Run</button>
+          </nav>
+        </div>
 
         <div class="game-over hidden" id="game-over">
-          <h2>Game over</h2>
-          <p id="game-over-summary"></p>
-          <button type="button" class="btn btn-primary" id="restart-btn">Play again</button>
+          <div class="game-over-panel">
+            <p class="game-over-tag" id="game-over-tag">GAME OVER</p>
+            <p id="game-over-summary"></p>
+            <button type="button" class="cmd cmd-restart" id="restart-btn">
+              <span class="cmd-icon">↻</span>
+              <span class="cmd-label">Try again?</span>
+            </button>
+          </div>
         </div>
-      </main>
+        </main>
+      </div>
+
+      <footer class="records-bar" aria-label="Lifetime stats and game options">
+        <span class="records-stat">Runs played <strong id="stat-runs">0</strong></span>
+        <div class="meta-actions">
+          <button type="button" class="meta-btn" id="quit-btn">Quit</button>
+          <button type="button" class="meta-btn" id="restart-run-btn">Restart</button>
+          <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
+            Reset
+          </button>
+        </div>
+      </footer>
     </div>
 
     <script type="module" src="game.js"></script>

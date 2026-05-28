@@ -1,16 +1,17 @@
-# Goblinwave
+# Critterwave
 
-A tiny browser RPG: fight goblins, heal, dance, and survive as many waves as you can.
+A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, and beat every wave.
 
 Play online after you enable [GitHub Pages](#github-pages) (Settings → Pages → **GitHub Actions**).
 
 ## Features
 
 - Turn-based combat in the browser
-- 8 goblin moods with swappable art
-- Random dance reactions
-- Gold and wave scoring
-- **Scores persist** in `localStorage` (best wave, best gold in a run, lifetime gold, run count)
+- 115 hand-picked alliterative foes (critters and fantasy creatures)
+- Pick any roster emoji as your hero
+- Random dance reactions and hype buffs
+- Shuffled foe order each run — defeat them all to win
+- **Scores persist** in `localStorage` (best wave, run count)
 - **Mid-run save** — refresh the page and your current fight continues
 
 ## Local play
@@ -31,23 +32,6 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Your game will be at `https://<username>.github.io/<repo-name>/`.
 
-## Goblin images (8 placeholders)
-
-Replace the placeholder SVGs in `assets/goblins/` with your own art. Keep the same filenames, or use PNG/WebP and update `GOBLIN_IMAGES` in `game.ts`.
-
-| File | When it shows |
-|------|----------------|
-| `goblin-default.svg` | Combat idle |
-| `goblin-angry.svg` | Goblin attacks you |
-| `goblin-happy.svg` | Positive dance reactions, gold toss |
-| `goblin-confused.svg` | Confused / wary reactions |
-| `goblin-impressed.svg` | Impressed / emotional reactions |
-| `goblin-disappointed.svg` | Boos, tomatoes, game over |
-| `goblin-silly.svg` | Funny dance outcomes |
-| `goblin-dancing.svg` | Goblin joins your dance |
-
-Suggested ChatGPT prompt: *"Pixel-art goblin RPG sprite, green skin, single character, transparent background, 200x200, mood: [happy/angry/etc.]"*
-
 ## Controls
 
 | Action | Button |
@@ -59,7 +43,7 @@ Suggested ChatGPT prompt: *"Pixel-art goblin RPG sprite, green skin, single char
 
 ## What gets saved
 
-Stored under `goblinwave-v1` in the browser:
+Stored under `critterwave-v1` in the browser (migrates from older `goblinwave-*` keys):
 
-- **Records:** best wave reached, best gold in one run, total gold earned across all runs, number of runs
-- **Active run:** player HP, gold, current goblin, wave, and turn (until game over)
+- **Records:** best wave reached, number of runs played, chosen hero
+- **Active run:** player HP, hype buff, current foe, wave, turn, and shuffled foe order (until game over)
