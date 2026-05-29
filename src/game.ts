@@ -1421,7 +1421,7 @@ function onAttack(): void {
 
   if (foeKilled) {
     const defeatVerb = nextDefeatVerb();
-    logLine(`You hit ${foe.name} for ${hit} damage. You ${defeatVerb} ${foe.name},`, "player");
+    logLine(`You ${defeatVerb} ${foe.name},`, "player");
     render();
     const isFinal = wave >= getCampaignLength();
     void playFoeDefeat(isFinal).then(() => {
