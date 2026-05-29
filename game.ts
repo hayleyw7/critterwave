@@ -1055,18 +1055,51 @@ async function handlePlayerDeath(): Promise<void> {
   endGame();
 }
 
+function spritePopAnchor(side: "hero" | "foe"): { left: string; top: string } {
+  const panel = side === "hero" ? el.playerPanel : el.foePanel;
+  const stack = panel.querySelector<HTMLElement>(".sprite-wrap .emoji-stack");
+  const layerRect = el.damageLayer.getBoundingClientRect();
+  if (!stack || layerRect.width <= 0 || layerRect.height <= 0) {
+    const fallbackLeft = side === "hero" ? 22 : 78;
+    return { left: `${fallbackLeft}%`, top: "42%" };
+  }
+  const stackRect = stack.getBoundingClientRect();
+  const centerX =
+    ((stackRect.left + stackRect.width / 2 - layerRect.left) / layerRect.width) *
+    100;
+  const gapAbove = Math.max(32, stackRect.height * 0.78);
+  const anchorY =
+    ((stackRect.top - gapAbove - layerRect.top) / layerRect.height) * 100;
+  return { left: `${centerX}%`, top: `${anchorY}%` };
+}
+
 function showDamagePop(
   side: "hero" | "foe",
   text: string,
-  kind: "damage" | "heal"
+  kind: "damage" | "heal" | "hype"
 ): void {
   const pop = document.createElement("span");
-  pop.className = kind === "heal" ? "damage-pop heal-pop" : "damage-pop";
+  pop.className =
+    kind === "heal"
+      ? "damage-pop heal-pop"
+      : kind === "hype"
+        ? "damage-pop hype-pop"
+        : "damage-pop";
   pop.textContent = text;
-  pop.style.left = side === "hero" ? "18%" : "62%";
-  pop.style.top = side === "hero" ? "28%" : "22%";
+  const anchor = spritePopAnchor(side);
+  pop.style.left = anchor.left;
+  pop.style.top = anchor.top;
   el.damageLayer.appendChild(pop);
+  void pop.offsetWidth;
   window.setTimeout(() => pop.remove(), 900);
+}
+
+function showHypeGainPops(playerGain: number, foeJoins: boolean): void {
+  if (playerGain <= 0) return;
+  showDamagePop("hero", "HYPE", "hype");
+  if (foeJoins) {
+    window.setTimeout(() => showDamagePop("foe", "HYPE", "hype"), 90);
+  }
 }
 
 function pulseWaveHud(): void {
@@ -1517,6 +1550,8 @@ async function onDance(): Promise<void> {
   if (tail) {
     await pause(COUNTER_ATTACK_DELAY_MS);
     logDanceLines(opener, reaction, tail);
+    showHypeGainPops(playerGain, joins);
+    render();
   }
 
   turn += 1;

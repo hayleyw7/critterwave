@@ -577,7 +577,7 @@ body.is-booting .game-shell {
   position: relative;
   min-height: 10rem;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: end;
@@ -1093,16 +1093,16 @@ body.is-booting .game-shell {
 .damage-layer {
   position: absolute;
   inset: 0;
-  z-index: 10;
+  z-index: 20;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .damage-pop {
   position: absolute;
   font-family: var(--font-ui);
   font-size: 1.5rem;
-  color: #fff;
+  color: var(--danger);
   text-shadow:
     2px 2px 0 #000,
     0 0 8px var(--danger);
@@ -1111,20 +1111,27 @@ body.is-booting .game-shell {
 }
 
 .damage-pop.heal-pop {
-  color: var(--hero);
+  color: #4ade80;
   text-shadow:
     2px 2px 0 #000,
-    0 0 8px var(--hero);
+    0 0 8px rgba(74, 222, 128, 0.9);
+}
+
+.damage-pop.hype-pop {
+  color: var(--enemy);
+  text-shadow:
+    2px 2px 0 #000,
+    0 0 8px rgba(250, 204, 21, 0.9);
 }
 
 @keyframes damage-float {
   0% {
     opacity: 1;
-    transform: translateY(0) scale(1.2);
+    transform: translateX(-50%) translateY(0) scale(1.2);
   }
   100% {
     opacity: 0;
-    transform: translateY(-48px) scale(0.9);
+    transform: translateX(-50%) translateY(-48px) scale(0.9);
   }
 }
 

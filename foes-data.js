@@ -261,7 +261,7 @@ export const FOES = [
     },
     {
         "id": "rabid-rabbit",
-        "name": "Rancid Rabbit",
+        "name": "Rabid Rabbit",
         "emoji": "🐰",
         "baseHp": 10,
         "baseAtk": 3
