@@ -191,6 +191,7 @@ const FOE_ENTRANCE_MS = 550;
 const DEATH_BEAT_MS = 1200;
 const GOLD_FLASH_MS = 650;
 const KILL_KNOCKBACK_SETTLE_MS = 180;
+const DEFEAT_TEXT_BEAT_MS = 450;
 const HEAL_ANIM_MS = 420;
 const HEAL_AMOUNT = 3;
 const DANCE_ANIM_MS = 550;
@@ -1072,41 +1073,32 @@ function pause(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-function logWaveTransitionComplete(
-  previousName: string,
-  transition: "flee" | "defeat",
-  nextName: string,
-  defeatVerb?: string
+function playNextFoeReveal(
+  primary: { text: string; kind: "player" },
+  secondary: { text: string; kind: "foe" }
 ): void {
-  const actionLine =
-    transition === "flee"
-      ? `You run away from ${escapeHtml(previousName)},`
-      : `You ${escapeHtml(defeatVerb ?? nextDefeatVerb())} ${escapeHtml(previousName)},`;
-
-  const nextLine =
-    transition === "flee"
-      ? `but you run into ${escapeHtml(nextName)}!`
-      : `but ${escapeHtml(nextName)} appears!`;
-
-  el.battleText.className = "battle-text";
-  el.battleText.innerHTML = [
-    `<span class="battle-line battle-player">${actionLine}</span>`,
-    `<span class="battle-line battle-foe">${nextLine}</span>`,
-  ].join("");
-  revealBattleLog();
+  applyFoeColorTheme(foeColorTheme);
+  render();
+  playFoeEntrance();
+  logBattleLines(primary, secondary);
 }
 
 async function transitionToNextWave(
   previousFoeName: string,
   transition: "flee" | "defeat",
   entrance: "run" | "foe" = "foe",
-  exitAnimPromise?: Promise<void>
+  exitAnimPromise?: Promise<void>,
+  knownDefeatVerb?: string
 ): Promise<void> {
-  const defeatVerb = transition === "defeat" ? nextDefeatVerb() : undefined;
+  const defeatVerb =
+    transition === "defeat" ? (knownDefeatVerb ?? nextDefeatVerb()) : undefined;
   const fleeWithExitAnim = exitAnimPromise !== undefined;
 
   if (fleeWithExitAnim) {
     logLine(`You run away from ${previousFoeName},`, "player");
+  } else if (transition === "defeat" && knownDefeatVerb) {
+    await pause(DEFEAT_TEXT_BEAT_MS);
+    await applyWaveVictoryHeal();
   } else {
     const actionText =
       transition === "flee"
@@ -1114,7 +1106,9 @@ async function transitionToNextWave(
         : `You ${defeatVerb} ${previousFoeName},`;
 
     logLine(actionText, "player");
-    await pause(COUNTER_ATTACK_DELAY_MS);
+    await pause(
+      transition === "defeat" ? DEFEAT_TEXT_BEAT_MS : COUNTER_ATTACK_DELAY_MS
+    );
 
     if (transition === "defeat") {
       await applyWaveVictoryHeal();
@@ -1133,22 +1127,15 @@ async function transitionToNextWave(
     render();
     await exitAnimPromise;
     suppressFoePanelRender = false;
-    render();
-    await pause(COUNTER_ATTACK_DELAY_MS);
-    logBattleLines(
+    playNextFoeReveal(
       { text: `You run away from ${previousFoeName},`, kind: "player" },
       { text: `but you run into ${foe.name}!`, kind: "foe" }
     );
-    playRunEntrance();
   } else {
-    applyFoeColorTheme(foeColorTheme);
-    render();
-    logWaveTransitionComplete(previousFoeName, transition, foe.name, defeatVerb);
-    if (entrance === "run") {
-      playRunEntrance();
-    } else {
-      playFoeEntrance();
-    }
+    playNextFoeReveal(
+      { text: `You ${defeatVerb} ${previousFoeName},`, kind: "player" },
+      { text: `but ${foe.name} appears!`, kind: "foe" }
+    );
   }
   persist();
 }
@@ -1278,7 +1265,7 @@ function maybeRunDebugWin(): void {
   triggerDebugWin();
 }
 
-async function winWave(): Promise<void> {
+async function winWave(defeatVerb: string): Promise<void> {
   if (!foe) return;
 
   const defeatedFoe = foe.name;
@@ -1287,7 +1274,7 @@ async function winWave(): Promise<void> {
     return;
   }
 
-  await transitionToNextWave(defeatedFoe, "defeat", "foe");
+  await transitionToNextWave(defeatedFoe, "defeat", "foe", undefined, defeatVerb);
 }
 
 function playHitExchange(
@@ -1361,13 +1348,16 @@ async function onAttack(): Promise<void> {
 
   if (foeKilled) {
     await pause(KILL_KNOCKBACK_SETTLE_MS);
+    const defeatVerb = nextDefeatVerb();
+    logLine(`You ${defeatVerb} ${foe.name},`, "player");
     const isFinal = wave >= getCampaignLength();
     await playFoeDefeat(isFinal);
     if (isFinal) {
+      await pause(DEFEAT_TEXT_BEAT_MS);
       await applyWaveVictoryHeal();
       winCampaign();
     } else {
-      await winWave();
+      await winWave(defeatVerb);
     }
     return;
   }
