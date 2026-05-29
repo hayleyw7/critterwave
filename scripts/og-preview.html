@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        width: 1200px;
+        height: 630px;
+        font-family: "VT323", monospace;
+        background: radial-gradient(
+          ellipse 85% 95% at 50% 35%,
+          #2d1b4e 0%,
+          #1a0f2e 48%,
+          #0a0612 100%
+        );
+        color: #f8f0ff;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .frame {
+        position: absolute;
+        inset: 14px;
+        border: 4px solid #5a3d8a;
+        box-shadow:
+          inset 0 0 48px rgba(124, 92, 191, 0.22),
+          0 0 72px rgba(253, 224, 71, 0.12);
+        pointer-events: none;
+      }
+
+      h1 {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        width: min(1040px, 92%);
+        font-size: 132px;
+        line-height: 1;
+        color: #fde047;
+        text-shadow:
+          4px 4px 0 #854d0e,
+          0 0 48px rgba(253, 224, 71, 0.45);
+      }
+
+      h1 span {
+        flex: 0 0 auto;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame" aria-hidden="true"></div>
+    <h1 aria-label="Critterwave">
+      <span>C</span><span>R</span><span>I</span><span>T</span><span>T</span
+      ><span>E</span><span>R</span><span>W</span><span>A</span><span>V</span
+      ><span>E</span>
+    </h1>
+  </body>
+</html>
