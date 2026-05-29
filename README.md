@@ -17,7 +17,7 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 - Pick any roster emoji as your hero
 - **Heal** (1–5 HP at Lv 1, grows with level) on your turn — foe may counterattack; **+1 HYPE** when you heal
 - **Dance** for random foe reactions — hype for you, hype for them, both, or neither (max **5 HYPE** each; +1 ATK per level)
-- **Partial HP restore after each wave victory** — half your max HP (sparkle + floating heal number); in-combat heals and hype matter more
+- **Full HP restore after each wave victory** — sparkle + floating heal number when you had missing HP
 - Shuffled foe order each run
 - **Scores persist** in this browser (best wave, run count)
 - **Mid-run save** — refresh and your fight continues (with a “restored” message)

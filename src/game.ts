@@ -11,14 +11,20 @@ import {
   HERO_NAME_MAX_LENGTH,
   HYPE_ATTACK_PER_LEVEL,
   HYPE_MAX,
+  applyPlayerHealRoll,
   applyHypeGain,
+  hypeAfterTakingHit,
   applyPlayerStatsForWave,
   clampHype,
   formatHypeLabel as formatHypeStatLabel,
   healHpAfterWaveVictory,
   hypeHeadroom,
   isLevelBandFinale,
-  makeFoeForWave as buildWaveFoe,
+  advanceFoeQueueAfterFlee,
+  advanceFoeQueueAfterVictory,
+  buildInitialFoeQueue,
+  buildQueueCycleFromWave,
+  makeFoeFromQueueHead,
   makeFoeFromTemplate,
   nextDefeatVerb as advanceDefeatVerb,
   pickFoeFromOrder,
@@ -34,7 +40,6 @@ import {
   normalizeHeroName,
   restoreFoeOrder as restoreFoeOrderForHero,
   randomDamage,
-  randomHeal,
 } from "./lib/game-logic.js";
 import {
   formatDanceHypeTail,
@@ -66,9 +71,35 @@ import {
   type CombatGateState,
 } from "./lib/combat-gate.js";
 import {
+  createCombatHintsState,
+  combatHintsForSnapshot,
+  deferDanceHintAfterRun,
+  maybeArmDanceHintForWave,
+  onNextFoeForHints,
+  onVictoryForHints,
+  recordAttackForHints,
+  recordDanceForHints,
+  recordHealForHints,
+  recordPlayerDamageForHints,
+  tryCelebrateFirstFoeHype,
+  tryCelebrateFirstPlayerHype,
+  tryCelebrateFirstWaveVictoryHeal,
+  hypeMaxPresentation,
+  recordRunForHints,
+  shouldShowAttackHint,
+  shouldShowDanceHint,
+  shouldShowHealHint,
+  shouldShowRunHint,
+  type CombatHintsState,
+} from "./lib/combat-hints.js";
+import {
   startVictoryCelebration,
   stopVictoryCelebration,
 } from "./ui/victory-celebration.js";
+
+const HYPE_METER_TEXT_STAGGER_MS = FOE_FOLLOW_UP_DELAY_MS;
+/** Bar flash (3×) plus staggered text — matches floating pop beat. */
+const HYPE_METER_FLASH_MS = HYPE_METER_TEXT_STAGGER_MS + 450 * 3 + 50;
 
 declare global {
   interface Window {
@@ -131,6 +162,8 @@ type SaveData = {
   /** @deprecated Legacy — creature label; use heroName when present. */
   heroLabel?: string;
   heroColorTheme?: HeroColorTheme;
+  /** True while the hero setup overlay should stay up (survives refresh). */
+  setupActive?: boolean;
 };
 
 type GameSnapshot = {
@@ -143,8 +176,13 @@ type GameSnapshot = {
   foeHypeLevel: number;
   /** Shuffled foe sequence for this run (foe template ids). */
   foeOrderIds?: string[];
+  /** Active foe queue — front is the current encounter. */
+  foeQueueIds?: string[];
+  /** Foes fled from; appended after the queue empties. */
+  deferredFoeIds?: string[];
   foeColorTheme?: FoeColorTheme;
   heroColorTheme?: HeroColorTheme;
+  combatHints?: CombatHintsState;
 };
 
 const STORAGE_KEY = "critterwave-v1";
@@ -190,6 +228,30 @@ assertUniqueEmojis(FOES);
 assertHeroPickerOrderCovers(FOES.map((f) => f.emoji));
 function buildFoeOrder(heroEmoji: string): FoeTemplate[] {
   return buildFoeOrderForHero(FOES, heroEmoji);
+}
+
+function restoreFoeQueueState(
+  snapshot: GameSnapshot,
+  order: FoeTemplate[]
+): { queue: string[]; deferred: string[] } {
+  if (snapshot.foeQueueIds && snapshot.foeQueueIds.length > 0) {
+    return {
+      queue: snapshot.foeQueueIds,
+      deferred: snapshot.deferredFoeIds ?? [],
+    };
+  }
+  const cycle = buildQueueCycleFromWave(order, snapshot.wave);
+  if (snapshot.foe?.id) {
+    const idx = cycle.indexOf(snapshot.foe.id);
+    if (idx >= 0) {
+      return { queue: cycle.slice(idx), deferred: [] };
+    }
+  }
+  return { queue: cycle, deferred: [] };
+}
+
+function spawnFoeFromQueue(): Enemy {
+  return makeFoeFromQueueHead(foeQueue, foeOrder, wave);
 }
 
 function getCampaignLength(): number {
@@ -240,11 +302,14 @@ const player: Player = {
 
 let foe: Enemy | null = null;
 let foeOrder: FoeTemplate[] = [];
+let foeQueue: string[] = [];
+let deferredFoeIds: string[] = [];
 let turn = 1;
 let wave = 1;
 let hypeLevel = 0;
 let foeHypeLevel = 0;
 let phase: GameSnapshot["phase"] = "combat";
+let combatHints: CombatHintsState = createCombatHintsState();
 let pendingHeroEmoji = DEFAULT_HERO_EMOJI;
 let pendingHeroLabel = DEFAULT_HERO_LABEL;
 let heroColorTheme: HeroColorTheme = DEFAULT_HERO_COLOR_THEME;
@@ -259,6 +324,10 @@ let combatActionGeneration = 0;
 let awaitingFoeResponse = false;
 /** Keep showing the fleeing foe until exit poof finishes (run away). */
 let suppressFoePanelRender = false;
+let displayedPlayerHype = 0;
+let displayedFoeHype = 0;
+/** Skip first-HYPE teach on the render beat right after Heal (gain may be lost to counter). */
+let skipPlayerHypeTeachThisRender = false;
 
 const el = {
   arena: document.getElementById("arena")!,
@@ -298,6 +367,18 @@ const el = {
   turnLabel: document.getElementById("turn-label")!,
   battleText: document.getElementById("battle-text")!,
   actions: document.getElementById("actions")!,
+  healBtn:
+    document.getElementById("cmd-heal") ??
+    document.querySelector<HTMLButtonElement>('[data-action="heal"]')!,
+  danceBtn:
+    document.getElementById("cmd-dance") ??
+    document.querySelector<HTMLButtonElement>('[data-action="dance"]')!,
+  attackBtn:
+    document.getElementById("cmd-attack") ??
+    document.querySelector<HTMLButtonElement>('[data-action="attack"]')!,
+  runBtn:
+    document.getElementById("cmd-run") ??
+    document.querySelector<HTMLButtonElement>('[data-action="run"]')!,
   gameOver: document.getElementById("game-over")!,
   victoryEmojiLayer: document.getElementById("victory-emoji-layer")!,
   gameOverTag: document.getElementById("game-over-tag")!,
@@ -409,6 +490,7 @@ function loadSave(): SaveData {
         parsed.heroColorTheme && isHeroColorTheme(parsed.heroColorTheme)
           ? parsed.heroColorTheme
           : undefined,
+      setupActive: parsed.setupActive === true,
     };
   } catch {
     return { bestWave: 0, runsPlayed: 0 };
@@ -464,6 +546,9 @@ function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
       snap.heroColorTheme && isHeroColorTheme(snap.heroColorTheme)
         ? snap.heroColorTheme
         : undefined,
+    combatHints: createCombatHintsState(snap.combatHints ?? {}),
+    foeQueueIds: snap.foeQueueIds,
+    deferredFoeIds: snap.deferredFoeIds,
   };
 }
 
@@ -477,6 +562,26 @@ function persistStatsOnly(): void {
       playerEmoji: player.emoji,
       heroName: player.name,
       heroColorTheme,
+      setupActive: false,
+    })
+  );
+}
+
+function persistSetupDraft(): void {
+  if (el.setupOverlay.classList.contains("hidden")) {
+    return;
+  }
+  const save = loadSave();
+  const name = readHeroNameFromSetup();
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      bestWave: save.bestWave,
+      runsPlayed: save.runsPlayed,
+      playerEmoji: pendingHeroEmoji,
+      heroName: name || undefined,
+      heroColorTheme: pendingHeroColorTheme,
+      setupActive: true,
     })
   );
 }
@@ -492,6 +597,7 @@ function persist(snapshot?: GameSnapshot): void {
         playerEmoji: player.emoji,
         heroName: player.name,
         heroColorTheme,
+        setupActive: false,
         snapshot: activeSnapshot,
       }
     : {
@@ -500,6 +606,7 @@ function persist(snapshot?: GameSnapshot): void {
         playerEmoji: player.emoji,
         heroName: player.name,
         heroColorTheme,
+        setupActive: false,
       };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
@@ -558,8 +665,11 @@ function getSnapshot(): GameSnapshot {
     hypeLevel,
     foeHypeLevel,
     foeOrderIds: foeOrder.map((f) => f.id),
+    foeQueueIds: foeQueue,
+    deferredFoeIds,
     foeColorTheme,
     heroColorTheme,
+    combatHints: combatHintsForSnapshot(combatHints),
   };
 }
 
@@ -571,7 +681,11 @@ function applySnapshot(snapshot: GameSnapshot): void {
   phase = snapshot.phase;
   hypeLevel = clampHype(snapshot.hypeLevel ?? 0);
   foeHypeLevel = clampHype(snapshot.foeHypeLevel ?? 0);
+  combatHints = createCombatHintsState(snapshot.combatHints ?? {});
   foeOrder = restoreFoeOrder(snapshot.foeOrderIds, snapshot.player.emoji);
+  const queueState = restoreFoeQueueState(snapshot, foeOrder);
+  foeQueue = queueState.queue;
+  deferredFoeIds = queueState.deferred;
   if (snapshot.heroColorTheme) {
     applyHeroColorTheme(snapshot.heroColorTheme);
   }
@@ -584,6 +698,7 @@ function applySnapshot(snapshot: GameSnapshot): void {
   }
   syncPlayerForCurrentWave();
   refreshFoeStatsPreservingHp();
+  combatHints = maybeArmDanceHintForWave(combatHints, wave);
 }
 
 function getHeroLabelForEmoji(emoji: string): string {
@@ -711,6 +826,7 @@ function buildHeroColorSwatches(): void {
       syncHeroColorSwatchSelection();
       updateHeroColorTogglePreview();
       closeHeroColorPopup();
+      persistSetupDraft();
     });
     el.heroColorSwatches.appendChild(btn);
   }
@@ -760,10 +876,22 @@ function updateSetupStartButton(): void {
   el.setupHint.classList.add("setup-hint-error");
 }
 
+const SETUP_NAME_TEACH_FLASH_MS = 1400;
+
+function playSetupNameTeachFlash(): void {
+  el.heroNameInput.classList.remove("setup-name-teach-flash");
+  void el.heroNameInput.offsetWidth;
+  el.heroNameInput.classList.add("setup-name-teach-flash");
+  window.setTimeout(() => {
+    el.heroNameInput.classList.remove("setup-name-teach-flash");
+  }, SETUP_NAME_TEACH_FLASH_MS);
+}
+
 function showSetupBlockedHint(): void {
   setupHintForced = true;
   updateSetupStartButton();
   if (!readHeroNameFromSetup()) {
+    playSetupNameTeachFlash();
     el.heroNameInput.focus();
   } else {
     el.heroPicker.focus();
@@ -788,11 +916,11 @@ function getEffectiveFoeAttack(): number {
 }
 
 function applyPlayerDanceBuff(amount = 1): void {
-  hypeLevel = applyHypeGain(hypeLevel, amount);
+  gainPlayerHype(amount);
 }
 
 function applyFoeDanceBuff(amount = 1): void {
-  foeHypeLevel = applyHypeGain(foeHypeLevel, amount);
+  gainFoeHype(amount);
 }
 
 function formatHypeAriaLabel(level: number): string {
@@ -803,10 +931,38 @@ function formatHypeAriaLabel(level: number): string {
 function clearAllHype(): void {
   hypeLevel = 0;
   foeHypeLevel = 0;
+  displayedPlayerHype = 0;
+  displayedFoeHype = 0;
+}
+
+function syncHypeMaxPresentation(
+  wrap: HTMLElement,
+  level: number,
+  side: "player" | "foe"
+): void {
+  const previous = side === "player" ? displayedPlayerHype : displayedFoeHype;
+  const pres = hypeMaxPresentation(previous, level);
+  wrap.classList.toggle("hype-maxed", pres.atMax);
+  if (pres.flashReachedMax) {
+    wrap.classList.remove("hype-maxed-flash");
+    void wrap.offsetWidth;
+    wrap.classList.add("hype-maxed-flash");
+    window.setTimeout(() => wrap.classList.remove("hype-maxed-flash"), HYPE_METER_FLASH_MS);
+  }
+  const clamped = clampHype(level);
+  if (side === "player") {
+    displayedPlayerHype = clamped;
+  } else {
+    displayedFoeHype = clamped;
+  }
 }
 
 function applyPlayerHitHypeLoss(): void {
   hypeLevel = Math.max(0, hypeLevel - 1);
+}
+
+function applyFoeHitHypeLoss(damageDealt: number): void {
+  foeHypeLevel = hypeAfterTakingHit(foeHypeLevel, damageDealt);
 }
 
 function renderHypeMeter(
@@ -815,7 +971,8 @@ function renderHypeMeter(
   bar: HTMLElement,
   fill: HTMLElement,
   label: HTMLElement,
-  level: number
+  level: number,
+  side: "player" | "foe"
 ): void {
   const clamped = clampHype(level);
   label.textContent = formatHypeStatLabel(clamped);
@@ -824,6 +981,7 @@ function renderHypeMeter(
   bar.setAttribute("aria-valuenow", String(clamped));
   bar.setAttribute("aria-valuemax", String(HYPE_MAX));
   statusPanel.classList.toggle("hype-full", clamped >= HYPE_MAX);
+  syncHypeMaxPresentation(wrap, level, side);
 }
 
 function foeDisplayName(): string {
@@ -852,6 +1010,118 @@ function playXpBarFullBeat(): Promise<void> {
   el.xpBar.setAttribute("aria-valuenow", String(max));
   el.xpBar.setAttribute("aria-valuemax", String(max));
   return pause(XP_FILL_BEAT_MS);
+}
+
+function playFirstHypeFlash(wrap: HTMLElement): void {
+  wrap.classList.add("hype-first-dance-flash");
+  window.setTimeout(() => {
+    wrap.classList.remove("hype-first-dance-flash");
+  }, HYPE_METER_FLASH_MS);
+}
+
+function gainPlayerHype(amount: number): void {
+  if (amount <= 0) {
+    return;
+  }
+  hypeLevel = applyHypeGain(hypeLevel, amount);
+}
+
+function gainFoeHype(amount: number): void {
+  if (amount <= 0) {
+    return;
+  }
+  foeHypeLevel = applyHypeGain(foeHypeLevel, amount);
+}
+
+function syncFirstHypeFlashes(): void {
+  const skipPlayer = skipPlayerHypeTeachThisRender;
+  skipPlayerHypeTeachThisRender = false;
+
+  if (!skipPlayer) {
+    const player = tryCelebrateFirstPlayerHype(combatHints, hypeLevel);
+    combatHints = player.flags;
+    if (player.flashFirstHype) {
+      playFirstHypeFlash(el.playerHypeWrap);
+    }
+  }
+
+  const foe = tryCelebrateFirstFoeHype(combatHints, foeHypeLevel);
+  combatHints = foe.flags;
+  if (foe.flashFirstHype) {
+    playFirstHypeFlash(el.foeHypeWrap);
+  }
+}
+
+const HP_TEACH_FLASH_MS = 1400;
+
+function playHpBarTeachFlash(fill: HTMLElement, className: string): void {
+  const bar = fill.parentElement;
+  if (!bar) {
+    return;
+  }
+  bar.classList.remove(className);
+  void bar.offsetWidth;
+  bar.classList.add(className);
+  window.setTimeout(() => bar.classList.remove(className), HP_TEACH_FLASH_MS);
+}
+
+function playFirstHealHpFlash(): void {
+  playHpBarTeachFlash(el.playerHpFill, "hp-first-heal-flash");
+}
+
+function playFirstPlayerDamageHpFlash(): void {
+  playHpBarTeachFlash(el.playerHpFill, "hp-first-damage-flash");
+}
+
+function playFirstAttackFoeHpFlash(): void {
+  playHpBarTeachFlash(el.foeHpFill, "hp-first-attack-flash");
+}
+
+function playFirstWaveVictoryHealHpFlash(): void {
+  playHpBarTeachFlash(el.playerHpFill, "hp-first-wave-heal-flash");
+}
+
+function syncCombatHintClasses(): void {
+  if (!el.healBtn || !el.danceBtn || !el.attackBtn || !el.runBtn) {
+    return;
+  }
+  const hasFoe = foe !== null;
+  const showAttack = shouldShowAttackHint(combatHints, phase, hasFoe);
+  const showHeal = shouldShowHealHint(
+    combatHints,
+    player.hp,
+    player.maxHp,
+    phase,
+    hasFoe
+  );
+  const showRun =
+    foe !== null &&
+    shouldShowRunHint(
+      combatHints,
+      player.hp,
+      foe.attack,
+      foeHypeLevel,
+      phase,
+      hasFoe
+    );
+  const showDance = shouldShowDanceHint(
+    combatHints,
+    player.hp,
+    player.maxHp,
+    phase,
+    hasFoe,
+    hypeLevel,
+    foe?.attack ?? 0,
+    foeHypeLevel
+  );
+  el.attackBtn.classList.toggle("cmd-hint-flash", showAttack);
+  el.healBtn.classList.toggle("cmd-hint-flash", showHeal);
+  el.danceBtn.classList.toggle("cmd-hint-flash", showDance);
+  el.runBtn.classList.toggle("cmd-hint-flash", showRun);
+  el.attackBtn.dataset.combatHint = showAttack ? "on" : "off";
+  el.healBtn.dataset.combatHint = showHeal ? "on" : "off";
+  el.danceBtn.dataset.combatHint = showDance ? "on" : "off";
+  el.runBtn.dataset.combatHint = showRun ? "on" : "off";
 }
 
 function briefClass(element: HTMLElement, className: string, ms: number): void {
@@ -1064,7 +1334,8 @@ function render(): void {
     el.playerHypeBar,
     el.playerHypeFill,
     el.playerBuff,
-    hypeLevel
+    hypeLevel,
+    "player"
   );
 
   const playerHpBar = el.playerPanel.querySelector(".hp-bar");
@@ -1081,7 +1352,8 @@ function render(): void {
       el.foeHypeBar,
       el.foeHypeFill,
       el.foeBuff,
-      foeHypeLevel
+      foeHypeLevel,
+      "foe"
     );
     el.foeEmoji.textContent = foe.emoji;
     el.foeEmoji.setAttribute("aria-label", foe.name);
@@ -1103,6 +1375,8 @@ function render(): void {
   el.restartLabel.textContent = phase === "victory" ? "Play again?" : "Try again?";
   el.actions.classList.toggle("hidden", inEndScreen);
   el.turnLabel.classList.toggle("hidden", inEndScreen);
+  syncFirstHypeFlashes();
+  syncCombatHintClasses();
 }
 
 function escapeHtml(text: string): string {
@@ -1178,6 +1452,7 @@ function lockCombat(): number | null {
 
 function finishCombatAction(generation: number): void {
   applyCombatGateState(finishCombatActionGate(generation, combatGateState()));
+  syncCombatHintClasses();
 }
 
 function playNextFoeReveal(
@@ -1200,45 +1475,83 @@ async function transitionToNextWave(
   const defeatVerb =
     transition === "defeat" ? (knownDefeatVerb ?? nextDefeatVerb()) : undefined;
   const fleeWithExitAnim = exitAnimPromise !== undefined;
+  const fledId = foe?.id;
 
   if (fleeWithExitAnim) {
     logLine(`You run away from ${previousFoeName},`, "player");
-  } else if (transition === "defeat" && knownDefeatVerb) {
-    void applyWaveVictoryHeal();
-  } else {
+  } else if (!(transition === "defeat" && knownDefeatVerb)) {
     const actionText =
       transition === "flee"
         ? `You run away from ${previousFoeName},`
         : `You ${defeatVerb} ${previousFoeName},`;
 
     logLine(actionText, "player");
-
-    if (transition === "defeat") {
-      void applyWaveVictoryHeal();
-    }
   }
 
-  const completedWave = wave;
-  const isLevelBandFinaleWave = isLevelBandFinale(
-    completedWave,
-    getCampaignLength()
-  );
-  if (isLevelBandFinaleWave) {
-    await playXpBarFullBeat();
-  }
-
-  wave += 1;
   turn = 1;
-  const levelBefore = playerLevelForWave(wave - 1);
-  const playerLevel = syncPlayerForCurrentWave({ grantMaxHpIncrease: true });
   pickNextFoeColor();
-  foe = makeFoeForWave(wave);
-  foeHypeLevel = 0;
-  pulseWaveHud();
+  let flashWaveVictoryHealHp = false;
 
-  if (playerLevel > levelBefore) {
-    render();
-    void playLevelUpNotice();
+  if (transition === "defeat") {
+    const completedWave = wave;
+    const isLevelBandFinaleWave = isLevelBandFinale(
+      completedWave,
+      getCampaignLength()
+    );
+    if (isLevelBandFinaleWave) {
+      await playXpBarFullBeat();
+    }
+
+    wave += 1;
+    const levelBefore = playerLevelForWave(wave - 1);
+    const hpBeforeHeal = player.hp;
+    const advanced = advanceFoeQueueAfterVictory(
+      foeQueue,
+      deferredFoeIds,
+      foeOrder,
+      wave
+    );
+    foeQueue = advanced.queue;
+    deferredFoeIds = advanced.deferred;
+    const playerLevel = syncPlayerForCurrentWave({
+      grantMaxHpIncrease: true,
+      healToMax: true,
+    });
+    applyWaveVictoryHealPop(hpBeforeHeal);
+    const waveHealFlash = tryCelebrateFirstWaveVictoryHeal(
+      combatHints,
+      completedWave,
+      hpBeforeHeal,
+      player.hp
+    );
+    combatHints = waveHealFlash.flags;
+    flashWaveVictoryHealHp = waveHealFlash.flashHp;
+    combatHints = onVictoryForHints(combatHints);
+    foe = spawnFoeFromQueue();
+    combatHints = onNextFoeForHints(combatHints);
+    combatHints = maybeArmDanceHintForWave(combatHints, wave);
+    foeHypeLevel = 0;
+    pulseWaveHud();
+
+    if (playerLevel > levelBefore) {
+      render();
+      void playLevelUpNotice();
+    }
+  } else if (fledId) {
+    const advanced = advanceFoeQueueAfterFlee(
+      foeQueue,
+      deferredFoeIds,
+      fledId,
+      foeOrder,
+      wave
+    );
+    foeQueue = advanced.queue;
+    deferredFoeIds = advanced.deferred;
+    foe = spawnFoeFromQueue();
+    combatHints = onNextFoeForHints(combatHints);
+    combatHints = maybeArmDanceHintForWave(combatHints, wave);
+    foeHypeLevel = 0;
+    pulseWaveHud();
   }
 
   if (fleeWithExitAnim) {
@@ -1248,14 +1561,19 @@ async function transitionToNextWave(
     suppressFoePanelRender = false;
     playNextFoeReveal(
       { text: `You run away from ${previousFoeName},`, kind: "player" },
-      { text: `but you run into ${foe.name}!`, kind: "foe" }
+      { text: `but you run into ${foe!.name}!`, kind: "foe" }
     );
   } else {
     playNextFoeReveal(
       { text: `You ${defeatVerb} ${previousFoeName},`, kind: "player" },
-      { text: `but ${foe.name} appears!`, kind: "foe" }
+      { text: `but ${foe!.name} appears!`, kind: "foe" }
     );
   }
+
+  if (flashWaveVictoryHealHp) {
+    playFirstWaveVictoryHealHpFlash();
+  }
+
   persist();
 }
 
@@ -1263,16 +1581,29 @@ function clearLog(): void {
   logLine("What will you do?", "info");
 }
 
-function makeFoeForWave(w: number): Enemy {
-  return buildWaveFoe(foeOrder, w);
-}
-
 function rollDamage(max: number): number {
   return randomDamage(max, Math.random);
 }
 
-function rollHeal(max: number): number {
-  return randomHeal(max, Math.random);
+function rollAndApplyPlayerHeal(): {
+  rolled: number;
+  gained: number;
+  hpBefore: number;
+} {
+  const hpBefore = player.hp;
+  const result = applyPlayerHealRoll(
+    hpBefore,
+    player.maxHp,
+    getHealMax(),
+    Math.random
+  );
+  player.hp = result.hp;
+  return { rolled: result.rolled, gained: result.gained, hpBefore };
+}
+
+function showPlayerHealRoll(rolled: number): void {
+  showDamagePop("hero", `+${rolled}`, "heal");
+  void playHeroHeal();
 }
 
 function nextDefeatVerb(): string {
@@ -1283,9 +1614,14 @@ function nextDefeatVerb(): string {
 
 function startWave(): void {
   syncPlayerForCurrentWave({ healToMax: wave === 1 });
+  if (foeQueue.length === 0) {
+    foeQueue = buildInitialFoeQueue(foeOrder);
+    deferredFoeIds = [];
+  }
   pickNextFoeColor();
-  foe = makeFoeForWave(wave);
+  foe = spawnFoeFromQueue();
   foeHypeLevel = 0;
+  combatHints = maybeArmDanceHintForWave(combatHints, wave);
   pulseWaveHud();
   applyFoeColorTheme(foeColorTheme);
   logHtmlLine(
@@ -1435,6 +1771,13 @@ function applyFoeCounterAttack(): number | null {
 
   const hit = rollDamage(getEffectiveFoeAttack());
   player.hp = Math.max(0, player.hp - hit);
+  if (hit > 0) {
+    const damageHint = recordPlayerDamageForHints(combatHints);
+    combatHints = damageHint.flags;
+    if (damageHint.flashHp) {
+      playFirstPlayerDamageHpFlash();
+    }
+  }
   applyPlayerHitHypeLoss();
 
   if (player.hp > 0) {
@@ -1484,9 +1827,6 @@ function scheduleFoeDanceFollowUp(
     if (opts.foeGain > 0) {
       showDamagePop("foe", "HYPE", "hype");
     }
-    if (opts.foeCapped) {
-      briefClass(el.foeHypeWrap, "hype-capped-flash", 420);
-    }
     finishCombatAction(generation);
   }, delay);
 }
@@ -1496,8 +1836,17 @@ function onAttack(): void {
   if (generation === null) return;
   const currentFoe = foe!;
 
+  const firstAttack = !combatHints.dismissedAttackHint;
+  combatHints = recordAttackForHints(combatHints);
+  if (firstAttack) {
+    playFirstAttackFoeHpFlash();
+  }
+
   const hit = rollDamage(getEffectiveAttack());
   currentFoe.hp = Math.max(0, currentFoe.hp - hit);
+  if (hit > 0) {
+    applyFoeHitHypeLoss(hit);
+  }
   const foeKilled = currentFoe.hp <= 0;
   showDamagePop("foe", `-${hit}`, "damage");
   playHitExchange("hero", "foe", foeKilled);
@@ -1523,6 +1872,7 @@ function onAttack(): void {
 
   applyCombatGateState(beginAwaitingFoeResponse(combatGateState()));
   const counterHit = applyFoeCounterAttack();
+  syncCombatHintClasses();
   if (counterHit === null) {
     finishCombatAction(generation);
     return;
@@ -1537,10 +1887,7 @@ function onAttack(): void {
   scheduleFoeCounterHitVisuals(counterHit, generation);
 }
 
-function applyWaveVictoryHeal(): void {
-  const before = player.hp;
-  player.hp = healHpAfterWaveVictory(before, player.maxHp);
-  const gained = player.hp - before;
+function applyHealPop(gained: number): void {
   if (gained <= 0) {
     return;
   }
@@ -1549,30 +1896,64 @@ function applyWaveVictoryHeal(): void {
   void playHeroHeal();
 }
 
+function applyWaveVictoryHealPop(hpBefore: number): void {
+  applyHealPop(player.hp - hpBefore);
+}
+
+function applyFleeHeal(): void {
+  const { rolled, gained } = rollAndApplyPlayerHeal();
+  showPlayerHealRoll(rolled);
+  if (gained > 0) {
+    render();
+    persist();
+  }
+}
+
+function applyWaveVictoryHeal(): void {
+  const before = player.hp;
+  player.hp = healHpAfterWaveVictory(before, player.maxHp);
+  applyWaveVictoryHealPop(before);
+}
+
 function onHeal(): void {
   const generation = lockCombat();
   if (generation === null) return;
   const currentFoe = foe!;
 
-  const heal = rollHeal(getHealMax());
-  const hpBefore = player.hp;
-  player.hp = Math.min(player.maxHp, player.hp + heal);
-  showDamagePop("hero", `+${heal}`, "heal");
-  void playHeroHeal();
+  skipPlayerHypeTeachThisRender = true;
 
-  if (hpBefore < player.maxHp) {
-    hypeLevel = applyHypeGain(hypeLevel, 1);
+  const firstHeal = !combatHints.dismissedHealHint;
+  combatHints = recordHealForHints(combatHints);
+  if (firstHeal) {
+    playFirstHealHpFlash();
+  }
+
+  const { rolled, gained, hpBefore } = rollAndApplyPlayerHeal();
+  showPlayerHealRoll(rolled);
+
+  const healGrantsHype = hpBefore < player.maxHp;
+  const deferHealHypeGain = healGrantsHype && hypeLevel === 0;
+
+  if (healGrantsHype && !deferHealHypeGain) {
+    gainPlayerHype(1);
   }
 
   applyCombatGateState(beginAwaitingFoeResponse(combatGateState()));
   const counterHit = applyFoeCounterAttack();
+
+  if (deferHealHypeGain && counterHit === null) {
+    gainPlayerHype(1);
+  }
+  syncCombatHintClasses();
   if (counterHit === null) {
+    render();
+    persist();
     finishCombatAction(generation);
     return;
   }
 
   logBattleLines(
-    { text: `You healed yourself for ${heal} HP.`, kind: "player" },
+    { text: `You healed yourself for ${rolled} HP.`, kind: "player" },
     { text: `${currentFoe.name} hits you for ${counterHit} damage.`, kind: "foe" }
   );
   render();
@@ -1597,6 +1978,8 @@ function onDance(): void {
   const generation = lockCombat();
   if (generation === null) return;
   const currentFoe = foe!;
+
+  combatHints = recordDanceForHints(combatHints);
 
   const response = pickRandomDanceResponse();
   const attemptedPlayerGain = getPlayerHypeGain(response);
@@ -1631,9 +2014,6 @@ function onDance(): void {
     if (actualPlayerGain > 0) {
       showDamagePop("hero", "HYPE", "hype");
     }
-    if (playerCapped) {
-      briefClass(el.playerHypeWrap, "hype-capped-flash", 420);
-    }
   }
 
   turn += 1;
@@ -1657,7 +2037,12 @@ function onRun(): void {
     return;
   }
 
+  combatHints = deferDanceHintAfterRun(combatHints);
+  combatHints = recordRunForHints(combatHints);
+  syncCombatHintClasses();
+
   clearAllHype();
+  applyFleeHeal();
   const fledFoe = currentFoe.name;
   const exitAnimPromise = playRunExit();
   void transitionToNextWave(fledFoe, "flee", "run", exitAnimPromise).finally(() =>
@@ -1697,6 +2082,7 @@ function buildHeroPicker(): void {
         pendingHeroEmoji = hero.emoji;
         pendingHeroLabel = hero.label;
         updateSetupStartButton();
+        persistSetupDraft();
       });
       grid.appendChild(btn);
   }
@@ -1718,6 +2104,7 @@ function showSetup(): void {
   updateSetupStartButton();
   el.setupOverlay.classList.remove("hidden");
   el.gameShell.classList.add("setup-active");
+  persistSetupDraft();
 }
 
 function hideSetup(): void {
@@ -1752,10 +2139,13 @@ function resetGame(): void {
   wave = 1;
   defeatVerbIndex = 0;
   foeOrder = buildFoeOrder(player.emoji);
+  foeQueue = buildInitialFoeQueue(foeOrder);
+  deferredFoeIds = [];
   syncPlayerForCurrentWave({ healToMax: true });
   clearAllHype();
   lastFoeColorTheme = null;
   resetDancePicker();
+  combatHints = createCombatHintsState();
   phase = "combat";
   applyCombatGateState(resetCombatGate(combatGateState()));
   clearCombatAnimations();
@@ -1768,10 +2158,10 @@ function resetGame(): void {
 
 async function startNewGame(): Promise<void> {
   const confirmed = await showConfirm({
-    title: "Start over with a new hero?",
+    title: "Start a new run?",
     message:
-      "Your best wave and run count stay. This run can't be continued.",
-    confirmLabel: "New game",
+      "Your high score and run count stay. This run can't be continued.",
+    confirmLabel: "New run",
   });
   if (!confirmed) {
     return;
@@ -1846,7 +2236,10 @@ function bindActions(): void {
     void resetStats();
   });
 
-  el.heroNameInput.addEventListener("input", updateSetupStartButton);
+  el.heroNameInput.addEventListener("input", () => {
+    updateSetupStartButton();
+    persistSetupDraft();
+  });
   bindSetupColorPicker();
 
   el.setupStartBtn.addEventListener("click", () => {
@@ -1905,6 +2298,13 @@ function init(): void {
   renderRecords();
 
   const save = loadSave();
+  if (save.setupActive) {
+    showSetup();
+    finishBoot();
+    maybeRunDebugWin();
+    return;
+  }
+
   if (!save.playerEmoji) {
     showSetup();
     finishBoot();

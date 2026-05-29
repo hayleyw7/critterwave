@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { clearSave, startFreshRun, STORAGE_KEY } from "./helpers.js";
+import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers.js";
 
 test.describe("Critterwave — happy paths", () => {
   test("hero setup starts a run", async ({ page }) => {
@@ -8,6 +8,12 @@ test.describe("Critterwave — happy paths", () => {
     await expect(page.locator("#wave-banner")).toHaveText(/1\s*\/\s*\d+/);
     await expect(page.locator("#battle-text")).toContainText(/appears!/i);
     await expect(page.locator("#player-hp-text")).toHaveText("20/20");
+
+    const save = await page.evaluate((key) => {
+      const raw = localStorage.getItem(key);
+      return raw ? (JSON.parse(raw) as { setupActive?: boolean }) : null;
+    }, STORAGE_KEY);
+    expect(save?.setupActive).toBeFalsy();
   });
 
   test("attack resolves combat text", async ({ page }) => {
@@ -37,10 +43,11 @@ test.describe("Critterwave — happy paths", () => {
     });
   });
 
-  test("run away advances wave text", async ({ page }) => {
+  test("run away keeps wave and shows next foe", async ({ page }) => {
     await startFreshRun(page);
     const waveBefore = await page.locator("#wave-banner").textContent();
-    await page.getByRole("button", { name: "Run" }).click();
+    const foeBefore = await page.locator("#foe-name").textContent();
+    await clickCombatRun(page);
     await expect(page.locator("#battle-text")).toContainText(
       /run away from/i,
       { timeout: 10_000 }
@@ -48,12 +55,13 @@ test.describe("Critterwave — happy paths", () => {
     await expect(page.locator("#battle-text")).toContainText(/run into/i, {
       timeout: 15_000,
     });
-    await expect(page.locator("#wave-banner")).not.toHaveText(waveBefore ?? "");
+    await expect(page.locator("#wave-banner")).toHaveText(waveBefore ?? "");
+    await expect(page.locator("#foe-name")).not.toHaveText(foeBefore ?? "");
   });
 
-  test("new game returns to hero setup", async ({ page }) => {
+  test("new run returns to hero setup", async ({ page }) => {
     await startFreshRun(page);
-    await page.getByRole("button", { name: "New game" }).click();
+    await page.getByRole("button", { name: "New run" }).click();
     await page.locator("#confirm-ok").click();
     await expect(
       page.getByRole("heading", { name: "Which critter are you?" })
@@ -77,6 +85,47 @@ test.describe("Critterwave — sad paths", () => {
       /setup-name-input--highlight/
     );
     await expect(page.locator("#battle-text")).not.toContainText(/appears!/i);
+  });
+
+  test("setup screen survives reload with draft choices", async ({ page }) => {
+    await clearSave(page);
+    await page.locator(".emoji-pick").first().click();
+    await page.getByLabel("Name").fill("Refresh Cat");
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Which critter are you?" })
+    ).toBeVisible();
+    await expect(page.getByLabel("Name")).toHaveValue("Refresh Cat");
+    await expect(page.locator(".game-shell")).toHaveClass(/setup-active/);
+  });
+
+  test("setup draft persists setupActive in save", async ({ page }) => {
+    await clearSave(page);
+    await page.locator(".emoji-pick").first().click();
+    await page.getByLabel("Name").fill("Saved Draft");
+
+    const save = await page.evaluate((key) => {
+      const raw = localStorage.getItem(key);
+      return raw ? (JSON.parse(raw) as { setupActive?: boolean; heroName?: string }) : null;
+    }, STORAGE_KEY);
+
+    expect(save?.setupActive).toBe(true);
+    expect(save?.heroName).toBe("Saved Draft");
+  });
+
+  test("new run setup survives reload", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "New run" }).click();
+    await page.locator("#confirm-ok").click();
+    await expect(
+      page.getByRole("heading", { name: "Which critter are you?" })
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Which critter are you?" })
+    ).toBeVisible();
+    await expect(page.locator("#character-setup")).toBeVisible();
+    await expect(page.locator(".game-shell")).toHaveClass(/setup-active/);
   });
 
   test("clear data resets to setup", async ({ page }) => {

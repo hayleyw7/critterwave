@@ -25,3 +25,7 @@ export async function startFreshRun(
   await expect(page.getByLabel("Combat actions")).toBeVisible();
   await expect(page.getByRole("button", { name: "Attack" })).toBeEnabled();
 }
+
+export async function clickCombatRun(page: Page): Promise<void> {
+  await page.locator("#cmd-run").click();
+}

@@ -12,8 +12,8 @@ export const PLAYER_HP_PER_LEVEL = 3;
 export const PLAYER_ATK_PER_LEVEL = 1;
 export const HEAL_MAX_PER_LEVEL = 1;
 
-/** Fraction of max HP restored after each wave win (not a full reset). */
-export const WAVE_VICTORY_HEAL_RATIO = 0.5;
+/** Fraction of max HP restored after each wave win. */
+export const WAVE_VICTORY_HEAL_RATIO = 1;
 
 export const FOE_HP_PER_LEVEL = 3;
 export const FOE_ATK_PER_LEVEL = 1;
@@ -300,6 +300,77 @@ export function makeFoeFromTemplate(
   };
 }
 
+/** Max damage a foe can roll on the next hit (includes HYPE). */
+export function maxFoeHit(baseAttack: number, hypeLevel: number): number {
+  return effectiveAttack(baseAttack, hypeLevel);
+}
+
+export function buildInitialFoeQueue(foeOrder: readonly FoeTemplate[]): string[] {
+  return foeOrder.map((entry) => entry.id);
+}
+
+export function buildQueueCycleFromWave(
+  foeOrder: readonly FoeTemplate[],
+  wave: number
+): string[] {
+  const start = pickFoeTemplateIndex(wave, foeOrder.length);
+  const ids = foeOrder.map((entry) => entry.id);
+  return [...ids.slice(start), ...ids.slice(0, start)];
+}
+
+export function advanceFoeQueueAfterVictory(
+  queue: readonly string[],
+  deferred: readonly string[],
+  foeOrder: readonly FoeTemplate[],
+  nextWave: number
+): { queue: string[]; deferred: string[] } {
+  let nextQueue = queue.slice(1);
+  let nextDeferred = [...deferred];
+  if (nextQueue.length === 0 && nextDeferred.length > 0) {
+    nextQueue = [...nextDeferred];
+    nextDeferred = [];
+  }
+  if (nextQueue.length === 0) {
+    nextQueue = buildQueueCycleFromWave(foeOrder, nextWave);
+  }
+  return { queue: nextQueue, deferred: nextDeferred };
+}
+
+export function advanceFoeQueueAfterFlee(
+  queue: readonly string[],
+  deferred: readonly string[],
+  fledId: string,
+  foeOrder: readonly FoeTemplate[],
+  wave: number
+): { queue: string[]; deferred: string[] } {
+  let nextDeferred = [...deferred, fledId];
+  let nextQueue = queue.slice(1);
+  if (nextQueue.length === 0 && nextDeferred.length > 0) {
+    nextQueue = [...nextDeferred];
+    nextDeferred = [];
+  }
+  if (nextQueue.length === 0) {
+    nextQueue = buildQueueCycleFromWave(foeOrder, wave);
+  }
+  return { queue: nextQueue, deferred: nextDeferred };
+}
+
+export function makeFoeFromQueueHead(
+  queue: readonly string[],
+  foeOrder: readonly FoeTemplate[],
+  wave: number
+): WaveFoe {
+  const id = queue[0];
+  if (!id) {
+    throw new Error("Foe queue is empty");
+  }
+  const template = foeOrder.find((entry) => entry.id === id);
+  if (!template) {
+    throw new Error(`Unknown foe id ${id}`);
+  }
+  return makeFoeFromTemplate(template, wave);
+}
+
 export function makeFoeForWave(
   foeOrder: readonly FoeTemplate[],
   wave: number
@@ -368,6 +439,29 @@ export function randomHeal(max: number, random: () => number): number {
   return randomDamage(max, random);
 }
 
+/** Same 1–healMax roll as the Heal command; HP capped at max. */
+export function applyPlayerHealRoll(
+  currentHp: number,
+  maxHp: number,
+  healMax: number,
+  random: () => number
+): { rolled: number; hp: number; gained: number } {
+  if (healMax < 1) {
+    return { rolled: 0, hp: currentHp, gained: 0 };
+  }
+  const rolled = randomHeal(healMax, random);
+  const hp = Math.min(maxHp, currentHp + rolled);
+  return { rolled, hp, gained: hp - currentHp };
+}
+
+/** Lose 1 HYPE when damage is taken (same rule for player and foe). */
+export function hypeAfterTakingHit(hypeBefore: number, damageDealt: number): number {
+  if (damageDealt <= 0) {
+    return hypeBefore;
+  }
+  return Math.max(0, hypeBefore - 1);
+}
+
 export function hypeAttackBonus(hypeLevel: number): number {
   return Math.max(0, hypeLevel) * HYPE_ATTACK_PER_LEVEL;
 }
@@ -382,6 +476,25 @@ export function applyHypeGain(
   max = HYPE_MAX
 ): number {
   return clampHype(current + amount, max);
+}
+
+/** Heal grants +1 HYPE; a counter strips −1. Skip transient gain at 0 when countered. */
+export function hypeAfterHealAndCounter(
+  hypeBefore: number,
+  healGrantsHype: boolean,
+  counterOccurred: boolean
+): number {
+  if (!healGrantsHype) {
+    return hypeBefore;
+  }
+  if (hypeBefore === 0 && counterOccurred) {
+    return 0;
+  }
+  let level = applyHypeGain(hypeBefore, 1);
+  if (counterOccurred) {
+    level = Math.max(0, level - 1);
+  }
+  return level;
 }
 
 export function hypeHeadroom(current: number, max = HYPE_MAX): number {

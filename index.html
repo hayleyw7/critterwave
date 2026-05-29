@@ -125,7 +125,7 @@
               <span class="hud-value" id="turn-label">1</span>
             </div>
             <div class="hud-block hud-records">
-              <span class="hud-label">Best</span>
+              <span class="hud-label">High score</span>
               <span class="hud-value" id="stat-best-wave">0</span>
             </div>
           </div>
@@ -272,10 +272,10 @@
           </div>
 
           <nav class="command-menu" id="actions" aria-label="Combat actions">
-            <button type="button" data-action="attack" class="cmd cmd-attack">Attack</button>
-            <button type="button" data-action="heal" class="cmd cmd-heal">Heal</button>
-            <button type="button" data-action="dance" class="cmd cmd-dance">Dance</button>
-            <button type="button" data-action="run" class="cmd cmd-run">Run</button>
+            <button type="button" data-action="attack" id="cmd-attack" class="cmd cmd-attack">Attack</button>
+            <button type="button" data-action="heal" id="cmd-heal" class="cmd cmd-heal">Heal</button>
+            <button type="button" data-action="dance" id="cmd-dance" class="cmd cmd-dance">Dance</button>
+            <button type="button" data-action="run" id="cmd-run" class="cmd cmd-run">Run</button>
           </nav>
         </div>
 
@@ -304,7 +304,7 @@
           <strong id="stat-runs">0</strong>
         </span>
         <div class="meta-actions">
-          <button type="button" class="meta-btn" id="quit-btn">New game</button>
+          <button type="button" class="meta-btn" id="quit-btn">New run</button>
           <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
             Clear data
           </button>
