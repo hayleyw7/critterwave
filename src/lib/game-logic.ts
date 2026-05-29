@@ -2,6 +2,22 @@ export const CAMPAIGN_WAVE_COUNT = 100;
 export const HERO_NAME_MAX_LENGTH = 16;
 export const HYPE_ATTACK_PER_LEVEL = 1;
 export const HYPE_MAX = 5;
+export const LEVEL_COUNT = 10;
+export const WAVES_PER_LEVEL = 10;
+
+export const BASE_PLAYER_MAX_HP = 20;
+export const BASE_PLAYER_ATTACK = 5;
+export const BASE_HEAL_MAX = 3;
+export const PLAYER_HP_PER_LEVEL = 3;
+export const PLAYER_ATK_PER_LEVEL = 1;
+export const HEAL_MAX_PER_LEVEL = 1;
+
+export const FOE_HP_PER_LEVEL = 2;
+export const FOE_ATK_PER_LEVEL = 1;
+export const STARTER_WAVE_MAX = 10;
+export const STARTER_HP_MULTIPLIER = 0.82;
+export const STARTER_ATK_PENALTY = 1;
+export const FOE_LEVEL1_HP_MULTIPLIER = 0.72;
 
 export const DEFEAT_VERBS = [
   "defeat",
@@ -36,6 +52,14 @@ export type WaveFoe = {
   hp: number;
   maxHp: number;
   attack: number;
+  level: number;
+};
+
+export type PlayerCombatStats = {
+  level: number;
+  maxHp: number;
+  attack: number;
+  healMax: number;
 };
 
 export function heroLabelFromFoeName(name: string): string {
@@ -103,26 +127,122 @@ export function pickFoeFromOrder(
   return foeOrder[pickFoeTemplateIndex(wave, foeOrder.length)]!;
 }
 
-export function scaleFoeHp(baseHp: number, wave: number): number {
-  return baseHp + Math.max(0, wave - 1) * 2;
+export function clampBattleLevel(level: number): number {
+  return Math.max(1, Math.min(LEVEL_COUNT, level));
 }
 
-export function scaleFoeAttack(baseAtk: number, wave: number): number {
-  return baseAtk + Math.floor((wave - 1) / 3);
+export function playerLevelForWave(wave: number): number {
+  return clampBattleLevel(Math.floor((Math.max(1, wave) - 1) / WAVES_PER_LEVEL) + 1);
+}
+
+export function playerStatsForLevel(level: number): PlayerCombatStats {
+  const lvl = clampBattleLevel(level);
+  const above = lvl - 1;
+  return {
+    level: lvl,
+    maxHp: BASE_PLAYER_MAX_HP + above * PLAYER_HP_PER_LEVEL,
+    attack: BASE_PLAYER_ATTACK + above * PLAYER_ATK_PER_LEVEL,
+    healMax: BASE_HEAL_MAX + above * HEAL_MAX_PER_LEVEL,
+  };
+}
+
+export function playerStatsForWave(wave: number): PlayerCombatStats {
+  return playerStatsForLevel(playerLevelForWave(wave));
+}
+
+/** Progress through the current level band — one wave = 10% (waves 1–10 → 10%…100%). */
+export function xpProgressForWave(wave: number): { current: number; max: number } {
+  const max = WAVES_PER_LEVEL;
+  const current = ((Math.max(1, wave) - 1) % max) + 1;
+  return { current, max };
+}
+
+export function xpPercentForWave(wave: number): number {
+  const { current, max } = xpProgressForWave(wave);
+  return Math.round((current / max) * 100);
+}
+
+export function isStarterBand(wave: number): boolean {
+  return wave >= 1 && wave <= STARTER_WAVE_MAX;
+}
+
+/** Rough power score from roster base stats — used to nudge foe level up/down. */
+export function foeStatScore(template: FoeTemplate): number {
+  return template.baseHp + template.baseAtk * 2;
+}
+
+/** Easier roster entries fight below your level; beefier ones fight above. */
+export function foeDifficultyOffset(template: FoeTemplate): number {
+  const score = foeStatScore(template);
+  if (score <= 15) {
+    return -1;
+  }
+  if (score >= 20) {
+    return 1;
+  }
+  return 0;
+}
+
+export function foeLevelForTemplate(template: FoeTemplate, wave: number): number {
+  if (isStarterBand(wave)) {
+    return 1;
+  }
+  return clampBattleLevel(playerLevelForWave(wave) + foeDifficultyOffset(template));
+}
+
+export function scaleFoeHp(baseHp: number, foeLevel: number): number {
+  const levelBonus = Math.max(0, foeLevel - 1) * FOE_HP_PER_LEVEL;
+  let hp = baseHp + levelBonus;
+  if (foeLevel === 1) {
+    hp = Math.round(hp * FOE_LEVEL1_HP_MULTIPLIER);
+  } else if (foeLevel === 2) {
+    hp = Math.round(hp * 0.92);
+  }
+  return Math.max(4, hp);
+}
+
+export function scaleFoeAttack(baseAtk: number, foeLevel: number): number {
+  const levelBonus = Math.max(0, foeLevel - 1) * FOE_ATK_PER_LEVEL;
+  let atk = baseAtk + levelBonus;
+  if (foeLevel === 1) {
+    atk -= 1;
+  }
+  return Math.max(1, atk);
+}
+
+export function applyStarterBandEase(
+  hp: number,
+  attack: number,
+  wave: number
+): { hp: number; attack: number } {
+  if (!isStarterBand(wave)) {
+    return { hp, attack };
+  }
+  return {
+    hp: Math.max(4, Math.round(hp * STARTER_HP_MULTIPLIER)),
+    attack: Math.max(1, attack - STARTER_ATK_PENALTY),
+  };
 }
 
 export function makeFoeFromTemplate(
   template: FoeTemplate,
   wave: number
 ): WaveFoe {
-  const hp = scaleFoeHp(template.baseHp, wave);
+  const level = foeLevelForTemplate(template, wave);
+  const eased = applyStarterBandEase(
+    scaleFoeHp(template.baseHp, level),
+    scaleFoeAttack(template.baseAtk, level),
+    wave
+  );
+  const hp = eased.hp;
   return {
     id: template.id,
     name: template.name,
     emoji: template.emoji,
     hp,
     maxHp: hp,
-    attack: scaleFoeAttack(template.baseAtk, wave),
+    attack: eased.attack,
+    level,
   };
 }
 

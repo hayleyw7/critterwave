@@ -110,17 +110,36 @@
 
       <div class="playfield">
         <div class="hud">
-          <div class="hud-block hud-wave">
-            <span class="hud-label">Wave</span>
-            <span class="hud-value" id="wave-banner">1</span>
+          <div class="hud-stats">
+            <div class="hud-block hud-wave">
+              <span class="hud-label">Wave</span>
+              <span class="hud-value" id="wave-banner">1</span>
+            </div>
+            <div class="hud-block hud-turn">
+              <span class="hud-label">Turn</span>
+              <span class="hud-value" id="turn-label">1</span>
+            </div>
+            <div class="hud-block hud-records">
+              <span class="hud-label">Best</span>
+              <span class="hud-value" id="stat-best-wave">0</span>
+            </div>
           </div>
-          <div class="hud-block hud-turn">
-            <span class="hud-label">Turn</span>
-            <span class="hud-value" id="turn-label">1</span>
-          </div>
-          <div class="hud-block hud-records">
-            <span class="hud-label">Best</span>
-            <span class="hud-value" id="stat-best-wave">0</span>
+          <div class="hud-xp-block">
+            <span class="hud-label">XP</span>
+            <div class="xp-bar-wrap">
+              <div
+                class="xp-bar"
+                id="xp-bar"
+                role="progressbar"
+                aria-label="Experience toward next level"
+                aria-valuemin="0"
+                aria-valuemax="10"
+                aria-valuenow="0"
+              >
+                <div class="xp-fill" id="xp-fill"></div>
+              </div>
+              <span class="xp-numbers" id="xp-text">10%</span>
+            </div>
           </div>
         </div>
 
@@ -149,7 +168,10 @@
                   </div>
                   <span class="hp-numbers" id="player-hp-text">20/20</span>
                   <div class="stat-group">
-                    <span class="stat-mini">ATK <span id="player-attack">5</span></span>
+                    <div class="stat-left">
+                      <span class="stat-mini">LV <span id="player-level">1</span></span>
+                      <span class="stat-mini">ATK <span id="player-attack">5</span></span>
+                    </div>
                     <div class="hype-stat-wrap" id="player-hype-wrap">
                       <span class="stat-mini hype-stat" id="player-buff" aria-label="HYPE level">HYPE 0/5</span>
                       <div
@@ -199,7 +221,10 @@
                   </div>
                   <span class="hp-numbers" id="foe-hp-text">12/12</span>
                   <div class="stat-group">
-                    <span class="stat-mini">ATK <span id="foe-attack">3</span></span>
+                    <div class="stat-left">
+                      <span class="stat-mini">LV <span id="foe-level">1</span></span>
+                      <span class="stat-mini">ATK <span id="foe-attack">3</span></span>
+                    </div>
                     <div class="hype-stat-wrap" id="foe-hype-wrap">
                       <span class="stat-mini hype-stat" id="foe-buff" aria-label="Foe HYPE level">HYPE 0/5</span>
                       <div
@@ -227,6 +252,9 @@
           </section>
 
           <div class="damage-layer" id="damage-layer" aria-hidden="true"></div>
+          <div class="level-up-toast hidden" id="level-up-toast" role="status" aria-live="assertive">
+            <p class="level-up-title">Level up!</p>
+          </div>
         </div>
 
         <div class="action-panel">

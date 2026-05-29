@@ -543,11 +543,59 @@ body.is-booting .game-shell {
 }
 
 .hud {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   flex-shrink: 0;
   border-bottom: 1px solid var(--panel-edge);
   background: var(--panel);
+}
+
+.hud-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.hud-xp-block {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--panel-edge);
+}
+
+.hud-xp-block .hud-label {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.xp-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.xp-bar {
+  flex: 1;
+  height: 0.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-edge);
+  overflow: hidden;
+}
+
+.xp-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--hero, #4ade80);
+  transition: width 0.2s ease;
+}
+
+.xp-numbers {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 
 .hud-block {
@@ -821,11 +869,19 @@ body.is-booting .game-shell {
   grid-column: 1 / -1;
   grid-row: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
+  gap: var(--space-2);
   width: 100%;
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.stat-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .hype-stat {
@@ -1201,6 +1257,71 @@ body.is-booting .game-shell {
   overflow: visible;
 }
 
+.level-up-toast {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  z-index: 25;
+  pointer-events: none;
+  text-align: center;
+  padding: 0.65rem 1.1rem;
+  border: 2px solid var(--hero);
+  background: rgba(22, 101, 52, 0.94);
+  box-shadow:
+    0 0 0 1px rgba(74, 222, 128, 0.35),
+    0 0 24px rgba(74, 222, 128, 0.35);
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px) scale(0.85);
+}
+
+.level-up-toast.level-up-show {
+  animation: level-up-pop 1.5s ease-out forwards;
+}
+
+.level-up-title {
+  font-family: var(--font-display, var(--font-ui));
+  font-size: 1.65rem;
+  line-height: 1.1;
+  color: var(--hero);
+  margin: 0;
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.55);
+}
+
+.hero-level-up .emoji-stack {
+  animation: hero-level-up-bounce 0.85s ease-out;
+}
+
+@keyframes level-up-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.72);
+  }
+  14% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1.08);
+  }
+  28% {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-6px) scale(0.96);
+  }
+}
+
+@keyframes hero-level-up-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px) scale(1.06);
+  }
+}
+
 .damage-pop {
   position: absolute;
   font-family: var(--font-ui);
@@ -1574,6 +1695,13 @@ body.is-booting .game-shell {
 @media (prefers-reduced-motion: reduce) {
   .victory-emoji {
     animation: none !important;
+  }
+
+  .level-up-toast.level-up-show,
+  .hero-level-up .emoji-stack {
+    animation: none !important;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 
   .victory-trophy,

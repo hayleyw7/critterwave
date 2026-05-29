@@ -9,6 +9,7 @@ import {
   DEFEAT_VERBS,
   effectiveAttack,
   foeColorConflictsWithHero,
+  foeLevelForTemplate,
   foesForHero,
   formatFoeInText,
   formatHypeLabel,
@@ -25,6 +26,10 @@ import {
   normalizeHeroName,
   pickFoeFromOrder,
   pickFoeTemplateIndex,
+  playerLevelForWave,
+  playerStatsForLevel,
+  xpProgressForWave,
+  xpPercentForWave,
   randomDamage,
   randomHeal,
   restoreFoeOrder,
@@ -35,7 +40,7 @@ import {
 
 const SAMPLE_FOES = [
   { id: "a", name: "Angry Ant", emoji: "🐜", baseHp: 8, baseAtk: 2 },
-  { id: "b", name: "Brave Bear", emoji: "🐻", baseHp: 12, baseAtk: 3 },
+  { id: "b", name: "Brave Bear", emoji: "🐻", baseHp: 14, baseAtk: 4 },
   { id: "c", name: "Clever Cat", emoji: "🐱", baseHp: 10, baseAtk: 3 },
 ] as const;
 
@@ -110,27 +115,74 @@ describe("restoreFoeOrder", () => {
   });
 });
 
+describe("level progression", () => {
+  it("maps waves to player levels 1-10", () => {
+    expect(playerLevelForWave(1)).toBe(1);
+    expect(playerLevelForWave(10)).toBe(1);
+    expect(playerLevelForWave(11)).toBe(2);
+    expect(playerLevelForWave(100)).toBe(10);
+  });
+
+  it("scales player stats by level", () => {
+    expect(playerStatsForLevel(1)).toEqual({
+      level: 1,
+      maxHp: 20,
+      attack: 5,
+      healMax: 3,
+    });
+    expect(playerStatsForLevel(5).maxHp).toBe(32);
+    expect(playerStatsForLevel(10).attack).toBe(14);
+    expect(playerStatsForLevel(10).healMax).toBe(12);
+  });
+
+  it("tracks xp progress within each 10-wave band", () => {
+    expect(xpProgressForWave(1)).toEqual({ current: 1, max: 10 });
+    expect(xpPercentForWave(1)).toBe(10);
+    expect(xpProgressForWave(5)).toEqual({ current: 5, max: 10 });
+    expect(xpPercentForWave(5)).toBe(50);
+    expect(xpProgressForWave(10)).toEqual({ current: 10, max: 10 });
+    expect(xpPercentForWave(10)).toBe(100);
+    expect(xpProgressForWave(11)).toEqual({ current: 1, max: 10 });
+    expect(xpPercentForWave(11)).toBe(10);
+  });
+
+  it("offsets foe level from roster toughness", () => {
+    const easy = SAMPLE_FOES[0]!;
+    const hard = SAMPLE_FOES[1]!;
+    expect(foeLevelForTemplate(easy, 5)).toBe(1);
+    expect(foeLevelForTemplate(hard, 5)).toBe(1);
+    expect(foeLevelForTemplate(easy, 21)).toBe(2);
+    expect(foeLevelForTemplate(hard, 21)).toBe(4);
+  });
+
+  it("softens waves 1-10 with starter band ease", () => {
+    const hard = SAMPLE_FOES[1]!;
+    const starter = makeFoeFromTemplate(hard, 5);
+    const mid = makeFoeFromTemplate(hard, 15);
+    expect(starter.level).toBe(1);
+    expect(starter.hp).toBeLessThan(mid.hp);
+    expect(starter.attack).toBeLessThanOrEqual(mid.attack);
+  });
+});
+
 describe("wave scaling", () => {
-  it("scales hp by wave", () => {
-    expect(scaleFoeHp(10, 1)).toBe(10);
+  it("softens level-1 foes for beginners", () => {
+    expect(scaleFoeHp(10, 1)).toBe(7);
+    expect(scaleFoeAttack(3, 1)).toBe(2);
+  });
+
+  it("scales hp and attack by foe level", () => {
     expect(scaleFoeHp(10, 3)).toBe(14);
-    expect(scaleFoeHp(10, 5)).toBe(18);
+    expect(scaleFoeAttack(3, 3)).toBe(5);
   });
 
-  it("scales attack every 3 waves", () => {
-    expect(scaleFoeAttack(3, 1)).toBe(3);
-    expect(scaleFoeAttack(3, 3)).toBe(3);
-    expect(scaleFoeAttack(3, 4)).toBe(4);
-    expect(scaleFoeAttack(3, 7)).toBe(5);
-  });
-
-  it("builds wave foes from order", () => {
-    const order = foesForHero(SAMPLE_FOES, "🐱");
-    const wave1 = makeFoeForWave(order, 1);
-    const wave4 = makeFoeForWave(order, 4);
-    expect(wave1.name).toBe(order[0]!.name);
-    expect(wave4.hp).toBeGreaterThan(wave1.hp);
-    expect(wave4.attack).toBeGreaterThanOrEqual(wave1.attack);
+  it("builds wave foes from order with levels", () => {
+    const hard = SAMPLE_FOES[1]!;
+    const wave1 = makeFoeFromTemplate(hard, 1);
+    const wave21 = makeFoeFromTemplate(hard, 21);
+    expect(wave21.level).toBeGreaterThan(wave1.level);
+    expect(wave21.hp).toBeGreaterThan(wave1.hp);
+    expect(wave21.attack).toBeGreaterThan(wave1.attack);
   });
 
   it("cycles templates when waves exceed roster size", () => {

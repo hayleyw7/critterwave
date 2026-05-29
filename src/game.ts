@@ -16,7 +16,13 @@ import {
   formatHypeLabel as formatHypeStatLabel,
   hypeHeadroom,
   makeFoeForWave as buildWaveFoe,
+  makeFoeFromTemplate,
   nextDefeatVerb as advanceDefeatVerb,
+  pickFoeFromOrder,
+  playerLevelForWave,
+  playerStatsForWave,
+  xpProgressForWave,
+  xpPercentForWave,
   heroLabelFromFoeName,
   normalizeHeroName,
   restoreFoeOrder as restoreFoeOrderForHero,
@@ -66,6 +72,7 @@ type Enemy = {
   hp: number;
   maxHp: number;
   attack: number;
+  level: number;
 };
 
 type FoeTemplate = {
@@ -132,7 +139,6 @@ const GOLD_FLASH_MS = 650;
 const KILL_KNOCKBACK_SETTLE_MS = 180;
 const DEFEAT_TEXT_BEAT_MS = 450;
 const HEAL_ANIM_MS = 420;
-const HEAL_MAX = 3;
 const DANCE_ANIM_MS = 550;
 const DEFAULT_HERO_EMOJI = "🐱";
 const DEFAULT_HERO_LABEL = "Cat";
@@ -173,6 +179,43 @@ function getCampaignLength(): number {
   return CAMPAIGN_WAVES;
 }
 
+function getHealMax(): number {
+  return playerStatsForWave(wave).healMax;
+}
+
+function syncPlayerForCurrentWave(options?: {
+  healToMax?: boolean;
+  grantMaxHpIncrease?: boolean;
+}): number {
+  const stats = playerStatsForWave(wave);
+  const prevMax = player.maxHp;
+  player.maxHp = stats.maxHp;
+  player.attack = stats.attack;
+
+  if (options?.healToMax) {
+    player.hp = stats.maxHp;
+  } else if (options?.grantMaxHpIncrease && stats.maxHp > prevMax) {
+    player.hp = Math.min(stats.maxHp, player.hp + (stats.maxHp - prevMax));
+  }
+  player.hp = Math.min(player.hp, player.maxHp);
+  return stats.level;
+}
+
+function refreshFoeStatsPreservingHp(): void {
+  const currentFoe = foe;
+  if (!currentFoe || foeOrder.length === 0) {
+    return;
+  }
+  const template =
+    foeOrder.find((entry) => entry.id === currentFoe.id) ??
+    pickFoeFromOrder(foeOrder, wave);
+  const rebuilt = makeFoeFromTemplate(template, wave);
+  currentFoe.maxHp = rebuilt.maxHp;
+  currentFoe.attack = rebuilt.attack;
+  currentFoe.level = rebuilt.level;
+  currentFoe.hp = Math.min(currentFoe.hp, rebuilt.maxHp);
+}
+
 function restoreFoeOrder(ids: string[] | undefined, heroEmoji: string): FoeTemplate[] {
   return restoreFoeOrderForHero(ids, heroEmoji, FOES);
 }
@@ -211,11 +254,16 @@ const el = {
   foePanel: document.getElementById("foe-panel")!,
   foeStatus: document.querySelector("#foe-panel .enemy-status") as HTMLElement,
   damageLayer: document.getElementById("damage-layer")!,
+  levelUpToast: document.getElementById("level-up-toast")!,
+  xpBar: document.getElementById("xp-bar")!,
+  xpFill: document.getElementById("xp-fill")!,
+  xpText: document.getElementById("xp-text")!,
   bestWave: document.getElementById("stat-best-wave")!,
   runs: document.getElementById("stat-runs")!,
   waveBanner: document.getElementById("wave-banner")!,
   playerHpFill: document.getElementById("player-hp-fill")!,
   playerHpText: document.getElementById("player-hp-text")!,
+  playerLevel: document.getElementById("player-level")!,
   playerAttack: document.getElementById("player-attack")!,
   playerBuff: document.getElementById("player-buff")!,
   playerHypeWrap: document.getElementById("player-hype-wrap")!,
@@ -224,6 +272,7 @@ const el = {
   playerEmoji: document.getElementById("hero-emoji")!,
   playerName: document.getElementById("hero-name")!,
   foeName: document.getElementById("foe-name")!,
+  foeLevel: document.getElementById("foe-level")!,
   foeAttack: document.getElementById("foe-attack")!,
   foeBuff: document.getElementById("foe-buff")!,
   foeHypeWrap: document.getElementById("foe-hype-wrap")!,
@@ -380,6 +429,7 @@ function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
         hp: legacyFoe.hp,
         maxHp: legacyFoe.maxHp,
         attack: legacyFoe.attack,
+        level: legacyFoe.level ?? playerLevelForWave(snap.wave),
       }
     : null;
 
@@ -518,6 +568,8 @@ function applySnapshot(snapshot: GameSnapshot): void {
   if (wave > CAMPAIGN_WAVES) {
     wave = CAMPAIGN_WAVES;
   }
+  syncPlayerForCurrentWave();
+  refreshFoeStatsPreservingHp();
 }
 
 function getHeroLabelForEmoji(emoji: string): string {
@@ -559,6 +611,7 @@ function applyHeroColorTheme(theme: HeroColorTheme): void {
   el.playerPanel.style.setProperty("--hero-divider", colors.divider);
   el.gameShell.style.setProperty("--hero", colors.accent);
   el.gameShell.style.setProperty("--hero-dark", colors.dark);
+  el.xpFill.style.background = colors.accent;
 }
 
 function updateHeroColorTogglePreview(): void {
@@ -946,6 +999,22 @@ function showHypeGainPops(playerGain: number, foeGain: number): void {
   }
 }
 
+const LEVEL_UP_NOTICE_MS = 1500;
+
+function playLevelUpNotice(): Promise<void> {
+  return new Promise((resolve) => {
+    el.levelUpToast.classList.remove("hidden", "level-up-show");
+    void el.levelUpToast.offsetWidth;
+    el.levelUpToast.classList.add("level-up-show");
+    briefClass(el.playerPanel, "hero-level-up", 900);
+    window.setTimeout(() => {
+      el.levelUpToast.classList.remove("level-up-show");
+      el.levelUpToast.classList.add("hidden");
+      resolve();
+    }, LEVEL_UP_NOTICE_MS);
+  });
+}
+
 function pulseWaveHud(): void {
   el.waveBanner.classList.remove("wave-pop");
   void el.waveBanner.offsetWidth;
@@ -964,9 +1033,15 @@ function render(): void {
   renderHeroSprite();
   el.waveBanner.textContent = `${Math.min(wave, getCampaignLength())} / ${getCampaignLength()}`;
   el.turnLabel.textContent = String(turn);
+  const xp = xpProgressForWave(wave);
+  setHpBar(el.xpFill, xp.current, xp.max);
+  el.xpText.textContent = `${xpPercentForWave(wave)}%`;
+  el.xpBar.setAttribute("aria-valuenow", String(xp.current));
+  el.xpBar.setAttribute("aria-valuemax", String(xp.max));
 
   setHpBar(el.playerHpFill, player.hp, player.maxHp);
   el.playerHpText.textContent = `${player.hp}/${player.maxHp}`;
+  el.playerLevel.textContent = String(playerLevelForWave(wave));
   el.playerAttack.textContent = String(getEffectiveAttack());
   renderHypeMeter(
     el.playerHypeWrap,
@@ -983,6 +1058,7 @@ function render(): void {
   if (foe && !suppressFoePanelRender) {
     applyFoeColorTheme(foeColorTheme);
     el.foeName.textContent = foe.name.toUpperCase();
+    el.foeLevel.textContent = String(foe.level);
     el.foeAttack.textContent = String(getEffectiveFoeAttack());
     renderHypeMeter(
       el.foeHypeWrap,
@@ -1102,10 +1178,17 @@ async function transitionToNextWave(
 
   wave += 1;
   turn = 1;
+  const levelBefore = playerLevelForWave(wave - 1);
+  const playerLevel = syncPlayerForCurrentWave({ grantMaxHpIncrease: true });
   pickNextFoeColor();
   foe = makeFoeForWave(wave);
   foeHypeLevel = 0;
   pulseWaveHud();
+
+  if (playerLevel > levelBefore) {
+    render();
+    await playLevelUpNotice();
+  }
 
   if (fleeWithExitAnim) {
     suppressFoePanelRender = true;
@@ -1148,6 +1231,7 @@ function nextDefeatVerb(): string {
 }
 
 function startWave(): void {
+  syncPlayerForCurrentWave({ healToMax: wave === 1 });
   pickNextFoeColor();
   foe = makeFoeForWave(wave);
   foeHypeLevel = 0;
@@ -1370,7 +1454,7 @@ async function onAttack(): Promise<void> {
 
 async function applyWaveVictoryHeal(): Promise<number> {
   const before = player.hp;
-  const heal = rollHeal(HEAL_MAX);
+  const heal = rollHeal(getHealMax());
   player.hp = Math.min(player.maxHp, player.hp + heal);
   const gained = player.hp - before;
   if (gained <= 0) {
@@ -1384,7 +1468,7 @@ async function applyWaveVictoryHeal(): Promise<number> {
 }
 
 async function onHeal(): Promise<void> {
-  const heal = rollHeal(HEAL_MAX);
+  const heal = rollHeal(getHealMax());
   player.hp = Math.min(player.maxHp, player.hp + heal);
   showDamagePop("hero", `+${heal}`, "heal");
   render();
@@ -1570,11 +1654,11 @@ function confirmHeroAndStart(): boolean {
 }
 
 function resetGame(): void {
-  player.hp = player.maxHp;
   turn = 1;
   wave = 1;
   defeatVerbIndex = 0;
   foeOrder = buildFoeOrder(player.emoji);
+  syncPlayerForCurrentWave({ healToMax: true });
   clearAllHype();
   lastFoeColorTheme = null;
   resetDancePicker();

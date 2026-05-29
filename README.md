@@ -12,10 +12,13 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 
 - Turn-based combat in the browser — no install
 - **100 waves** to win; **117** hand-picked alliterative foes (critters and fantasy creatures)
+- **Levels 1–10** — you level up every **10 waves**; HP, ATK, and max heal grow with you
+- Foe **LV** varies around yours — easier critters fight below your level, tougher ones above
+- Early foes are **softened** on waves **1–10** (lower HP/ATK, all Lv 1)
 - Pick any roster emoji as your hero
 - **Heal** (1–3 HP, random) on your turn — foe may counterattack
 - **Dance** for random foe reactions — hype for you, hype for them, both, or neither (max **5 HYPE** each; +1 ATK per level)
-- **+1–3 HP after each wave victory** (sparkle on your critter; no battle-log line)
+- **+1–3 HP after each wave victory** (max heal grows when you level up)
 - Shuffled foe order each run
 - **Scores persist** in this browser (best wave, run count)
 - **Mid-run save** — refresh and your fight continues (with a “restored” message)
@@ -25,7 +28,7 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 | Action | Button | Notes |
 |--------|--------|--------|
 | Attack | ⚔️ | |
-| Heal | 💚 | 1–3 HP (random); costs your turn |
+| Heal | 💚 | 1–max HP (random); max heal grows with your level |
 | Dance | 🕺 | Random reactions; +1 HYPE (max 5) for you, them, or both |
 | Run | 🏃 | Skip to the next wave — **not on wave 100** |
 
