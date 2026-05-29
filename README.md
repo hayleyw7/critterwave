@@ -65,8 +65,39 @@ npm run test:e2e      # browser tests (downloads Chromium if needed, then runs)
 
 ## GitHub Pages
 
-1. Push this repo to GitHub.
-2. **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions**.
-3. Push to `main` (or `master`). The workflow builds TypeScript and deploys the site.
+This project uses **plain TypeScript** (`tsc`) — no bundler. `npm run build` compiles `.ts` → `.js` next to the source files; the browser loads `game.js` as an ES module from `index.html`.
 
-Your game will be at `https://<username>.github.io/<repo-name>/`.
+Hosting is automated by [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+
+### One-time setup on GitHub
+
+1. Push the repo to GitHub (e.g. `hayleyw7/critterwave`).
+2. Open the repo on GitHub → **Settings** → **Pages**.
+3. Under **Build and deployment → Source**, choose **GitHub Actions** (not “Deploy from a branch”).
+4. Push to `main` (or run the **Deploy to GitHub Pages** workflow manually under **Actions**).
+
+The workflow runs `npm ci`, `npm run build`, then publishes the site root (`index.html`, compiled `.js`, CSS, images, etc.).
+
+### Your live URL
+
+For a project repo named `critterwave`:
+
+**https://hayleyw7.github.io/critterwave/**
+
+(Replace username/repo if yours differ.)
+
+### Local check before you push
+
+```bash
+npm install
+npm run build   # compiles TypeScript — commit the updated .js files if you changed .ts
+npm run dev     # http://localhost:3000
+```
+
+### What *not* to do (common bad advice)
+
+- **No Vite/Webpack required** — `tsc` is enough for this app.
+- **No `gh-pages` branch** — the Actions workflow deploys for you.
+- **No separate `dist/` folder** — build output lives beside the `.ts` files (`game.js`, `foes-data.js`, …).
+
+After the first successful deploy, link previews may need absolute image URLs (`og:image`) — use your full Pages URL + `/og-image.png` if Discord/iMessage show a broken preview.
