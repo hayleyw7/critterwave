@@ -19,8 +19,9 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 - **Dance** for random foe reactions — hype for you, hype for them, both, or neither (max **5 HYPE** each; +1 ATK per level)
 - **Full HP restore after each wave victory** — sparkle + floating heal number when you had missing HP
 - Shuffled foe order each run
-- **Scores persist** in this browser (best wave, run count)
-- **Mid-run save** — refresh and your fight continues (with a “restored” message)
+- **Scores persist** in this browser (high score, runs played)
+- **Combat hints** — action buttons glow on early fights to teach Attack, Heal, Dance, and Run
+- **Mid-run save** — refresh and your fight continues (with a “restored” message; wave counter flashes briefly)
 
 ## Controls
 
@@ -33,17 +34,19 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 
 ## Footer
 
-| Button | What it does |
-|--------|----------------|
-| **New game** | New hero and fresh run. Best wave and run count are kept. |
-| **Clear data** | Deletes your critter and all saved history on this browser. |
+| Element | What it does |
+|---------|----------------|
+| **High Score** | Highest wave you’ve reached this browser (updates on game over or full win). |
+| **Runs Played** | How many runs you’ve finished (game over or victory). |
+| **New Run** | New hero and fresh run. High score and runs played are kept. |
+| **Clear Data** | Deletes your critter and all saved history on this browser. |
 
 ## What gets saved
 
 Stored under `critterwave-v1` in the browser (migrates from older `goblinwave-*` keys):
 
-- **Best** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
-- **Runs** — how many runs you’ve finished (game over or full win)
+- **High score** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
+- **Runs played** — how many runs you’ve finished (game over or full win)
 - **Hero** — emoji and name from your last run
 - **Active run** — HP, your hype & foe hype, current foe, wave, turn, and shuffled foe order (until game over or victory)
 
@@ -59,6 +62,7 @@ src/                # TypeScript source
   content/          # dance lines
   ui/               # victory celebration
 js/                 # compiled output (npm run build — gitignored)
+dist/               # Pages deploy artifact (npm run build:site — gitignored)
 css/styles.css
 icons/              # favicons & PWA icons
 images/             # og-image.png (social preview)
@@ -102,7 +106,7 @@ Hosting is automated by [`.github/workflows/deploy.yml`](.github/workflows/deplo
 3. Under **Build and deployment → Source**, choose **GitHub Actions** (not “Deploy from a branch”).
 4. Push to `main` (or run the **Deploy to GitHub Pages** workflow manually under **Actions**).
 
-The workflow runs `npm ci`, `npm run build`, then publishes the site root (`index.html`, compiled `.js`, CSS, images, etc.).
+The workflow runs `npm ci`, `npm run build:site`, then publishes the `dist/` folder (a slim copy of the site for Pages).
 
 ### Your live URL
 
@@ -116,14 +120,15 @@ For a project repo named `critterwave`:
 
 ```bash
 npm install
-npm run build   # src/ → js/
-npm run dev     # http://localhost:3000
+npm run build      # src/ → js/ (local dev)
+npm run dev        # http://localhost:3000
+npm run build:site # optional: same as CI — builds js/ then copies to dist/
 ```
 
 ### What *not* to do (common bad advice)
 
 - **No Vite/Webpack required** — `tsc` is enough for this app.
 - **No `gh-pages` branch** — the Actions workflow deploys for you.
-- **No bundler `dist/` folder** — output goes to `js/` at the repo root.
+- **Don’t deploy the repo root to Pages** — local dev serves from the root (`js/` at repo root); CI publishes `dist/` from `build:site`.
 
 After the first successful deploy, link previews may need absolute image URLs (`og:image`) — use your full Pages URL + `/images/og-image.png` if Discord/iMessage show a broken preview.
