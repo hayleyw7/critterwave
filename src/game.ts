@@ -65,8 +65,10 @@ import {
 import {
   assertHeroPickerOrderCovers,
   heroPickerOrderIndex,
+  HERO_PICKER_ORDER,
   isHeroEmojiHiddenInPicker,
   isMobileHeroPickerViewport,
+  resolveHeroPickerEmoji,
 } from "./lib/hero-groups.js";
 import {
   COLOR_THEME_IDS,
@@ -1540,8 +1542,13 @@ async function transitionToNextWave(
     );
     combatHints = onVictoryForHints(combatHints);
     foe = spawnFoeFromQueue();
-    combatHints = onNextFoeForHints(combatHints);
-    combatHints = maybeArmDanceHintForWave(combatHints, wave);
+    combatHints = onNextFoeForHints(combatHints, {
+      hypeLevel,
+      hp: player.hp,
+      maxHp: player.maxHp,
+      wave,
+      viaKill: true,
+    });
     foeHypeLevel = 0;
     pulseWaveHud();
 
@@ -1560,8 +1567,13 @@ async function transitionToNextWave(
     foeQueue = advanced.queue;
     deferredFoeIds = advanced.deferred;
     foe = spawnFoeFromQueue();
-    combatHints = onNextFoeForHints(combatHints);
-    combatHints = maybeArmDanceHintForWave(combatHints, wave);
+    combatHints = onNextFoeForHints(combatHints, {
+      hypeLevel,
+      hp: player.hp,
+      maxHp: player.maxHp,
+      wave,
+      viaKill: false,
+    });
     foeHypeLevel = 0;
     pulseWaveHud();
   }
@@ -2061,21 +2073,8 @@ function applyHeroChoice(emoji: string, label: string): void {
   pendingHeroLabel = label;
 }
 
-function firstHeroEmojiForPicker(mobile = isMobileHeroPickerViewport()): string {
-  for (const hero of HEROES) {
-    if (!isHeroEmojiHiddenInPicker(hero.emoji, mobile)) {
-      return hero.emoji;
-    }
-  }
-  return HEROES[0]!.emoji;
-}
-
 function resolvePickerHeroEmoji(emoji: string): string {
-  const mobile = isMobileHeroPickerViewport();
-  if (!isHeroEmojiHiddenInPicker(emoji, mobile)) {
-    return emoji;
-  }
-  return firstHeroEmojiForPicker(mobile);
+  return resolveHeroPickerEmoji(emoji, HERO_PICKER_ORDER, isMobileHeroPickerViewport());
 }
 
 function buildHeroPicker(): void {

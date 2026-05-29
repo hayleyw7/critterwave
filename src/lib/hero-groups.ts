@@ -14,6 +14,30 @@ export function isHeroEmojiHiddenInPicker(emoji: string, mobile: boolean): boole
   return mobile && MOBILE_HIDDEN_PICKER_EMOJIS.has(emoji);
 }
 
+export function firstVisibleHeroPickerEmoji(
+  orderedEmojis: readonly string[],
+  mobile: boolean
+): string {
+  for (const emoji of orderedEmojis) {
+    if (!isHeroEmojiHiddenInPicker(emoji, mobile)) {
+      return emoji;
+    }
+  }
+  return orderedEmojis[0]!;
+}
+
+/** Fall back when a saved hero is hidden on the current viewport. */
+export function resolveHeroPickerEmoji(
+  emoji: string,
+  orderedEmojis: readonly string[],
+  mobile: boolean
+): string {
+  if (!isHeroEmojiHiddenInPicker(emoji, mobile)) {
+    return emoji;
+  }
+  return firstVisibleHeroPickerEmoji(orderedEmojis, mobile);
+}
+
 /** Flat picker order — similar emojis adjacent, no visible categories. */
 export const HERO_PICKER_ORDER = [
   "🐱",

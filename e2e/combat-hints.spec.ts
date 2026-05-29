@@ -101,7 +101,7 @@ test.describe("combat hints — button glow", () => {
     await page.reload();
     await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "off");
   });
-  test("dance does not glow on wave 2 after wasted full-hp heal", async ({ page }) => {
+  test("dance glows on wave 2 at full hp until first hype after wasted heal", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
       player: { hp: 20, maxHp: 20 },
@@ -126,7 +126,7 @@ test.describe("combat hints — button glow", () => {
     await expect(page.locator("#battle-text")).toContainText(/appears!/i, {
       timeout: 15_000,
     });
-    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
+    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
   });
 });
 
@@ -146,14 +146,13 @@ test.describe("combat hints — dance after heal", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
   });
 
-  test("dance glows on next foe after heal when save restored mid-run", async ({ page }) => {
+  test("dance glows at full hp when save restored mid-run", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
-      player: { hp: 10, maxHp: 20 },
+      player: { hp: 20, maxHp: 20 },
       combatHints: {
         dismissedAttackHint: true,
         dismissedHealHint: true,
-        pendingDanceHintAfterHeal: false,
         showDanceHintThisFoe: true,
       },
     });
@@ -161,7 +160,7 @@ test.describe("combat hints — dance after heal", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
   });
 
-  test("dance keeps glowing across mobs until used", async ({ page }) => {
+  test("dance keeps glowing across mobs until first hype", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
       player: { hp: 20, maxHp: 20 },
@@ -176,24 +175,28 @@ test.describe("combat hints — dance after heal", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
 
     await page.getByRole("button", { name: "Attack" }).click();
+    await expect(page.locator("#battle-text")).toContainText(/You (hit|defeat|vanquish|crush)/i, {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
+
     await expect(page.locator("#battle-text")).toContainText(/appears!/i, {
       timeout: 15_000,
     });
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
   });
 
-  test("run delays dance until after next kill top-up", async ({ page }) => {
+  test("dance returns after run once topped up to full hp", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
       player: { hp: 12, maxHp: 20 },
       combatHints: {
         dismissedAttackHint: true,
         dismissedHealHint: true,
-        showDanceHintThisFoe: true,
       },
     });
     await page.reload();
-    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
 
     await clickCombatRun(page);
     await expect(page.locator("#battle-text")).toContainText(/run into/i, {
@@ -218,7 +221,6 @@ test.describe("combat hints — dance after heal", () => {
       combatHints: {
         dismissedAttackHint: true,
         dismissedHealHint: true,
-        showDanceHintThisFoe: true,
       },
     });
     await page.reload();
@@ -229,6 +231,10 @@ test.describe("combat hints — dance after heal", () => {
     await patchSaveSnapshot(page, { player: { hp: 20, maxHp: 20 } });
     await page.reload();
     await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "off");
+    await patchSaveSnapshot(page, {
+      combatHints: { showDanceHintThisFoe: true },
+    });
+    await page.reload();
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
   });
 });
@@ -243,11 +249,15 @@ test.describe("combat hints — save persistence", () => {
     await expect(page.locator("#cmd-attack")).toHaveAttribute("data-combat-hint", "off");
   });
 
-  test("pending dance state is stored in save after heal", async ({ page }) => {
+  test("heal press clears dance hint for the current foe in save", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
-      player: { hp: 10, maxHp: 20 },
-      combatHints: { dismissedAttackHint: true },
+      player: { hp: 20, maxHp: 20 },
+      combatHints: {
+        dismissedAttackHint: true,
+        dismissedHealHint: true,
+        showDanceHintThisFoe: true,
+      },
     });
     await page.reload();
 
@@ -255,16 +265,7 @@ test.describe("combat hints — save persistence", () => {
     await expect(page.locator("#battle-text")).toContainText(/healed yourself/i, {
       timeout: 10_000,
     });
-
-    const hints = await page.evaluate((key) => {
-      const raw = localStorage.getItem(key);
-      const data = JSON.parse(raw!) as {
-        snapshot?: { combatHints?: { pendingDanceHintAfterHeal?: boolean } };
-      };
-      return data.snapshot?.combatHints;
-    }, STORAGE_KEY);
-
-    expect(hints?.pendingDanceHintAfterHeal).toBe(true);
+    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
   });
 });
 
@@ -451,20 +452,38 @@ test.describe("combat hints — teach flashes", () => {
   });
 });
 
-test.describe("combat hints — wave 11 dance fallback", () => {
-  test("dance glows at wave 11 when never armed earlier", async ({ page }) => {
+test.describe("combat hints — wave 12 dance fallback", () => {
+  test("dance glows at wave 12 when full hp and still at 0 hype", async ({ page }) => {
+    await startFreshRun(page);
+    await patchSaveSnapshot(page, {
+      wave: 12,
+      hypeLevel: 0,
+      player: { hp: 23, maxHp: 23 },
+      combatHints: {
+        dismissedAttackHint: true,
+        dismissedHealHint: true,
+        showDanceHintThisFoe: true,
+      },
+    });
+    await page.reload();
+
+    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#wave-banner")).toContainText("12");
+  });
+
+  test("dance does not glow at wave 11 without a post-kill arm", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
       wave: 11,
+      hypeLevel: 0,
+      player: { hp: 23, maxHp: 23 },
       combatHints: {
         dismissedAttackHint: true,
         dismissedHealHint: true,
       },
     });
     await page.reload();
-
-    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
-    await expect(page.locator("#wave-banner")).toContainText("11");
+    await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
   });
 });
 
@@ -492,5 +511,21 @@ test.describe("ui labels", () => {
     await startFreshRun(page);
     await expect(page.getByText("High Score", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "New Run" })).toBeVisible();
+  });
+
+  test("shows title case footer and restart labels", async ({ page }) => {
+    await startFreshRun(page);
+    await expect(page.getByText("Runs Played")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Clear Data" })).toBeVisible();
+    await patchSaveSnapshot(page, {
+      player: { hp: 1, maxHp: 20 },
+      foe: { attack: 20 },
+    });
+    await page.reload();
+    await page.getByRole("button", { name: "Attack" }).click();
+    await expect(page.locator("#cmd-attack")).toBeEnabled({ timeout: 10_000 });
+    await expect(page.getByRole("button", { name: "Try Again?" })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 });

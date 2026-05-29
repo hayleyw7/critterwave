@@ -4,8 +4,10 @@ import {
   combatHintsForSnapshot,
   createCombatHintsState,
   isLowHpForHint,
+  isFullHpForHint,
   LOW_HP_HINT_RATIO,
   deferDanceHintAfterRun,
+  dismissDanceHintThisFoe,
   dismissHealHint,
   dismissHealHintIfWasLow,
   DANCE_HINT_FALLBACK_WAVE,
@@ -25,11 +27,41 @@ import {
   shouldShowDanceHint,
   shouldShowHealHint,
   shouldShowRunHint,
+  shouldArmDanceHintForNewFoe,
   type CombatHintsState,
+  type NewFoeDanceHintContext,
 } from "../src/lib/combat-hints.js";
 
 const fresh = () => createCombatHintsState();
 const combat = "combat" as const;
+
+function newFoeAfterKill(
+  flags: CombatHintsState,
+  overrides: Partial<NewFoeDanceHintContext> = {}
+): CombatHintsState {
+  return onNextFoeForHints(flags, {
+    hypeLevel: 0,
+    hp: 20,
+    maxHp: 20,
+    wave: 2,
+    viaKill: true,
+    ...overrides,
+  });
+}
+
+function newFoeAfterFlee(
+  flags: CombatHintsState,
+  overrides: Partial<NewFoeDanceHintContext> = {}
+): CombatHintsState {
+  return onNextFoeForHints(flags, {
+    hypeLevel: 0,
+    hp: 20,
+    maxHp: 20,
+    wave: 3,
+    viaKill: false,
+    ...overrides,
+  });
+}
 
 function hintSnapshot(
   flags: CombatHintsState,
@@ -65,6 +97,12 @@ describe("combat hints — thresholds", () => {
     expect(isLowHpForHint(20, 20)).toBe(false);
     expect(isLowHpForHint(10, 0)).toBe(false);
   });
+
+  it("uses full-hp check for dance hint eligibility", () => {
+    expect(isFullHpForHint(20, 20)).toBe(true);
+    expect(isFullHpForHint(19, 20)).toBe(false);
+    expect(isFullHpForHint(20, 0)).toBe(false);
+  });
 });
 
 describe("combat hints — per-run dismissals", () => {
@@ -81,14 +119,14 @@ describe("combat hints — per-run dismissals", () => {
     const wasted = recordHealForHints(fresh(), { armDance: false });
     expect(shouldShowHealHint(wasted, 8, 20, combat, true)).toBe(false);
     expect(shouldShowHealHint(wasted, 20, 20, combat, true)).toBe(false);
-    expect(wasted.pendingDanceHintAfterHeal).toBe(false);
     expect(recordHealForHints(wasted)).toBe(wasted);
   });
 
-  it("arms dance only after a heal that restores hp", () => {
-    const after = recordHealForHints(fresh(), { armDance: true });
-    expect(after.pendingDanceHintAfterHeal).toBe(true);
-    expect(recordHealForHints(after)).toBe(after);
+  it("heal press clears dance hint for the current foe", () => {
+    const armed = newFoeAfterKill(recordAttackForHints(fresh()));
+    const afterHeal = recordHealForHints(armed);
+    expect(afterHeal.showDanceHintThisFoe).toBe(false);
+    expect(shouldShowDanceHint(afterHeal, 20, 20, combat, true, 0, 3, 0)).toBe(false);
   });
 
   it("dismissHealHint only clears heal glow without arming dance", () => {
@@ -106,11 +144,20 @@ describe("combat hints — per-run dismissals", () => {
     expect(shouldShowHealHint(full, 8, 20, combat, true)).toBe(true);
   });
 
-  it("dance hint dismisses on any dance and clears active foe flag", () => {
-    const primed = onNextFoeForHints(recordHealForHints(fresh()));
-    const after = recordDanceForHints(primed);
-    expect(shouldShowDanceHint(after, 20, 20, combat, true, 0, 3, 0)).toBe(false);
-    expect(after.showDanceHintThisFoe).toBe(false);
+  it("dance hint stops for this foe after dance until next kill", () => {
+    const armed = newFoeAfterKill(recordAttackForHints(fresh()));
+    const danced = recordDanceForHints(armed);
+    expect(shouldShowDanceHint(danced, 20, 20, combat, true, 0, 3, 0)).toBe(false);
+
+    const next = newFoeAfterKill(danced);
+    expect(shouldShowDanceHint(next, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+    expect(shouldShowDanceHint(next, 20, 20, combat, true, 1, 3, 0)).toBe(false);
+  });
+
+  it("attack clears dance hint for the current foe", () => {
+    const armed = newFoeAfterKill(recordAttackForHints(fresh()));
+    const afterAttack = recordAttackForHints(armed);
+    expect(shouldShowDanceHint(afterAttack, 20, 20, combat, true, 0, 3, 0)).toBe(false);
   });
 
   it("run hint dismisses permanently after first run", () => {
@@ -120,87 +167,65 @@ describe("combat hints — per-run dismissals", () => {
   });
 });
 
-describe("combat hints — heal before dance ordering", () => {
+describe("combat hints — dance until first hype", () => {
   it("never shows heal and dance together", () => {
-    expect(hintSnapshot(fresh(), { hp: 10 }).heal).toBe(true);
-    expect(hintSnapshot(fresh(), { hp: 10 }).dance).toBe(false);
+    const afterAttack = recordAttackForHints(fresh());
+    expect(hintSnapshot(afterAttack, { hp: 10 }).heal).toBe(true);
+    expect(hintSnapshot(afterAttack, { hp: 10 }).dance).toBe(false);
 
-    const primed = onNextFoeForHints(recordHealForHints(fresh()));
-    expect(hintSnapshot(primed, { hp: 10 }).heal).toBe(false);
-    expect(hintSnapshot(primed, { hp: 10 }).dance).toBe(true);
+    const armed = newFoeAfterKill(afterAttack);
+    expect(hintSnapshot(armed, { hp: 20 }).dance).toBe(true);
+    expect(hintSnapshot(armed, { hp: 10 }).dance).toBe(false);
   });
 
-  it("shows dance on next foe after a heal that restored hp", () => {
-    const afterHeal = recordHealForHints(fresh(), { armDance: true });
-    expect(shouldShowDanceHint(afterHeal, 20, 20, combat, true, 0, 3, 0)).toBe(false);
-
-    const nextFoe = onNextFoeForHints(afterHeal);
-    expect(shouldShowDanceHint(nextFoe, 20, 20, combat, true, 0, 3, 0)).toBe(true);
-    expect(nextFoe.pendingDanceHintAfterHeal).toBe(false);
-    expect(nextFoe.showDanceHintThisFoe).toBe(true);
+  it("arms dance on a new foe after a kill at full hp with 0 hype", () => {
+    const armed = newFoeAfterKill(recordAttackForHints(fresh()));
+    expect(armed.showDanceHintThisFoe).toBe(true);
+    expect(shouldShowDanceHint(armed, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+    expect(shouldShowDanceHint(armed, 20, 20, combat, true, 1, 3, 0)).toBe(false);
+    expect(shouldShowDanceHint(armed, 18, 20, combat, true, 0, 3, 0)).toBe(false);
   });
 
-  it("does not arm dance after a wasted heal at full hp", () => {
-    const afterHeal = recordHealForHints(fresh(), { armDance: false });
-    const nextFoe = onNextFoeForHints(afterHeal);
-    expect(nextFoe.showDanceHintThisFoe).toBe(false);
-    expect(shouldShowDanceHint(nextFoe, 20, 20, combat, true, 0, 3, 0)).toBe(false);
+  it("does not arm dance before first attack or on the first foe", () => {
+    expect(
+      shouldArmDanceHintForNewFoe(fresh(), {
+        hypeLevel: 0,
+        hp: 20,
+        maxHp: 20,
+        wave: 1,
+        viaKill: false,
+      })
+    ).toBe(false);
+    expect(shouldShowDanceHint(fresh(), 20, 20, combat, true, 0, 3, 0)).toBe(false);
   });
 
-  it("does not arm dance hint without healing first", () => {
-    const next = onNextFoeForHints(fresh());
-    expect(next.showDanceHintThisFoe).toBe(false);
-    expect(shouldShowDanceHint(next, 20, 20, combat, true, 0, 3, 0)).toBe(false);
+  it("does not arm dance after run away before wave 12", () => {
+    const afterFlee = newFoeAfterFlee(recordAttackForHints(fresh()));
+    expect(afterFlee.showDanceHintThisFoe).toBe(false);
+    expect(shouldShowDanceHint(afterFlee, 20, 20, combat, true, 0, 3, 0)).toBe(false);
   });
 
-  it("does not re-arm dance after it was already dismissed", () => {
-    const danced = recordDanceForHints(onNextFoeForHints(recordHealForHints(fresh())));
-    const again = onNextFoeForHints(recordHealForHints(danced));
-    expect(again.showDanceHintThisFoe).toBe(false);
+  it("re-arms dance on each kill until hype reaches 1", () => {
+    let flags = newFoeAfterKill(recordAttackForHints(fresh()));
+    expect(shouldShowDanceHint(flags, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+
+    flags = recordAttackForHints(flags);
+    flags = newFoeAfterKill(flags);
+    expect(shouldShowDanceHint(flags, 20, 20, combat, true, 0, 3, 0)).toBe(true);
   });
 
-  it("keeps dance hint across mobs until danced", () => {
-    const primed = onNextFoeForHints(recordHealForHints(fresh()));
-    expect(shouldShowDanceHint(primed, 20, 20, combat, true, 0, 3, 0)).toBe(true);
-
-    const nextMob = onNextFoeForHints(primed);
-    expect(nextMob.showDanceHintThisFoe).toBe(true);
-    expect(shouldShowDanceHint(nextMob, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+  it("yields to run hint while lethal on an armed foe", () => {
+    const armed = newFoeAfterKill(recordAttackForHints(fresh()));
+    expect(shouldShowDanceHint(armed, 3, 20, combat, true, 0, 5, 0)).toBe(false);
+    expect(shouldShowRunHint(armed, 3, 5, 0, combat, true)).toBe(true);
   });
 
-  it("yields to run hint while lethal and returns when safe", () => {
-    const primed = onNextFoeForHints(recordHealForHints(fresh()));
-    expect(shouldShowDanceHint(primed, 3, 20, combat, true, 0, 5, 0)).toBe(false);
-    expect(shouldShowRunHint(primed, 3, 5, 0, combat, true)).toBe(true);
+  it("run defer no longer blocks dance after a later kill top-up", () => {
+    const fled = deferDanceHintAfterRun(newFoeAfterKill(recordAttackForHints(fresh())));
+    expect(shouldShowDanceHint(fled, 12, 20, combat, true, 0, 3, 0)).toBe(false);
 
-    expect(shouldShowDanceHint(primed, 12, 20, combat, true, 0, 5, 0)).toBe(true);
-    expect(shouldShowRunHint(primed, 12, 5, 0, combat, true)).toBe(false);
-  });
-
-  it("clears dance foe flag only after dance is used", () => {
-    const armed = { ...fresh(), showDanceHintThisFoe: true };
-    const next = onNextFoeForHints(armed);
-    expect(next.showDanceHintThisFoe).toBe(true);
-
-    const danced = recordDanceForHints(next);
-    const after = onNextFoeForHints(danced);
-    expect(after.showDanceHintThisFoe).toBe(false);
-  });
-
-  it("run defers dance to the foe after the next victory top-up", () => {
-    const primed = onNextFoeForHints(recordHealForHints(fresh()));
-    expect(shouldShowDanceHint(primed, 20, 20, combat, true, 0, 3, 0)).toBe(true);
-
-    const fled = deferDanceHintAfterRun(primed);
-    expect(fled.showDanceHintThisFoe).toBe(false);
-    expect(fled.pendingDanceHintAfterVictory).toBe(true);
-
-    const afterRunFoe = onNextFoeForHints(fled);
-    expect(shouldShowDanceHint(afterRunFoe, 20, 20, combat, true, 0, 3, 0)).toBe(false);
-
-    const afterKill = onVictoryForHints(afterRunFoe);
-    const nextAfterVictory = onNextFoeForHints(afterKill);
-    expect(shouldShowDanceHint(nextAfterVictory, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+    const afterKill = newFoeAfterKill(fled, { hp: 20, maxHp: 20 });
+    expect(shouldShowDanceHint(afterKill, 20, 20, combat, true, 0, 3, 0)).toBe(true);
   });
 
   it("run does not defer dance when none was queued", () => {
@@ -209,50 +234,113 @@ describe("combat hints — heal before dance ordering", () => {
   });
 });
 
-describe("combat hints — dance wave 11 fallback", () => {
-  it("does not arm before wave 11", () => {
-    expect(maybeArmDanceHintForWave(fresh(), 10).showDanceHintThisFoe).toBe(false);
+describe("combat hints — dance wave 12 fallback", () => {
+  it("does not clear defer flags before wave 12", () => {
+    const deferred = deferDanceHintAfterRun(newFoeAfterKill(recordAttackForHints(fresh())));
+    expect(maybeArmDanceHintForWave(deferred, 10).pendingDanceHintAfterVictory).toBe(true);
   });
 
-  it("arms dance at wave 11 when never shown", () => {
-    const armed = maybeArmDanceHintForWave(fresh(), DANCE_HINT_FALLBACK_WAVE);
-    expect(armed.showDanceHintThisFoe).toBe(true);
-    expect(
-      shouldShowDanceHint(armed, 20, 20, combat, true, 0, 3, 0)
-    ).toBe(true);
-  });
-
-  it("does not arm after dance was used", () => {
-    const danced = recordDanceForHints(fresh());
-    expect(maybeArmDanceHintForWave(danced, 11).showDanceHintThisFoe).toBe(false);
-  });
-
-  it("does not override an active dance hint", () => {
-    const primed = onNextFoeForHints(recordHealForHints(fresh()));
-    const again = maybeArmDanceHintForWave(primed, 11);
-    expect(again).toBe(primed);
-  });
-
-  it("clears run-deferred state when wave 11 fallback fires", () => {
-    const deferred = deferDanceHintAfterRun(
-      onNextFoeForHints(recordHealForHints(fresh()))
-    );
+  it("clears run-deferred state at wave 12", () => {
+    const deferred = deferDanceHintAfterRun(newFoeAfterKill(recordAttackForHints(fresh())));
     expect(deferred.pendingDanceHintAfterVictory).toBe(true);
 
-    const armed = maybeArmDanceHintForWave(deferred, DANCE_HINT_FALLBACK_WAVE);
-    expect(armed.showDanceHintThisFoe).toBe(true);
-    expect(armed.pendingDanceHintAfterVictory).toBe(false);
-    expect(armed.pendingDanceHintAfterHeal).toBe(false);
+    const cleared = maybeArmDanceHintForWave(deferred, DANCE_HINT_FALLBACK_WAVE);
+    expect(cleared.pendingDanceHintAfterVictory).toBe(false);
+    expect(cleared.pendingDanceHintAfterHeal).toBe(false);
   });
 
-  it("run defer then victory arms dance on the next foe", () => {
-    let flags = onNextFoeForHints(recordHealForHints(fresh()));
-    flags = deferDanceHintAfterRun(flags);
-    expect(shouldShowDanceHint(flags, 20, 20, combat, true, 0, 3, 0)).toBe(false);
+  it("does not arm dance on run away at wave 11", () => {
+    const armed = newFoeAfterFlee(recordAttackForHints(fresh()), { wave: 11 });
+    expect(armed.showDanceHintThisFoe).toBe(false);
+  });
 
+  it("arms dance on a new foe at wave 12 even after run away", () => {
+    const armed = newFoeAfterFlee(recordAttackForHints(fresh()), { wave: 12 });
+    expect(armed.showDanceHintThisFoe).toBe(true);
+    expect(shouldShowDanceHint(armed, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+  });
+
+  it("run defer then kill still shows dance on the next full-hp foe", () => {
+    let flags = newFoeAfterKill(recordAttackForHints(fresh()));
+    flags = deferDanceHintAfterRun(flags);
     flags = onVictoryForHints(flags);
-    flags = onNextFoeForHints(flags);
+    flags = newFoeAfterKill(flags);
     expect(shouldShowDanceHint(flags, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+  });
+
+  it("uses wave 12 as the dance fallback threshold", () => {
+    expect(DANCE_HINT_FALLBACK_WAVE).toBe(12);
+    expect(
+      shouldArmDanceHintForNewFoe(recordAttackForHints(fresh()), {
+        hypeLevel: 0,
+        hp: 20,
+        maxHp: 20,
+        wave: 11,
+        viaKill: false,
+      })
+    ).toBe(false);
+    expect(
+      shouldArmDanceHintForNewFoe(recordAttackForHints(fresh()), {
+        hypeLevel: 0,
+        hp: 20,
+        maxHp: 20,
+        wave: 12,
+        viaKill: false,
+      })
+    ).toBe(true);
+  });
+});
+
+describe("combat hints — dance arming edge cases", () => {
+  const afterAttack = () => recordAttackForHints(fresh());
+
+  it("does not arm when hype is already at least 1", () => {
+    const next = onNextFoeForHints(afterAttack(), {
+      hypeLevel: 1,
+      hp: 20,
+      maxHp: 20,
+      wave: 2,
+      viaKill: true,
+    });
+    expect(next.showDanceHintThisFoe).toBe(false);
+  });
+
+  it("does not arm after a kill when not at full hp", () => {
+    const next = newFoeAfterKill(afterAttack(), { hp: 18, maxHp: 20 });
+    expect(next.showDanceHintThisFoe).toBe(false);
+  });
+
+  it("clears an armed foe flag when entering a foe without arming context", () => {
+    const armed = newFoeAfterKill(afterAttack());
+    const cleared = onNextFoeForHints(armed);
+    expect(cleared.showDanceHintThisFoe).toBe(false);
+  });
+
+  it("run press clears dance hint for the current foe", () => {
+    const armed = newFoeAfterKill(afterAttack());
+    const afterRun = recordRunForHints(armed);
+    expect(afterRun.showDanceHintThisFoe).toBe(false);
+    expect(shouldShowDanceHint(afterRun, 20, 20, combat, true, 0, 3, 0)).toBe(false);
+  });
+
+  it("heal press no longer sets pending dance after heal", () => {
+    const afterHeal = recordHealForHints(afterAttack(), { armDance: true });
+    expect(afterHeal.pendingDanceHintAfterHeal).toBe(false);
+  });
+
+  it("dismissDanceHintThisFoe only clears the active foe flag", () => {
+    const armed = newFoeAfterKill(afterAttack());
+    const cleared = dismissDanceHintThisFoe(armed);
+    expect(cleared.showDanceHintThisFoe).toBe(false);
+    expect(dismissDanceHintThisFoe(cleared)).toBe(cleared);
+  });
+
+  it("recordDanceForHints does not permanently dismiss future dance hints", () => {
+    const danced = recordDanceForHints(newFoeAfterKill(afterAttack()));
+    expect(danced.dismissedDanceHint).toBe(false);
+    expect(danced.showDanceHintThisFoe).toBe(false);
+    const next = newFoeAfterKill(danced);
+    expect(next.showDanceHintThisFoe).toBe(true);
   });
 });
 
@@ -373,7 +461,7 @@ describe("combat hints — full first-run tutorial flow", () => {
       run: false,
     });
 
-    flags = onNextFoeForHints(flags);
+    flags = newFoeAfterKill(flags, { hp: 20, maxHp: 20 });
     expect(hintSnapshot(flags, { hp: 20 })).toEqual({
       attack: false,
       heal: false,
@@ -389,6 +477,29 @@ describe("combat hints — full first-run tutorial flow", () => {
       run: true,
     });
 
+    expect(hintSnapshot(flags, { hp: 20, hype: 0 })).toEqual({
+      attack: false,
+      heal: false,
+      dance: false,
+      run: false,
+    });
+
+    flags = newFoeAfterKill(flags, { hp: 20, maxHp: 20 });
+    expect(hintSnapshot(flags, { hp: 20, hype: 0 })).toEqual({
+      attack: false,
+      heal: false,
+      dance: true,
+      run: false,
+    });
+
+    flags = tryCelebrateFirstPlayerHype(flags, 1).flags;
+    expect(hintSnapshot(flags, { hp: 20, hype: 1 })).toEqual({
+      attack: false,
+      heal: false,
+      dance: false,
+      run: false,
+    });
+
     flags = recordRunForHints(flags);
     expect(hintSnapshot(flags, { hp: 1, foeAtk: 9 })).toEqual({
       attack: false,
@@ -401,7 +512,7 @@ describe("combat hints — full first-run tutorial flow", () => {
 
 describe("combat hints — persistence and migration", () => {
   it("persists full hint state in snapshots", () => {
-    const flags = onNextFoeForHints(recordHealForHints(fresh()));
+    const flags = newFoeAfterKill(recordAttackForHints(fresh()));
     const snap = combatHintsForSnapshot(flags);
     const restored = createCombatHintsState(snap);
     expect(restored).toEqual(flags);
@@ -418,7 +529,7 @@ describe("combat hints — persistence and migration", () => {
   });
 
   it("hides dance at max hype even when foe flag is set", () => {
-    const primed = onNextFoeForHints(recordHealForHints(fresh()));
+    const primed = newFoeAfterKill(recordAttackForHints(fresh()));
     expect(shouldShowDanceHint(primed, 20, 20, combat, true, 5, 3, 0)).toBe(false);
   });
 });

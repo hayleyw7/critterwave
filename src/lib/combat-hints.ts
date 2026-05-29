@@ -3,8 +3,8 @@ import { effectiveAttack, HYPE_MAX } from "./game-logic.js";
 /** Show heal hint at or below this fraction of max HP (60% feels “hurt” on mobile). */
 export const LOW_HP_HINT_RATIO = 0.6;
 
-/** Arm dance hint from this wave if the player still has not danced this run. */
-export const DANCE_HINT_FALLBACK_WAVE = 11;
+/** Arm dance hint on new foes from this wave if the player still has 0 hype. */
+export const DANCE_HINT_FALLBACK_WAVE = 12;
 
 export type CombatHintsState = {
   /** Legacy: set when the player has danced this run. */
@@ -29,8 +29,17 @@ export type CombatHintsState = {
   pendingDanceHintAfterHeal: boolean;
   /** Run deferred dance — show after the next victory top-up instead. */
   pendingDanceHintAfterVictory: boolean;
-  /** Dance hint active for the current foe (next mob after heal). */
+  /** Dance hint armed for this foe only — cleared after any other action. */
   showDanceHintThisFoe: boolean;
+};
+
+export type NewFoeDanceHintContext = {
+  hypeLevel: number;
+  hp: number;
+  maxHp: number;
+  wave: number;
+  /** True when this foe followed a kill (not run away). */
+  viaKill: boolean;
 };
 
 export type CombatHintPhase = "combat" | "gameover" | "victory";
@@ -103,6 +112,11 @@ export function isLowHpForHint(hp: number, maxHp: number): boolean {
   return hpRatio(hp, maxHp) <= LOW_HP_HINT_RATIO;
 }
 
+/** Topped up — dance hint only nags at full HP until first HYPE. */
+export function isFullHpForHint(hp: number, maxHp: number): boolean {
+  return maxHp > 0 && hp >= maxHp;
+}
+
 export function maxFoeHitForHint(baseAttack: number, foeHypeLevel: number): number {
   return effectiveAttack(baseAttack, foeHypeLevel);
 }
@@ -145,13 +159,19 @@ export function shouldShowDanceHint(
   foeHypeLevel: number,
   hypeMax = HYPE_MAX
 ): boolean {
-  if (flags.dismissedDanceHint) {
-    return false;
-  }
   if (phase !== "combat" || !hasFoe) {
     return false;
   }
   if (!flags.showDanceHintThisFoe) {
+    return false;
+  }
+  if (hypeLevel >= 1) {
+    return false;
+  }
+  if (!flags.dismissedAttackHint) {
+    return false;
+  }
+  if (!isFullHpForHint(hp, maxHp)) {
     return false;
   }
   if (hypeLevel >= hypeMax) {
@@ -183,11 +203,37 @@ export function shouldShowRunHint(
   return hp <= maxFoeHitForHint(foeBaseAttack, foeHypeLevel);
 }
 
-export function recordAttackForHints(flags: CombatHintsState): CombatHintsState {
-  if (flags.dismissedAttackHint) {
+export function dismissDanceHintThisFoe(flags: CombatHintsState): CombatHintsState {
+  if (!flags.showDanceHintThisFoe) {
     return flags;
   }
-  return { ...flags, dismissedAttackHint: true };
+  return { ...flags, showDanceHintThisFoe: false };
+}
+
+export function shouldArmDanceHintForNewFoe(
+  flags: CombatHintsState,
+  ctx: NewFoeDanceHintContext
+): boolean {
+  if (ctx.hypeLevel >= 1) {
+    return false;
+  }
+  if (!flags.dismissedAttackHint) {
+    return false;
+  }
+  if (!isFullHpForHint(ctx.hp, ctx.maxHp)) {
+    return false;
+  }
+  if (ctx.viaKill) {
+    return true;
+  }
+  return ctx.wave >= DANCE_HINT_FALLBACK_WAVE;
+}
+
+export function recordAttackForHints(flags: CombatHintsState): CombatHintsState {
+  if (flags.dismissedAttackHint && !flags.showDanceHintThisFoe) {
+    return flags;
+  }
+  return { ...flags, dismissedAttackHint: true, showDanceHintThisFoe: false };
 }
 
 export function dismissHealHint(flags: CombatHintsState): CombatHintsState {
@@ -211,17 +257,15 @@ export function dismissHealHintIfWasLow(
 
 export function recordHealForHints(
   flags: CombatHintsState,
-  options: { armDance?: boolean } = {}
+  _options: { armDance?: boolean } = {}
 ): CombatHintsState {
   if (flags.dismissedHealHint) {
-    return flags;
+    return dismissDanceHintThisFoe(flags);
   }
-  const armDance = options.armDance ?? true;
   return {
     ...flags,
     dismissedHealHint: true,
-    pendingDanceHintAfterHeal:
-      armDance && !flags.dismissedDanceHint ? true : flags.pendingDanceHintAfterHeal,
+    showDanceHintThisFoe: false,
   };
 }
 
@@ -297,18 +341,15 @@ export function recordDanceForHints(flags: CombatHintsState): CombatHintsState {
   return {
     ...flags,
     celebratedFirstDance: true,
-    dismissedDanceHint: true,
     showDanceHintThisFoe: false,
-    pendingDanceHintAfterHeal: false,
-    pendingDanceHintAfterVictory: false,
   };
 }
 
 export function recordRunForHints(flags: CombatHintsState): CombatHintsState {
   if (flags.dismissedRunHint) {
-    return flags;
+    return dismissDanceHintThisFoe(flags);
   }
-  return { ...flags, dismissedRunHint: true };
+  return { ...flags, dismissedRunHint: true, showDanceHintThisFoe: false };
 }
 
 /** Running skips dance on the immediate next foe — arm it for after the next kill heal. */
@@ -339,40 +380,36 @@ export function onVictoryForHints(flags: CombatHintsState): CombatHintsState {
   };
 }
 
-/** Call when a new foe enters — activates deferred dance hint once; keeps it until danced. */
-export function onNextFoeForHints(flags: CombatHintsState): CombatHintsState {
-  if (flags.dismissedDanceHint) {
-    return {
-      ...flags,
-      showDanceHintThisFoe: false,
-      pendingDanceHintAfterHeal: false,
-      pendingDanceHintAfterVictory: false,
-    };
+/** Call when a new foe enters — arms dance for this foe only if eligible. */
+export function onNextFoeForHints(
+  flags: CombatHintsState,
+  ctx?: NewFoeDanceHintContext
+): CombatHintsState {
+  const cleared = {
+    ...flags,
+    showDanceHintThisFoe: false,
+    pendingDanceHintAfterHeal: false,
+    pendingDanceHintAfterVictory: false,
+  };
+  if (!ctx || !shouldArmDanceHintForNewFoe(flags, ctx)) {
+    return cleared;
   }
-  if (flags.pendingDanceHintAfterHeal) {
-    return {
-      ...flags,
-      pendingDanceHintAfterHeal: false,
-      showDanceHintThisFoe: true,
-    };
-  }
-  return flags;
+  return { ...cleared, showDanceHintThisFoe: true };
 }
 
-/** Wave 11+ fallback — blink dance until used if heal/run path never armed it. */
+/** Wave 12+ — clear stale defer flags; visibility uses full HP + hype rules. */
 export function maybeArmDanceHintForWave(
   flags: CombatHintsState,
   wave: number
 ): CombatHintsState {
-  if (flags.dismissedDanceHint || wave < DANCE_HINT_FALLBACK_WAVE) {
+  if (wave < DANCE_HINT_FALLBACK_WAVE) {
     return flags;
   }
-  if (flags.showDanceHintThisFoe) {
+  if (!flags.pendingDanceHintAfterVictory && !flags.pendingDanceHintAfterHeal) {
     return flags;
   }
   return {
     ...flags,
-    showDanceHintThisFoe: true,
     pendingDanceHintAfterHeal: false,
     pendingDanceHintAfterVictory: false,
   };
