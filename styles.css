@@ -116,6 +116,10 @@ body::before {
   opacity: 0.35;
 }
 
+body.is-booting .game-shell {
+  visibility: hidden;
+}
+
 .game-shell {
   --foe-accent: #facc15;
   position: relative;

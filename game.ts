@@ -1775,6 +1775,10 @@ function beginGame(): void {
   resetGame();
 }
 
+function finishBoot(): void {
+  document.body.classList.remove("is-booting");
+}
+
 function init(): void {
   bindConfirmDialog();
   bindActions();
@@ -1783,12 +1787,17 @@ function init(): void {
   const save = loadSave();
   if (!save.playerEmoji) {
     showSetup();
+    finishBoot();
     return;
   }
 
-  applyHeroChoice(save.playerEmoji, getHeroLabelForEmoji(save.playerEmoji));
+  applyHeroChoice(
+    save.playerEmoji,
+    resolveSavedHeroName(save, save.playerEmoji)
+  );
   applyHeroColorTheme(resolveHeroColorTheme(save));
   beginGame();
+  finishBoot();
 }
 
 init();

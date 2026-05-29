@@ -1438,6 +1438,9 @@ function beginGame() {
     }
     resetGame();
 }
+function finishBoot() {
+    document.body.classList.remove("is-booting");
+}
 function init() {
     bindConfirmDialog();
     bindActions();
@@ -1445,10 +1448,12 @@ function init() {
     const save = loadSave();
     if (!save.playerEmoji) {
         showSetup();
+        finishBoot();
         return;
     }
-    applyHeroChoice(save.playerEmoji, getHeroLabelForEmoji(save.playerEmoji));
+    applyHeroChoice(save.playerEmoji, resolveSavedHeroName(save, save.playerEmoji));
     applyHeroColorTheme(resolveHeroColorTheme(save));
     beginGame();
+    finishBoot();
 }
 init();
