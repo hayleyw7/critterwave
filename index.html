@@ -57,8 +57,7 @@
       <div class="setup-panel">
         <div class="setup-fields">
           <h2 class="setup-title mobile-stack">
-            <span class="mobile-stack-part">Which critter</span>
-            <span class="mobile-stack-part">are you?</span>
+            <span class="mobile-stack-part">Which critter</span> <span class="mobile-stack-part">are you?</span>
           </h2>
           <div class="emoji-picker" id="hero-picker" role="listbox" aria-label="Which critter are you?"></div>
         </div>
@@ -110,7 +109,9 @@
 
     <div class="game-shell">
       <header class="title-bar">
-        <h1 class="title">Critterwave</h1>
+        <h1 class="title mobile-stack" aria-label="Critterwave">
+          <span class="mobile-stack-part" aria-hidden="true">Critter</span><span class="mobile-stack-part" aria-hidden="true">wave</span>
+        </h1>
       </header>
 
       <div class="playfield">
