@@ -1032,11 +1032,6 @@ body.is-booting .game-shell {
   transform-origin: center bottom;
 }
 
-.foe-enter .enemy-status {
-  animation: foe-enter 0.55s cubic-bezier(0.34, 1.4, 0.64, 1);
-  transform-origin: center bottom;
-}
-
 .foe-sprite-hidden .enemy-status {
   opacity: 0;
   visibility: hidden;
@@ -1114,13 +1109,24 @@ body.is-booting .game-shell {
 }
 
 .emoji-sprite {
+  --sprite-size: clamp(2.75rem, 10vw, 3.75rem);
+  --sprite-box: calc(var(--sprite-size) * 1.1);
   position: relative;
   z-index: 2;
-  display: inline-block;
-  font-size: clamp(2.75rem, 10vw, 3.75rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sprite-box);
+  height: var(--sprite-box);
+  font-size: var(--sprite-size);
   line-height: 1;
   filter: drop-shadow(3px 4px 0 rgba(0, 0, 0, 0.45));
   user-select: none;
+}
+
+/* Creature emojis often draw smaller than hero picks at the same font-size. */
+.emoji-sprite.foe-emoji {
+  font-size: calc(var(--sprite-size) * 1.1);
 }
 
 .hp-wrap {
@@ -1963,7 +1969,7 @@ body.is-booting .game-shell {
   }
 
   .emoji-sprite {
-    font-size: clamp(2.25rem, 9vw, 3rem);
+    --sprite-size: clamp(2.25rem, 9vw, 3rem);
   }
 
   .name-plate {
@@ -1997,6 +2003,6 @@ body.is-booting .game-shell {
   }
 
   .emoji-sprite {
-    font-size: 2.5rem;
+    --sprite-size: 2.5rem;
   }
 }
