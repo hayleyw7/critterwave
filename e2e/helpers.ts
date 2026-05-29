@@ -15,7 +15,7 @@ export async function startFreshRun(
   const { name = "Test Critter", emojiIndex = 0 } = options;
   await clearSave(page);
   await expect(
-    page.getByRole("heading", { name: "What critter are you?" })
+    page.getByRole("heading", { name: "Which critter are you?" })
   ).toBeVisible();
 
   await page.locator(".emoji-pick").nth(emojiIndex).click();

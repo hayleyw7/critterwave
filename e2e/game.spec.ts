@@ -56,7 +56,7 @@ test.describe("Critterwave — happy paths", () => {
     await page.getByRole("button", { name: "New game" }).click();
     await page.locator("#confirm-ok").click();
     await expect(
-      page.getByRole("heading", { name: "What critter are you?" })
+      page.getByRole("heading", { name: "Which critter are you?" })
     ).toBeVisible();
   });
 });
@@ -84,7 +84,7 @@ test.describe("Critterwave — sad paths", () => {
     await page.getByRole("button", { name: "Clear data" }).click();
     await page.locator("#confirm-ok").click();
     await expect(
-      page.getByRole("heading", { name: "What critter are you?" })
+      page.getByRole("heading", { name: "Which critter are you?" })
     ).toBeVisible();
 
     const save = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
