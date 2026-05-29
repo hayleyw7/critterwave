@@ -1,3 +1,5 @@
+import { escapeHtml } from "../lib/escape-html.js";
+
 export type DanceResponse = {
   message: string;
   /** Player hype gain; defaults to 1 when omitted (unless only foeHype is set). */
@@ -152,14 +154,6 @@ export type DanceHypeTailOptions = {
 
 function formatDanceHypeGain(gain: number): string {
   return `<span class="battle-hype-gain">+${gain} HYPE</span>`;
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 export function formatDanceHypeTail(

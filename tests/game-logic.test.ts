@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { FOES } from "../src/data/foes-data.js";
 import {
+  applyPlayerHealRoll,
   applyHypeGain,
+  hypeAfterTakingHit,
   applyPlayerStatsForWave,
   buildFoeOrder,
   CAMPAIGN_WAVE_COUNT,
@@ -25,9 +27,14 @@ import {
   hypeAttackBonus,
   HYPE_ATTACK_PER_LEVEL,
   hypeHeadroom,
+  hypeAfterHealAndCounter,
   HYPE_MAX,
   isLevelBandFinale,
   LEVEL_COUNT,
+  advanceFoeQueueAfterFlee,
+  advanceFoeQueueAfterVictory,
+  buildInitialFoeQueue,
+  buildQueueCycleFromWave,
   makeFoeForWave,
   makeFoeFromTemplate,
   nextDefeatVerb,
@@ -243,17 +250,50 @@ describe("level progression", () => {
     expect(wave1.level).toBeGreaterThanOrEqual(1);
   });
 
+  it("defers fled foes to the back of the queue", () => {
+    const order = foesForHero(SAMPLE_FOES, "🐱");
+    const ids = buildInitialFoeQueue(order);
+    const fled = advanceFoeQueueAfterFlee(ids, [], ids[0]!, order, 1);
+    expect(fled.queue[0]).toBe(ids[1]);
+    expect(fled.deferred).toEqual([ids[0]]);
+
+    const won = advanceFoeQueueAfterVictory(fled.queue, fled.deferred, order, 2);
+    if (ids.length > 2) {
+      expect(won.queue[0]).toBe(ids[2]);
+      expect(won.deferred).toEqual([ids[0]]);
+    } else {
+      expect(won.queue[0]).toBe(ids[0]);
+      expect(won.deferred).toEqual([]);
+    }
+  });
+
+  it("brings deferred foes back after clearing the queue", () => {
+    const order = foesForHero(SAMPLE_FOES, "🐱");
+    const ids = buildInitialFoeQueue(order);
+    const fled = advanceFoeQueueAfterFlee([ids[0]!], [], ids[0]!, order, 1);
+    let queue = fled.queue;
+    let deferred = fled.deferred;
+    while (queue.length > 1) {
+      const next = advanceFoeQueueAfterVictory(queue, deferred, order, 2);
+      queue = next.queue;
+      deferred = next.deferred;
+    }
+    const final = advanceFoeQueueAfterVictory(queue, deferred, order, 3);
+    expect(final.queue[0]).toBe(ids[0]);
+    expect(final.deferred).toEqual([]);
+  });
+
   it("refreshes foe stats without overhealing", () => {
     const hard = SAMPLE_FOES[1]!;
     const refreshed = refreshWaveFoeFromTemplate(99, hard, 5);
     expect(refreshed.hp).toBeLessThanOrEqual(refreshed.maxHp);
     expect(refreshed.attack).toBe(makeFoeFromTemplate(hard, 5).attack);
   });
-  it("tops up hp partially after wave wins", () => {
-    expect(WAVE_VICTORY_HEAL_RATIO).toBe(0.5);
+  it("tops up hp to full after wave wins", () => {
+    expect(WAVE_VICTORY_HEAL_RATIO).toBe(1);
     expect(waveVictoryHealGain(20, 20)).toBe(0);
-    expect(waveVictoryHealGain(8, 20)).toBe(10);
-    expect(healHpAfterWaveVictory(8, 20)).toBe(18);
+    expect(waveVictoryHealGain(8, 20)).toBe(12);
+    expect(healHpAfterWaveVictory(8, 20)).toBe(20);
     expect(healHpAfterWaveVictory(14, 20)).toBe(20);
   });
 });
@@ -312,6 +352,11 @@ describe("normalizeHeroName", () => {
 
   it("returns empty for blank input", () => {
     expect(normalizeHeroName("   ")).toBe("");
+  });
+
+  it("strips angle brackets from names", () => {
+    expect(normalizeHeroName("<Pat>")).toBe("Pat");
+    expect(normalizeHeroName("<>")).toBe("");
   });
 });
 
@@ -390,6 +435,35 @@ describe("combat math", () => {
     expect(randomHeal(3, () => 0.99)).toBe(3);
   });
 
+  it("player heal roll uses heal dice and caps at max hp", () => {
+    expect(applyPlayerHealRoll(20, 20, 5, () => 0)).toEqual({
+      rolled: 1,
+      hp: 20,
+      gained: 0,
+    });
+    expect(applyPlayerHealRoll(8, 20, 5, () => 0)).toEqual({
+      rolled: 1,
+      hp: 9,
+      gained: 1,
+    });
+    expect(applyPlayerHealRoll(8, 20, 5, () => 0.99)).toEqual({
+      rolled: 5,
+      hp: 13,
+      gained: 5,
+    });
+    expect(applyPlayerHealRoll(18, 20, 5, () => 0.99)).toEqual({
+      rolled: 5,
+      hp: 20,
+      gained: 2,
+    });
+  });
+
+  it("loses one hype per hit taken when damage is dealt", () => {
+    expect(hypeAfterTakingHit(3, 4)).toBe(2);
+    expect(hypeAfterTakingHit(0, 2)).toBe(0);
+    expect(hypeAfterTakingHit(5, 0)).toBe(5);
+  });
+
   it("rejects invalid damage max", () => {
     expect(() => randomDamage(0, () => 0.5)).toThrow(/at least 1/i);
   });
@@ -411,6 +485,14 @@ describe("combat math", () => {
     expect(hypeHeadroom(3)).toBe(2);
     expect(formatHypeLabel(3)).toBe("HYPE 3/5");
     expect(formatHypeLabel(7)).toBe("HYPE 5/5");
+  });
+
+  it("heal hype skips transient gain when counter zeros from 0", () => {
+    expect(hypeAfterHealAndCounter(0, true, true)).toBe(0);
+    expect(hypeAfterHealAndCounter(0, true, false)).toBe(1);
+    expect(hypeAfterHealAndCounter(3, true, true)).toBe(3);
+    expect(hypeAfterHealAndCounter(4, true, true)).toBe(4);
+    expect(hypeAfterHealAndCounter(2, false, true)).toBe(2);
   });
 });
 

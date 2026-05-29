@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 import { FOES } from "../src/data/foes-data.js";
 import {
   assertHeroPickerOrderCovers,
+  firstVisibleHeroPickerEmoji,
   HERO_PICKER_ORDER,
   heroPickerOrderIndex,
+  isHeroEmojiHiddenInPicker,
+  isMobileHeroPickerViewport,
+  MOBILE_HIDDEN_PICKER_EMOJIS,
+  resolveHeroPickerEmoji,
 } from "../src/lib/hero-groups.js";
 
 describe("HERO_PICKER_ORDER", () => {
@@ -36,6 +41,33 @@ describe("assertHeroPickerOrderCovers", () => {
     );
   });
 
+});
+
+describe("mobile hero picker visibility", () => {
+  it("hides devil emoji on mobile only", () => {
+    expect(MOBILE_HIDDEN_PICKER_EMOJIS.has("😈")).toBe(true);
+    expect(isHeroEmojiHiddenInPicker("😈", true)).toBe(true);
+    expect(isHeroEmojiHiddenInPicker("😈", false)).toBe(false);
+    expect(isHeroEmojiHiddenInPicker("🐱", true)).toBe(false);
+  });
+
+  it("uses the 480px setup mobile breakpoint", () => {
+    expect(
+      isMobileHeroPickerViewport((query) => query === "(max-width: 480px)")
+    ).toBe(true);
+    expect(isMobileHeroPickerViewport(() => false)).toBe(false);
+  });
+
+  it("picks the first visible emoji in picker order", () => {
+    expect(firstVisibleHeroPickerEmoji(["😈", "🐱"], true)).toBe("🐱");
+    expect(firstVisibleHeroPickerEmoji(["😈", "🐱"], false)).toBe("😈");
+  });
+
+  it("resolves a hidden saved emoji to the first visible choice on mobile", () => {
+    expect(resolveHeroPickerEmoji("😈", HERO_PICKER_ORDER, true)).toBe("🐱");
+    expect(resolveHeroPickerEmoji("😈", HERO_PICKER_ORDER, false)).toBe("😈");
+    expect(resolveHeroPickerEmoji("🐱", HERO_PICKER_ORDER, true)).toBe("🐱");
+  });
 });
 
 describe("heroPickerOrderIndex", () => {
