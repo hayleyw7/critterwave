@@ -93,6 +93,13 @@ describe("formatDanceHypeTail", () => {
       formatDanceHypeTail(0, 1, "Rabid Rabbit", { playerCapped: true })
     ).toContain("You're max hype!");
   });
+
+  it("escapes HTML in foe names used by hype tails", () => {
+    const tail = formatDanceHypeTail(0, 1, `<Evil Foe>`);
+    expect(tail).toContain("&lt;Evil Foe&gt; gets");
+    expect(tail).not.toContain("<Evil");
+    expect(tail).toContain("+1 HYPE");
+  });
 });
 
 describe("dance content invariants", () => {

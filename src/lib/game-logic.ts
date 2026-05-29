@@ -382,7 +382,11 @@ export function normalizeHeroName(
   raw: string,
   maxLength = HERO_NAME_MAX_LENGTH
 ): string {
-  return raw.trim().replace(/\s+/g, " ").slice(0, maxLength);
+  return raw
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[<>]/g, "")
+    .slice(0, maxLength);
 }
 
 export function getSetupBlockers(

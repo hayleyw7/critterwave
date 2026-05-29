@@ -6,6 +6,7 @@
   "description": "Browser critter wave RPG",
   "scripts": {
     "build": "tsc",
+    "build:site": "npm run build && node scripts/build-site.mjs",
     "predev": "npm run build",
     "generate-foes": "node scripts/generate-foes.mjs",
     "generate:og": "node scripts/generate-og-image.mjs",
@@ -19,6 +20,7 @@
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.52.0",
+    "happy-dom": "^20.9.0",
     "typescript": "^6.0.3",
     "vitest": "^3.2.4"
   }

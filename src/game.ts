@@ -49,6 +49,19 @@ import {
   pickRandomDanceResponse,
   resetDancePicker,
 } from "./content/dance-responses.js";
+import { appendBattleHypeTail, setBattleLines } from "./lib/battle-log-dom.js";
+import {
+  isDebugHost,
+  parseSaveMeta,
+  sanitizeGamePhase,
+  sanitizeHypeLevel,
+  sanitizeIdList,
+  sanitizeSavedHeroName,
+  sanitizeSnapshotFoe,
+  sanitizeSnapshotPlayer,
+  sanitizeTurn,
+  sanitizeWave,
+} from "./lib/save-validation.js";
 import { assertHeroPickerOrderCovers, heroPickerOrderIndex } from "./lib/hero-groups.js";
 import {
   COLOR_THEME_IDS,
@@ -220,6 +233,9 @@ const FOES: FoeTemplate[] = FOES_RAW.map((f) => ({ ...f }));
 const HEROES: HeroOption[] = heroesFromFoes(FOES).sort(
   (a, b) => heroPickerOrderIndex(a.emoji) - heroPickerOrderIndex(b.emoji)
 );
+const HERO_EMOJIS = new Set(HEROES.map((hero) => hero.emoji));
+const FOES_BY_ID = new Map(FOES.map((foe) => [foe.id, foe]));
+const FOE_IDS = new Set(FOES.map((foe) => foe.id));
 
 for (const foe of FOES) {
   assertAlliterativeName(foe.name);
@@ -477,21 +493,10 @@ function loadSave(): SaveData {
     if (!raw) {
       return { bestWave: 0, runsPlayed: 0 };
     }
-    const parsed = JSON.parse(raw) as Partial<
-      SaveData & { snapshot?: LegacySnapshot }
-    >;
-    return {
-      bestWave: parsed.bestWave ?? 0,
-      runsPlayed: parsed.runsPlayed ?? 0,
-      playerEmoji: parsed.playerEmoji,
-      heroName: parsed.heroName,
-      heroLabel: parsed.heroLabel,
-      heroColorTheme:
-        parsed.heroColorTheme && isHeroColorTheme(parsed.heroColorTheme)
-          ? parsed.heroColorTheme
-          : undefined,
-      setupActive: parsed.setupActive === true,
-    };
+    return parseSaveMeta(JSON.parse(raw) as unknown, {
+      allowedHeroEmojis: HERO_EMOJIS,
+      campaignWaves: CAMPAIGN_WAVES,
+    });
   } catch {
     return { bestWave: 0, runsPlayed: 0 };
   }
@@ -516,39 +521,38 @@ function loadSnapshot(): GameSnapshot | null {
 }
 
 function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
+  const wave = sanitizeWave(snap.wave, CAMPAIGN_WAVES);
   const legacyFoe = snap.foe ?? snap.goblin;
-  const foeNormalized: Enemy | null = legacyFoe
-    ? {
-        id: legacyFoe.id ?? "grumpy-goblin",
-        name: legacyFoe.name ?? "Grumpy Goblin",
-        emoji: legacyFoe.emoji ?? "👺",
-        hp: legacyFoe.hp,
-        maxHp: legacyFoe.maxHp,
-        attack: legacyFoe.attack,
-        level: legacyFoe.level ?? playerLevelForWave(snap.wave),
-      }
+  const playerEmoji =
+    typeof snap.player?.emoji === "string" ? snap.player.emoji : DEFAULT_HERO_EMOJI;
+  const player = sanitizeSnapshotPlayer(
+    snap.player,
+    wave,
+    HERO_EMOJIS,
+    DEFAULT_HERO_EMOJI,
+    getHeroLabelForEmoji(playerEmoji)
+  );
+  const foeNormalized = legacyFoe
+    ? sanitizeSnapshotFoe(legacyFoe, wave, FOES_BY_ID)
     : null;
 
   return {
-    player: {
-      ...snap.player,
-      emoji: snap.player.emoji ?? DEFAULT_HERO_EMOJI,
-    },
+    player,
     foe: foeNormalized,
-    turn: snap.turn,
-    wave: snap.wave,
-    phase: snap.phase,
-    hypeLevel: snap.hypeLevel ?? 0,
-    foeHypeLevel: snap.foeHypeLevel ?? snap.goblinHypeLevel ?? 0,
-    foeOrderIds: snap.foeOrderIds,
+    turn: sanitizeTurn(snap.turn),
+    wave,
+    phase: sanitizeGamePhase(snap.phase),
+    hypeLevel: sanitizeHypeLevel(snap.hypeLevel),
+    foeHypeLevel: sanitizeHypeLevel(snap.foeHypeLevel ?? snap.goblinHypeLevel),
+    foeOrderIds: sanitizeIdList(snap.foeOrderIds, FOE_IDS),
     foeColorTheme: snap.foeColorTheme,
     heroColorTheme:
       snap.heroColorTheme && isHeroColorTheme(snap.heroColorTheme)
         ? snap.heroColorTheme
         : undefined,
     combatHints: createCombatHintsState(snap.combatHints ?? {}),
-    foeQueueIds: snap.foeQueueIds,
-    deferredFoeIds: snap.deferredFoeIds,
+    foeQueueIds: sanitizeIdList(snap.foeQueueIds, FOE_IDS),
+    deferredFoeIds: sanitizeIdList(snap.deferredFoeIds, FOE_IDS),
   };
 }
 
@@ -706,7 +710,11 @@ function getHeroLabelForEmoji(emoji: string): string {
 }
 
 function resolveSavedHeroName(save: SaveData, emoji: string): string {
-  return save.heroName ?? save.heroLabel ?? getHeroLabelForEmoji(emoji);
+  return sanitizeSavedHeroName(
+    save.heroName,
+    save.heroLabel,
+    getHeroLabelForEmoji(emoji)
+  );
 }
 
 function readHeroNameFromSetup(): string {
@@ -807,7 +815,7 @@ function syncHeroColorSwatchSelection(): void {
 
 function buildHeroColorSwatches(): void {
   if (!el.heroColorSwatches) return;
-  el.heroColorSwatches.innerHTML = "";
+  el.heroColorSwatches.replaceChildren();
   for (const theme of COLOR_THEMES) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -1379,22 +1387,8 @@ function render(): void {
   syncCombatHintClasses();
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function logLine(text: string, kind: "info" | "player" | "foe" | "win" | "lose" = "info"): void {
   el.battleText.textContent = text;
-  el.battleText.className = `battle-text battle-${kind}`;
-  revealBattleLog();
-}
-
-function logHtmlLine(html: string, kind: "info" | "player" | "foe" | "win" | "lose" = "info"): void {
-  el.battleText.innerHTML = html;
   el.battleText.className = `battle-text battle-${kind}`;
   revealBattleLog();
 }
@@ -1403,11 +1397,16 @@ function logBattleLines(
   primary: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" },
   secondary: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }
 ): void {
-  el.battleText.className = "battle-text";
-  el.battleText.innerHTML = [
-    `<span class="battle-line battle-${primary.kind}">${escapeHtml(primary.text)}</span>`,
-    `<span class="battle-line battle-${secondary.kind}">${escapeHtml(secondary.text)}</span>`,
-  ].join("");
+  setBattleLines(el.battleText, [primary, secondary]);
+  revealBattleLog();
+}
+
+function logDanceLines(opener: string, reaction: string, tail: string): void {
+  setBattleLines(el.battleText, [
+    { text: opener, kind: "player" },
+    { text: reaction, kind: "foe" },
+  ]);
+  appendBattleHypeTail(el.battleText, tail);
   revealBattleLog();
 }
 
@@ -1624,10 +1623,8 @@ function startWave(): void {
   combatHints = maybeArmDanceHintForWave(combatHints, wave);
   pulseWaveHud();
   applyFoeColorTheme(foeColorTheme);
-  logHtmlLine(
-    `<span class="battle-line battle-foe">${escapeHtml(foe.name)} appears!</span>`,
-    "info"
-  );
+  setBattleLines(el.battleText, [{ text: `${foe.name} appears!`, kind: "foe" }]);
+  revealBattleLog();
   render();
   playFoeEntrance();
   persist();
@@ -1694,7 +1691,10 @@ function winCampaign(): void {
 }
 
 function hasDebugWin(): boolean {
-  return new URLSearchParams(window.location.search).get("debug") === "win";
+  return (
+    isDebugHost(window.location.hostname) &&
+    new URLSearchParams(window.location.search).get("debug") === "win"
+  );
 }
 
 function triggerDebugWin(): void {
@@ -1712,6 +1712,9 @@ function triggerDebugWin(): void {
 }
 
 function mountDebugHooks(): void {
+  if (!isDebugHost(window.location.hostname)) {
+    return;
+  }
   window.critterwave = { win: triggerDebugWin };
   console.info(
     "[critterwave] Debug: critterwave.win() — or load with ?debug=win"
@@ -1961,19 +1964,6 @@ function onHeal(): void {
   scheduleFoeCounterHitVisuals(counterHit, generation);
 }
 
-function logDanceLines(opener: string, reactionHtml: string, tail: string): void {
-  const lines = [
-    `<span class="battle-line battle-player">${opener}</span>`,
-    `<span class="battle-line battle-foe">${reactionHtml}</span>`,
-  ];
-  if (tail) {
-    lines.push(`<span class="battle-line battle-hype-line">${tail}</span>`);
-  }
-  el.battleText.className = "battle-text";
-  el.battleText.innerHTML = lines.join("");
-  revealBattleLog();
-}
-
 function onDance(): void {
   const generation = lockCombat();
   if (generation === null) return;
@@ -1999,8 +1989,8 @@ function onDance(): void {
     applyFoeDanceBuff(actualFoeGain);
   }
 
-  const opener = escapeHtml(pickRandomDanceOpener());
-  const reaction = escapeHtml(formatFoeInText(response.message));
+  const opener = pickRandomDanceOpener();
+  const reaction = formatFoeInText(response.message);
   const tail = formatDanceHypeTail(actualPlayerGain, actualFoeGain, currentFoe.name, {
     playerCapped,
     foeCapped,
@@ -2058,7 +2048,7 @@ function applyHeroChoice(emoji: string, label: string): void {
 }
 
 function buildHeroPicker(): void {
-  el.heroPicker.innerHTML = "";
+  el.heroPicker.replaceChildren();
 
   const grid = document.createElement("div");
   grid.className = "emoji-picker-grid";
@@ -2070,7 +2060,11 @@ function buildHeroPicker(): void {
     btn.dataset.emoji = hero.emoji;
     btn.dataset.label = hero.label;
     btn.setAttribute("aria-label", hero.label);
-    btn.innerHTML = `<span class="emoji-pick-glyph" aria-hidden="true">${hero.emoji}</span>`;
+    const glyph = document.createElement("span");
+    glyph.className = "emoji-pick-glyph";
+    glyph.setAttribute("aria-hidden", "true");
+    glyph.textContent = hero.emoji;
+    btn.appendChild(glyph);
     if (hero.emoji === pendingHeroEmoji) {
       btn.classList.add("selected");
     }

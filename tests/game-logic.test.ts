@@ -353,6 +353,11 @@ describe("normalizeHeroName", () => {
   it("returns empty for blank input", () => {
     expect(normalizeHeroName("   ")).toBe("");
   });
+
+  it("strips angle brackets from names", () => {
+    expect(normalizeHeroName("<Pat>")).toBe("Pat");
+    expect(normalizeHeroName("<>")).toBe("");
+  });
 });
 
 describe("setup blockers", () => {
