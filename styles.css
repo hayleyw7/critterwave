@@ -14,13 +14,14 @@
   --danger: #fb7185;
   --highlight: #fde047;
   --dialog: #120a1f;
-  --cmd-bg: #1e1235;
-  --cmd-hover: #3d2668;
+  --cmd-bg: #2a1848;
+  --cmd-hover: #4a3080;
+  --cmd-border: #a78bdb;
   --font-ui: "VT323", monospace;
-  --scrollbar-track: var(--hp-bg);
-  --scrollbar-thumb: var(--panel);
-  --scrollbar-thumb-hover: var(--cmd-hover);
-  --scrollbar-border: var(--panel-edge);
+  --scrollbar-track: #120820;
+  --scrollbar-thumb: #8b6fc4;
+  --scrollbar-thumb-hover: #b49ae8;
+  --scrollbar-border: #c4a8f0;
   --space-1: 0.25rem;
   --space-2: 0.4rem;
   --space-3: 0.55rem;
@@ -68,7 +69,7 @@ body {
 *::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border: 2px solid var(--scrollbar-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 *::-webkit-scrollbar-thumb:hover {
@@ -268,11 +269,42 @@ body::before {
   letter-spacing: 0.06em;
 }
 
-.setup-name-field {
+.setup-actions {
+  --setup-control-height: 2.65rem;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.setup-name-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-bottom: 0;
   text-align: left;
+}
+
+.setup-hint {
+  margin: var(--space-2) 0 0;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  line-height: 1.25;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+}
+
+.setup-hint-error {
+  color: var(--highlight);
+}
+
+.setup-name-input--error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.45);
 }
 
 .emoji-picker {
@@ -290,8 +322,9 @@ body::before {
 .emoji-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, 3.5rem);
-  justify-content: start;
+  justify-content: center;
   gap: var(--space-2);
+  width: 100%;
 }
 
 .setup-name-label {
@@ -299,31 +332,32 @@ body::before {
   margin-bottom: var(--space-1);
   font-family: var(--font-ui);
   font-size: 1.05rem;
-  color: var(--text-dim);
+  color: var(--highlight);
   letter-spacing: 0.05em;
 }
 
 .setup-name-input {
   width: 100%;
   box-sizing: border-box;
-  padding: var(--space-2) var(--space-3);
+  height: var(--setup-control-height);
+  padding: 0 var(--space-3);
   font-family: var(--font-ui);
   font-size: 1.15rem;
+  line-height: 1;
   letter-spacing: 0.04em;
-  color: var(--text);
-  background: var(--cmd-bg);
-  border: 2px solid var(--panel-edge);
+  color: var(--highlight);
+  background: rgba(253, 224, 71, 0.08);
+  border: 2px solid var(--highlight);
   outline: none;
 }
 
 .setup-name-input::placeholder {
-  color: var(--text-dim);
-  opacity: 0.75;
+  color: rgba(253, 224, 71, 0.5);
 }
 
 .setup-name-input:focus {
-  border-color: var(--highlight);
-  box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.35);
+  box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.45);
+  background: rgba(253, 224, 71, 0.12);
 }
 
 .emoji-pick {
@@ -332,7 +366,7 @@ body::before {
   width: 3.5rem;
   height: 3.5rem;
   padding: 0;
-  border: 2px solid var(--panel-edge);
+  border: 2px solid var(--cmd-border);
   background: var(--cmd-bg);
   color: var(--text);
   display: grid;
@@ -371,11 +405,25 @@ body::before {
 }
 
 .cmd-start {
+  flex-shrink: 0;
+  align-self: flex-end;
+  height: var(--setup-control-height);
+  min-width: 8rem;
+  padding: 0 1.1rem;
   border: 2px solid var(--highlight);
   color: var(--highlight);
-  min-width: 8rem;
-  padding: 0.45rem 1rem;
+  background: rgba(253, 224, 71, 0.12);
   box-shadow: 0 2px 0 #0a0612;
+}
+
+.cmd-start:hover:not(:disabled) {
+  background: rgba(253, 224, 71, 0.22);
+  border-color: var(--highlight);
+  filter: brightness(1.05);
+}
+
+.cmd-start.cmd-start-ready {
+  background: rgba(253, 224, 71, 0.18);
 }
 
 .game-shell.setup-active {
@@ -1056,14 +1104,14 @@ body::before {
   cursor: pointer;
   color: var(--text);
   background: var(--cmd-bg);
-  border: none;
+  border: 2px solid var(--cmd-border);
   border-radius: 0;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
   letter-spacing: 0.04em;
-  transition: background 0.1s, filter 0.1s;
+  transition: background 0.1s, filter 0.1s, border-color 0.1s;
 }
 
 .command-menu .cmd:nth-child(odd) {
@@ -1076,6 +1124,7 @@ body::before {
 
 .cmd:hover:not(:disabled) {
   background: var(--cmd-hover);
+  border-color: var(--highlight);
   filter: brightness(1.08);
 }
 
@@ -1140,10 +1189,6 @@ body::before {
   line-height: 1;
 }
 
-.records-stat-played {
-  margin-left: 0.2rem;
-}
-
 .records-stat strong {
   color: var(--highlight);
   font-weight: normal;
@@ -1163,16 +1208,16 @@ body::before {
   letter-spacing: 0.04em;
   padding: var(--space-1) var(--space-3);
   cursor: pointer;
-  color: var(--text-dim);
-  background: transparent;
-  border: 1px solid var(--panel-edge);
+  color: var(--text);
+  background: var(--cmd-bg);
+  border: 2px solid var(--cmd-border);
   transition: color 0.1s, background 0.1s, border-color 0.1s;
 }
 
 .meta-btn:hover {
   color: var(--text);
-  background: var(--cmd-bg);
-  border-color: var(--panel-light);
+  background: var(--cmd-hover);
+  border-color: var(--highlight);
 }
 
 .meta-btn-danger:hover {
@@ -1448,6 +1493,16 @@ body::before {
 }
 
 @media (max-width: 480px) {
+  .setup-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cmd-start {
+    width: 100%;
+    min-width: 0;
+  }
+
   .game-shell {
     padding: var(--space-2);
     padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom, 0px));

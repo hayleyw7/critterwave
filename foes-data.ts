@@ -1,4 +1,4 @@
-/** 120 hand-picked foes — critters + fantasy creatures, sound-matched alliteration. */
+/** 117 hand-picked foes — critters + fantasy creatures, sound-matched alliteration. */
 export const FOES = [
   {
     "id": "cunning-cat",
@@ -173,13 +173,6 @@ export const FOES = [
     "name": "Barren Boar",
     "emoji": "🐗",
     "baseHp": 12,
-    "baseAtk": 4
-  },
-  {
-    "id": "raging-ram",
-    "name": "Raging Ram",
-    "emoji": "🐏",
-    "baseHp": 11,
     "baseAtk": 4
   },
   {
@@ -680,6 +673,13 @@ export const FOES = [
     "baseAtk": 3
   },
   {
+    "id": "tricky-tree",
+    "name": "Tricky Tree",
+    "emoji": "🌳",
+    "baseHp": 12,
+    "baseAtk": 3
+  },
+  {
     "id": "angry-ant",
     "name": "Angry Ant",
     "emoji": "🐜",
@@ -813,31 +813,10 @@ export const FOES = [
     "baseAtk": 3
   },
   {
-    "id": "vile-vampire",
-    "name": "Vile Vampire",
-    "emoji": "🧛",
-    "baseHp": 11,
-    "baseAtk": 4
-  },
-  {
-    "id": "zealous-zombie",
-    "name": "Zonked Zombie",
-    "emoji": "🧟",
-    "baseHp": 12,
-    "baseAtk": 3
-  },
-  {
-    "id": "gnarly-genie",
-    "name": "Galling Genie",
-    "emoji": "🧞",
-    "baseHp": 12,
-    "baseAtk": 4
-  },
-  {
-    "id": "moody-mermaid",
-    "name": "Moody Mer",
-    "emoji": "🧜",
-    "baseHp": 11,
-    "baseAtk": 3
+    "id": "enemy-egg",
+    "name": "Enemy Egg",
+    "emoji": "🥚",
+    "baseHp": 9,
+    "baseAtk": 2
   }
 ] as const;

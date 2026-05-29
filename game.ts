@@ -303,8 +303,11 @@ const el = {
   heroPicker: document.getElementById("hero-picker")!,
   heroNameInput: document.getElementById("hero-name-input") as HTMLInputElement,
   setupStartBtn: document.getElementById("setup-start-btn") as HTMLButtonElement,
+  setupHint: document.getElementById("setup-hint")!,
   gameShell: document.querySelector(".game-shell")!,
 };
+
+let setupHintForced = false;
 
 type ConfirmOptions = {
   title: string;
@@ -538,8 +541,59 @@ function readHeroNameFromSetup(): string {
   return normalizeHeroName(el.heroNameInput.value);
 }
 
+function getSetupBlockers(): string[] {
+  const blockers: string[] = [];
+  if (!pendingHeroEmoji) {
+    blockers.push("pick a critter");
+  }
+  if (!readHeroNameFromSetup()) {
+    blockers.push("enter your name");
+  }
+  return blockers;
+}
+
+function formatSetupBlockerMessage(blockers: string[]): string {
+  if (blockers.length === 0) return "";
+  if (blockers.length === 1) {
+    return `To fight, ${blockers[0]}.`;
+  }
+  return `To fight, ${blockers[0]} and ${blockers[1]}.`;
+}
+
 function updateSetupStartButton(): void {
-  el.setupStartBtn.disabled = readHeroNameFromSetup().length === 0;
+  const blockers = getSetupBlockers();
+  const canStart = blockers.length === 0;
+
+  el.setupStartBtn.disabled = false;
+  el.setupStartBtn.classList.toggle("cmd-start-ready", canStart);
+  el.heroNameInput.classList.toggle(
+    "setup-name-input--error",
+    setupHintForced && blockers.includes("enter your name")
+  );
+
+  if (canStart || !setupHintForced) {
+    if (canStart) {
+      setupHintForced = false;
+    }
+    el.setupHint.hidden = true;
+    el.setupHint.textContent = "";
+    el.setupHint.classList.remove("setup-hint-error");
+    return;
+  }
+
+  el.setupHint.hidden = false;
+  el.setupHint.textContent = formatSetupBlockerMessage(blockers);
+  el.setupHint.classList.add("setup-hint-error");
+}
+
+function showSetupBlockedHint(): void {
+  setupHintForced = true;
+  updateSetupStartButton();
+  if (!readHeroNameFromSetup()) {
+    el.heroNameInput.focus();
+  } else {
+    el.heroPicker.focus();
+  }
 }
 
 function getPlayerHypeBonus(): number {
@@ -1175,10 +1229,11 @@ function buildHeroPicker(): void {
         other.classList.remove("selected");
       }
       btn.classList.add("selected");
-      pendingHeroEmoji = hero.emoji;
-      pendingHeroLabel = hero.label;
-    });
-    grid.appendChild(btn);
+        pendingHeroEmoji = hero.emoji;
+        pendingHeroLabel = hero.label;
+        updateSetupStartButton();
+      });
+      grid.appendChild(btn);
   }
 
   el.heroPicker.appendChild(grid);
@@ -1188,6 +1243,7 @@ function showSetup(): void {
   const save = loadSave();
   pendingHeroEmoji = save.playerEmoji ?? player.emoji;
   pendingHeroLabel = getHeroLabelForEmoji(pendingHeroEmoji);
+  setupHintForced = false;
   buildHeroPicker();
   el.heroNameInput.value = save.heroName ?? "";
   updateSetupStartButton();
@@ -1201,10 +1257,14 @@ function hideSetup(): void {
 }
 
 function confirmHeroAndStart(): boolean {
+  const blockers = getSetupBlockers();
+  if (blockers.length > 0) {
+    showSetupBlockedHint();
+    return false;
+  }
   const heroName = readHeroNameFromSetup();
   if (!heroName) {
-    el.heroNameInput.focus();
-    updateSetupStartButton();
+    showSetupBlockedHint();
     return false;
   }
   applyHeroChoice(pendingHeroEmoji, heroName);
