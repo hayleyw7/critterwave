@@ -12,15 +12,18 @@ import {
   HYPE_ATTACK_PER_LEVEL,
   HYPE_MAX,
   applyHypeGain,
+  applyPlayerStatsForWave,
   clampHype,
   formatHypeLabel as formatHypeStatLabel,
   hypeHeadroom,
+  isLevelBandFinale,
   makeFoeForWave as buildWaveFoe,
   makeFoeFromTemplate,
   nextDefeatVerb as advanceDefeatVerb,
   pickFoeFromOrder,
   playerLevelForWave,
   playerStatsForWave,
+  refreshWaveFoeFromTemplate,
   WAVES_PER_LEVEL,
   xpProgressForWave,
   xpPercentForWave,
@@ -47,6 +50,18 @@ import {
   isColorThemeId,
   type ColorThemeId,
 } from "./lib/color-themes.js";
+import {
+  beginAwaitingFoeResponse,
+  blockCombatForScreenEnd,
+  canUseCombatActions as canUseCombatActionsGate,
+  finishCombatAction as finishCombatActionGate,
+  foeFollowUpDelayMs,
+  FOE_FOLLOW_UP_DELAY_MS,
+  isFollowUpTimerStale,
+  resetCombatGate,
+  tryLockCombat as tryLockCombatGate,
+  type CombatGateState,
+} from "./lib/combat-gate.js";
 import {
   startVictoryCelebration,
   stopVictoryCelebration,
@@ -134,8 +149,6 @@ const LEGACY_STORAGE_KEYS = ["goblinwave-v4", "goblinwave-v1"] as const;
 const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
 const FOE_POOF_MS = 450;
 const FOE_ENTRANCE_MS = 550;
-/** Foe counter / dance follow-up after your attack, heal, or dance. */
-const FOE_FOLLOW_UP_DELAY_MS = 200;
 const DEATH_BEAT_MS = 1200;
 const GOLD_FLASH_MS = 650;
 const HEAL_ANIM_MS = 420;
@@ -188,18 +201,11 @@ function syncPlayerForCurrentWave(options?: {
   healToMax?: boolean;
   grantMaxHpIncrease?: boolean;
 }): number {
-  const stats = playerStatsForWave(wave);
-  const prevMax = player.maxHp;
-  player.maxHp = stats.maxHp;
-  player.attack = stats.attack;
-
-  if (options?.healToMax) {
-    player.hp = stats.maxHp;
-  } else if (options?.grantMaxHpIncrease && stats.maxHp > prevMax) {
-    player.hp = Math.min(stats.maxHp, player.hp + (stats.maxHp - prevMax));
-  }
-  player.hp = Math.min(player.hp, player.maxHp);
-  return stats.level;
+  const next = applyPlayerStatsForWave(wave, player, options);
+  player.hp = next.hp;
+  player.maxHp = next.maxHp;
+  player.attack = next.attack;
+  return next.level;
 }
 
 function refreshFoeStatsPreservingHp(): void {
@@ -210,11 +216,11 @@ function refreshFoeStatsPreservingHp(): void {
   const template =
     foeOrder.find((entry) => entry.id === currentFoe.id) ??
     pickFoeFromOrder(foeOrder, wave);
-  const rebuilt = makeFoeFromTemplate(template, wave);
-  currentFoe.maxHp = rebuilt.maxHp;
-  currentFoe.attack = rebuilt.attack;
-  currentFoe.level = rebuilt.level;
-  currentFoe.hp = Math.min(currentFoe.hp, rebuilt.maxHp);
+  const refreshed = refreshWaveFoeFromTemplate(currentFoe.hp, template, wave);
+  currentFoe.maxHp = refreshed.maxHp;
+  currentFoe.attack = refreshed.attack;
+  currentFoe.level = refreshed.level;
+  currentFoe.hp = refreshed.hp;
 }
 
 function restoreFoeOrder(ids: string[] | undefined, heroEmoji: string): FoeTemplate[] {
@@ -1136,32 +1142,39 @@ function pause(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function combatGateState(): CombatGateState {
+  return {
+    phase,
+    combatBusy,
+    awaitingFoeResponse,
+    combatActionGeneration,
+    playerHp: player.hp,
+    hasFoe: foe !== null,
+  };
+}
+
+function applyCombatGateState(state: CombatGateState): void {
+  combatBusy = state.combatBusy;
+  awaitingFoeResponse = state.awaitingFoeResponse;
+  combatActionGeneration = state.combatActionGeneration;
+}
+
 function canUseCombatActions(): boolean {
-  return (
-    phase === "combat" &&
-    !combatBusy &&
-    !awaitingFoeResponse &&
-    player.hp > 0 &&
-    foe !== null
-  );
+  return canUseCombatActionsGate(combatGateState());
 }
 
 /** Returns action generation id when locked; null if actions are not allowed. */
 function lockCombat(): number | null {
-  if (!canUseCombatActions()) {
+  const locked = tryLockCombatGate(combatGateState());
+  if (!locked.ok) {
     return null;
   }
-  combatBusy = true;
-  combatActionGeneration += 1;
-  return combatActionGeneration;
+  applyCombatGateState(locked.state);
+  return locked.generation;
 }
 
 function finishCombatAction(generation: number): void {
-  if (generation !== combatActionGeneration) {
-    return;
-  }
-  awaitingFoeResponse = false;
-  combatBusy = false;
+  applyCombatGateState(finishCombatActionGate(generation, combatGateState()));
 }
 
 function playNextFoeReveal(
@@ -1203,9 +1216,11 @@ async function transitionToNextWave(
   }
 
   const completedWave = wave;
-  const isLevelBandFinale =
-    completedWave % WAVES_PER_LEVEL === 0 && completedWave < getCampaignLength();
-  if (isLevelBandFinale) {
+  const isLevelBandFinaleWave = isLevelBandFinale(
+    completedWave,
+    getCampaignLength()
+  );
+  if (isLevelBandFinaleWave) {
     await playXpBarFullBeat();
   }
 
@@ -1319,9 +1334,7 @@ function updateRecordsOnVictory(): void {
 
 function endGame(): void {
   stopVictoryCelebration(el.victoryEmojiLayer);
-  combatBusy = true;
-  awaitingFoeResponse = true;
-  combatActionGeneration += 1;
+  applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
   phase = "gameover";
   clearAllHype();
   logLine("You lose! Game over.", "lose");
@@ -1331,9 +1344,7 @@ function endGame(): void {
 }
 
 function winCampaign(): void {
-  combatBusy = true;
-  awaitingFoeResponse = true;
-  combatActionGeneration += 1;
+  applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
   phase = "victory";
   clearAllHype();
   logLine(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`, "win");
@@ -1441,7 +1452,7 @@ function playFoeCounterHitVisuals(hit: number, fatal: boolean): void {
 function scheduleFoeCounterHitVisuals(hit: number, generation: number): void {
   const fatal = player.hp <= 0;
   window.setTimeout(() => {
-    if (generation !== combatActionGeneration || phase !== "combat") {
+    if (isFollowUpTimerStale(generation, combatGateState(), phase)) {
       finishCombatAction(generation);
       return;
     }
@@ -1458,9 +1469,9 @@ function scheduleFoeDanceFollowUp(
   generation: number,
   opts: { foeDances: boolean; foeGain: number; foeCapped: boolean }
 ): void {
-  const delay = opts.foeDances ? FOE_FOLLOW_UP_DELAY_MS : 0;
+  const delay = foeFollowUpDelayMs(opts.foeDances);
   window.setTimeout(() => {
-    if (generation !== combatActionGeneration || phase !== "combat") {
+    if (isFollowUpTimerStale(generation, combatGateState(), phase)) {
       finishCombatAction(generation);
       return;
     }
@@ -1506,7 +1517,7 @@ function onAttack(): void {
     return;
   }
 
-  awaitingFoeResponse = true;
+  applyCombatGateState(beginAwaitingFoeResponse(combatGateState()));
   const counterHit = applyFoeCounterAttack();
   if (counterHit === null) {
     finishCombatAction(generation);
@@ -1544,7 +1555,7 @@ function onHeal(): void {
   showDamagePop("hero", `+${heal}`, "heal");
   void playHeroHeal();
 
-  awaitingFoeResponse = true;
+  applyCombatGateState(beginAwaitingFoeResponse(combatGateState()));
   const counterHit = applyFoeCounterAttack();
   if (counterHit === null) {
     finishCombatAction(generation);
@@ -1737,9 +1748,7 @@ function resetGame(): void {
   lastFoeColorTheme = null;
   resetDancePicker();
   phase = "combat";
-  combatBusy = false;
-  awaitingFoeResponse = false;
-  combatActionGeneration += 1;
+  applyCombatGateState(resetCombatGate(combatGateState()));
   clearCombatAnimations();
   stopVictoryCelebration(el.victoryEmojiLayer);
   el.gameOver.classList.add("hidden");

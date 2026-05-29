@@ -2,14 +2,18 @@ import { describe, expect, it } from "vitest";
 import { FOES } from "../src/data/foes-data.js";
 import {
   applyHypeGain,
+  applyPlayerStatsForWave,
   buildFoeOrder,
   CAMPAIGN_WAVE_COUNT,
   canFleeWave,
+  clampBattleLevel,
   clampHype,
   DEFEAT_VERBS,
   effectiveAttack,
   foeColorConflictsWithHero,
+  foeDifficultyOffset,
   foeLevelForTemplate,
+  foeStatScore,
   foesForHero,
   formatFoeInText,
   formatHypeLabel,
@@ -18,8 +22,11 @@ import {
   heroLabelFromFoeName,
   HERO_NAME_MAX_LENGTH,
   hypeAttackBonus,
+  HYPE_ATTACK_PER_LEVEL,
   hypeHeadroom,
   HYPE_MAX,
+  isLevelBandFinale,
+  LEVEL_COUNT,
   makeFoeForWave,
   makeFoeFromTemplate,
   nextDefeatVerb,
@@ -28,6 +35,9 @@ import {
   pickFoeTemplateIndex,
   playerLevelForWave,
   playerStatsForLevel,
+  playerStatsForWave,
+  refreshWaveFoeFromTemplate,
+  WAVES_PER_LEVEL,
   xpProgressForWave,
   xpPercentForWave,
   randomDamage,
@@ -124,6 +134,14 @@ describe("level progression", () => {
     expect(playerLevelForWave(100)).toBe(10);
   });
 
+  it("clamps battle levels to the campaign cap", () => {
+    expect(clampBattleLevel(0)).toBe(1);
+    expect(clampBattleLevel(1)).toBe(1);
+    expect(clampBattleLevel(LEVEL_COUNT)).toBe(LEVEL_COUNT);
+    expect(clampBattleLevel(99)).toBe(LEVEL_COUNT);
+    expect(foeLevelForTemplate(SAMPLE_FOES[1]!, 500)).toBe(LEVEL_COUNT);
+  });
+
   it("scales player stats by level", () => {
     expect(playerStatsForLevel(1)).toEqual({
       level: 1,
@@ -136,7 +154,14 @@ describe("level progression", () => {
     expect(playerStatsForLevel(10).healMax).toBe(12);
   });
 
+  it("derives wave stats from the wave band", () => {
+    expect(playerStatsForWave(1)).toEqual(playerStatsForLevel(1));
+    expect(playerStatsForWave(15).level).toBe(2);
+    expect(playerStatsForWave(15).maxHp).toBe(23);
+  });
+
   it("tracks xp progress within each 10-wave band", () => {
+    expect(WAVES_PER_LEVEL).toBe(10);
     expect(xpProgressForWave(1)).toEqual({ current: 0, max: 10 });
     expect(xpPercentForWave(1)).toBe(0);
     expect(xpProgressForWave(10)).toEqual({ current: 9, max: 10 });
@@ -145,6 +170,38 @@ describe("level progression", () => {
     expect(xpPercentForWave(11)).toBe(0);
     expect(xpProgressForWave(20)).toEqual({ current: 9, max: 10 });
     expect(xpPercentForWave(20)).toBe(90);
+    expect(xpPercentForWave(100)).toBe(90);
+  });
+
+  it("flags level-band finales before the campaign ends", () => {
+    expect(isLevelBandFinale(10)).toBe(true);
+    expect(isLevelBandFinale(20)).toBe(true);
+    expect(isLevelBandFinale(9)).toBe(false);
+    expect(isLevelBandFinale(11)).toBe(false);
+    expect(isLevelBandFinale(CAMPAIGN_WAVE_COUNT)).toBe(false);
+  });
+
+  it("applies wave stats with heal-to-max and level-up hp bumps", () => {
+    expect(
+      applyPlayerStatsForWave(1, { hp: 5, maxHp: 20 }, { healToMax: true })
+    ).toEqual({ hp: 20, maxHp: 20, attack: 5, level: 1 });
+
+    const leveled = applyPlayerStatsForWave(11, { hp: 18, maxHp: 20 }, {
+      grantMaxHpIncrease: true,
+    });
+    expect(leveled.maxHp).toBe(23);
+    expect(leveled.hp).toBe(21);
+    expect(leveled.level).toBe(2);
+  });
+
+  it("scores roster toughness and maps difficulty offsets", () => {
+    const easy = SAMPLE_FOES[0]!;
+    const mid = SAMPLE_FOES[2]!;
+    const hard = SAMPLE_FOES[1]!;
+    expect(foeStatScore(easy)).toBe(12);
+    expect(foeDifficultyOffset(easy)).toBe(-1);
+    expect(foeDifficultyOffset(mid)).toBe(0);
+    expect(foeDifficultyOffset(hard)).toBe(1);
   });
 
   it("offsets foe level from roster toughness", () => {
@@ -165,17 +222,43 @@ describe("level progression", () => {
     expect(wave15.hp).toBeGreaterThan(wave5.hp);
     expect(wave15.attack).toBeGreaterThan(wave5.attack);
   });
+
+  it("builds foes from wave order", () => {
+    const order = foesForHero(SAMPLE_FOES, "🐱");
+    const wave1 = makeFoeForWave(order, 1);
+    const wave2 = makeFoeForWave(order, 2);
+    expect(wave1.id).toBe(pickFoeFromOrder(order, 1).id);
+    expect(wave2.id).toBe(pickFoeFromOrder(order, 2).id);
+    expect(wave1.level).toBeGreaterThanOrEqual(1);
+  });
+
+  it("refreshes foe stats without overhealing", () => {
+    const hard = SAMPLE_FOES[1]!;
+    const refreshed = refreshWaveFoeFromTemplate(99, hard, 5);
+    expect(refreshed.hp).toBeLessThanOrEqual(refreshed.maxHp);
+    expect(refreshed.attack).toBe(makeFoeFromTemplate(hard, 5).attack);
+  });
 });
 
 describe("wave scaling", () => {
-  it("softens level-1 foes for beginners", () => {
+  it("softens level-1 foes", () => {
     expect(scaleFoeHp(10, 1)).toBe(7);
     expect(scaleFoeAttack(3, 1)).toBe(2);
+  });
+
+  it("softens level-2 foe hp slightly", () => {
+    expect(scaleFoeHp(10, 2)).toBe(11);
+    expect(scaleFoeAttack(3, 2)).toBe(4);
   });
 
   it("scales hp and attack by foe level", () => {
     expect(scaleFoeHp(10, 3)).toBe(14);
     expect(scaleFoeAttack(3, 3)).toBe(5);
+  });
+
+  it("never drops scaled stats below minimums", () => {
+    expect(scaleFoeHp(4, 1)).toBe(4);
+    expect(scaleFoeAttack(1, 1)).toBe(1);
   });
 
   it("builds wave foes from order with levels", () => {
@@ -294,10 +377,12 @@ describe("combat math", () => {
   });
 
   it("adds hype to attack", () => {
+    expect(HYPE_ATTACK_PER_LEVEL).toBe(1);
     expect(hypeAttackBonus(0)).toBe(0);
     expect(hypeAttackBonus(2)).toBe(2);
     expect(hypeAttackBonus(-1)).toBe(0);
     expect(effectiveAttack(5, 2)).toBe(7);
+    expect(effectiveAttack(14, 5)).toBe(19);
   });
 
   it("clamps hype to max", () => {

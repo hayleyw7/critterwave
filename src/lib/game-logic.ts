@@ -149,6 +149,54 @@ export function playerStatsForWave(wave: number): PlayerCombatStats {
   return playerStatsForLevel(playerLevelForWave(wave));
 }
 
+/** True when clearing wave 10, 20, … — XP bar fills before the next level band. */
+export function isLevelBandFinale(
+  completedWave: number,
+  campaignLength: number = CAMPAIGN_WAVE_COUNT
+): boolean {
+  return (
+    completedWave % WAVES_PER_LEVEL === 0 && completedWave < campaignLength
+  );
+}
+
+export function applyPlayerStatsForWave(
+  wave: number,
+  player: { hp: number; maxHp: number },
+  options?: { healToMax?: boolean; grantMaxHpIncrease?: boolean }
+): { hp: number; maxHp: number; attack: number; level: number } {
+  const stats = playerStatsForWave(wave);
+  const prevMax = player.maxHp;
+  let hp = player.hp;
+
+  if (options?.healToMax) {
+    hp = stats.maxHp;
+  } else if (options?.grantMaxHpIncrease && stats.maxHp > prevMax) {
+    hp = Math.min(stats.maxHp, hp + (stats.maxHp - prevMax));
+  }
+  hp = Math.min(hp, stats.maxHp);
+
+  return {
+    hp,
+    maxHp: stats.maxHp,
+    attack: stats.attack,
+    level: stats.level,
+  };
+}
+
+export function refreshWaveFoeFromTemplate(
+  currentHp: number,
+  template: FoeTemplate,
+  wave: number
+): Pick<WaveFoe, "hp" | "maxHp" | "attack" | "level"> {
+  const rebuilt = makeFoeFromTemplate(template, wave);
+  return {
+    hp: Math.min(currentHp, rebuilt.maxHp),
+    maxHp: rebuilt.maxHp,
+    attack: rebuilt.attack,
+    level: rebuilt.level,
+  };
+}
+
 /** XP toward the next level-up — 0% on wave 1, 90% on wave 10 (last mob of the band), level up at 11. */
 export function xpProgressForWave(wave: number): { current: number; max: number } {
   const max = WAVES_PER_LEVEL;
