@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { patchSaveSnapshot } from "./helpers-save.js";
 import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers.js";
 
 test.describe("Critterwave — happy paths", () => {
@@ -171,5 +172,22 @@ test.describe("Critterwave — sad paths", () => {
     await expect(page.getByLabel("Combat actions")).toBeVisible();
     await expect(page.locator("#battle-text")).toContainText(/restored/i);
     await expect(page.locator("#wave-banner")).toHaveText(waveBefore ?? "");
+    await expect(page.locator("#player-hype-wrap")).not.toHaveClass(/hype-first-dance-flash/);
+    await expect(page.locator("#foe-hype-wrap")).not.toHaveClass(/hype-first-dance-flash/);
+  });
+
+  test("restore keeps max hype styling without teach flash", async ({ page }) => {
+    await startFreshRun(page);
+    await patchSaveSnapshot(page, {
+      hypeLevel: 5,
+      foeHypeLevel: 5,
+      combatHints: { dismissedAttackHint: true },
+    });
+    await page.reload();
+    await expect(page.locator("#battle-text")).toContainText(/restored/i);
+    await expect(page.locator("#player-hype-wrap")).toHaveClass(/hype-maxed/);
+    await expect(page.locator("#foe-hype-wrap")).toHaveClass(/hype-maxed/);
+    await expect(page.locator("#player-hype-wrap")).not.toHaveClass(/hype-maxed-flash/);
+    await expect(page.locator("#foe-hype-wrap")).not.toHaveClass(/hype-maxed-flash/);
   });
 });

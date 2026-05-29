@@ -97,6 +97,20 @@ export function combatHintsForSnapshot(
   return { ...flags };
 }
 
+/** Mid-run reload: don't replay HYPE teach flashes for levels already earned. */
+export function combatHintsAfterMidRunRestore(
+  flags: CombatHintsState,
+  playerHype: number,
+  foeHype: number
+): CombatHintsState {
+  return {
+    ...flags,
+    celebratedFirstPlayerHype:
+      flags.celebratedFirstPlayerHype || playerHype >= 1,
+    celebratedFirstFoeHype: flags.celebratedFirstFoeHype || foeHype >= 1,
+  };
+}
+
 export function hpRatio(hp: number, maxHp: number): number {
   if (maxHp <= 0) {
     return 1;

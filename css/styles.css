@@ -128,6 +128,20 @@ body.is-booting .game-shell {
   visibility: hidden;
 }
 
+body.is-booting .status-panel,
+body.is-booting .hp-fill,
+body.is-booting .hype-fill,
+body.is-booting .xp-fill {
+  transition: none !important;
+}
+
+body.is-booting .hype-stat-wrap.hype-first-dance-flash .hype-bar,
+body.is-booting .hype-stat-wrap.hype-first-dance-flash .hype-stat,
+body.is-booting .hype-stat-wrap.hype-maxed-flash .hype-bar,
+body.is-booting .hype-stat-wrap.hype-maxed-flash .hype-stat {
+  animation: none !important;
+}
+
 .game-shell {
   --foe-accent: #facc15;
   position: relative;

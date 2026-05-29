@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { hypeAfterHealAndCounter } from "../src/lib/game-logic.js";
 import {
+  combatHintsAfterMidRunRestore,
   combatHintsForSnapshot,
   createCombatHintsState,
   isLowHpForHint,
@@ -516,6 +517,14 @@ describe("combat hints — persistence and migration", () => {
     const snap = combatHintsForSnapshot(flags);
     const restored = createCombatHintsState(snap);
     expect(restored).toEqual(flags);
+  });
+
+  it("skips hype teach flags on mid-run restore when hype was already earned", () => {
+    const restored = combatHintsAfterMidRunRestore(fresh(), 2, 1);
+    expect(restored.celebratedFirstPlayerHype).toBe(true);
+    expect(restored.celebratedFirstFoeHype).toBe(true);
+    expect(tryCelebrateFirstPlayerHype(restored, 2).flashFirstHype).toBe(false);
+    expect(tryCelebrateFirstFoeHype(restored, 1).flashFirstHype).toBe(false);
   });
 
   it("migrates legacy has-used flags from old saves", () => {

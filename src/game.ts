@@ -92,6 +92,7 @@ import {
 } from "./lib/combat-gate.js";
 import {
   createCombatHintsState,
+  combatHintsAfterMidRunRestore,
   combatHintsForSnapshot,
   deferDanceHintAfterRun,
   dismissHealHint,
@@ -353,6 +354,8 @@ let displayedPlayerHype = 0;
 let displayedFoeHype = 0;
 /** Skip first-HYPE teach on the render beat right after Heal (gain may be lost to counter). */
 let skipPlayerHypeTeachThisRender = false;
+/** Skip HYPE teach pulses on the first render after mid-run restore. */
+let suppressTeachFlashesThisRender = false;
 
 const el = {
   arena: document.getElementById("arena")!,
@@ -694,7 +697,14 @@ function applySnapshot(snapshot: GameSnapshot): void {
   phase = snapshot.phase;
   hypeLevel = clampHype(snapshot.hypeLevel ?? 0);
   foeHypeLevel = clampHype(snapshot.foeHypeLevel ?? 0);
-  combatHints = createCombatHintsState(snapshot.combatHints ?? {});
+  displayedPlayerHype = hypeLevel;
+  displayedFoeHype = foeHypeLevel;
+  suppressTeachFlashesThisRender = true;
+  combatHints = combatHintsAfterMidRunRestore(
+    createCombatHintsState(snapshot.combatHints ?? {}),
+    hypeLevel,
+    foeHypeLevel
+  );
   foeOrder = restoreFoeOrder(snapshot.foeOrderIds, snapshot.player.emoji);
   const queueState = restoreFoeQueueState(snapshot, foeOrder);
   foeQueue = queueState.queue;
@@ -960,7 +970,7 @@ function syncHypeMaxPresentation(
   const previous = side === "player" ? displayedPlayerHype : displayedFoeHype;
   const pres = hypeMaxPresentation(previous, level);
   wrap.classList.toggle("hype-maxed", pres.atMax);
-  if (pres.flashReachedMax) {
+  if (pres.flashReachedMax && !suppressTeachFlashesThisRender) {
     wrap.classList.remove("hype-maxed-flash");
     void wrap.offsetWidth;
     wrap.classList.add("hype-maxed-flash");
@@ -1051,6 +1061,10 @@ function gainFoeHype(amount: number): void {
 }
 
 function syncFirstHypeFlashes(): void {
+  if (suppressTeachFlashesThisRender) {
+    return;
+  }
+
   const skipPlayer = skipPlayerHypeTeachThisRender;
   skipPlayerHypeTeachThisRender = false;
 
@@ -1393,6 +1407,7 @@ function render(): void {
   el.actions.classList.toggle("hidden", inEndScreen);
   syncFirstHypeFlashes();
   syncCombatHintClasses();
+  suppressTeachFlashesThisRender = false;
 }
 
 function logLine(text: string, kind: "info" | "player" | "foe" | "win" | "lose" = "info"): void {
@@ -2316,7 +2331,9 @@ function beginGame(): void {
 }
 
 function finishBoot(): void {
-  document.body.classList.remove("is-booting");
+  requestAnimationFrame(() => {
+    document.body.classList.remove("is-booting");
+  });
 }
 
 function init(): void {
