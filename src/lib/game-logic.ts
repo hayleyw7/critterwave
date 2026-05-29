@@ -24,7 +24,7 @@ export const DEFEAT_VERBS = [
   "vanquish",
   "crush",
   "destroy",
-  "best",
+  "beat",
   "obliterate",
   "smite",
   "flatten",

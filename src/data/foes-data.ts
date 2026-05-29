@@ -757,8 +757,8 @@ export const FOES = [
     "baseAtk": 2
   },
   {
-    "id": "awful-alien",
-    "name": "Awful Alien",
+    "id": "ailing-alien",
+    "name": "Ailing Alien",
     "emoji": "👽",
     "baseHp": 11,
     "baseAtk": 3
