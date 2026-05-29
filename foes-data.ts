@@ -716,7 +716,7 @@ export const FOES = [
   },
   {
     "id": "cursed-cockroach",
-    "name": "Cursed Cootie",
+    "name": "Rotten Roach",
     "emoji": "🪳",
     "baseHp": 10,
     "baseAtk": 3

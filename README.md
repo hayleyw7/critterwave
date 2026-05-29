@@ -24,6 +24,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Tests
+
+```bash
+npm test              # unit tests (Vitest): alliteration, roster, dance, game logic
+npm run test:watch    # unit tests in watch mode
+npm run test:e2e      # browser tests (downloads Chromium if needed, then runs)
+```
+
+`npm run test:e2e` runs `playwright install chromium` automatically first. To install browsers manually: `npx playwright install chromium`.
+
 ## GitHub Pages
 
 1. Push this repo to GitHub.

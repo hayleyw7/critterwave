@@ -1,5 +1,7 @@
 import { FOES as FOES_RAW } from "./foes-data.js";
 import { assertAlliterativeName } from "./alliteration.js";
+import { buildFoeOrder as buildFoeOrderForHero, CAMPAIGN_WAVE_COUNT, DEFEAT_VERBS, foeColorConflictsWithHero as heroFoeColorConflicts, formatFoeInText as formatFoeMessage, formatSetupBlockerMessage, getSetupBlockers as getSetupBlockersForInput, makeFoeForWave as buildWaveFoe, nextDefeatVerb as advanceDefeatVerb, heroLabelFromFoeName, normalizeHeroName, restoreFoeOrder as restoreFoeOrderForHero, } from "./game-logic.js";
+import { formatDanceHypeTail, getPlayerHypeGain, pickRandomDanceOpener, pickRandomDanceResponse, resetDancePicker, } from "./dance-responses.js";
 import { assertHeroPickerOrderCovers, heroPickerOrderIndex } from "./hero-groups.js";
 const FOE_COLOR_THEMES = ["amber", "rose", "sky", "coral", "fuchsia"];
 const FOE_THEME_ACCENTS = {
@@ -86,25 +88,7 @@ const HERO_COLOR_THEMES = [
 const DEFAULT_HERO_COLOR_THEME = "green";
 const STORAGE_KEY = "critterwave-v1";
 const LEGACY_STORAGE_KEYS = ["goblinwave-v4", "goblinwave-v1"];
-const CAMPAIGN_WAVES = 100;
-const DEFEAT_VERBS = [
-    "defeated",
-    "vanquished",
-    "crushed",
-    "destroyed",
-    "bested",
-    "obliterated",
-    "smote",
-    "flattened",
-    "annihilated",
-    "pulverized",
-    "routed",
-    "trounced",
-    "clobbered",
-    "walloped",
-    "thrashed",
-];
-const HERO_NAME_MAX_LENGTH = 16;
+const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
 const HYPE_ATTACK_PER_LEVEL = 1;
 const COUNTER_ATTACK_DELAY_MS = 1000;
 const FOE_POOF_MS = 450;
@@ -125,10 +109,6 @@ function assertUniqueEmojis(entries) {
         seen.add(entry.emoji);
     }
 }
-function heroLabelFromFoeName(name) {
-    const words = name.trim().split(/\s+/);
-    return words.slice(1).join(" ") || words[0];
-}
 function heroesFromFoes(foes) {
     return foes.map((foe) => ({
         id: foe.id,
@@ -143,109 +123,15 @@ for (const foe of FOES) {
 }
 assertUniqueEmojis(FOES);
 assertHeroPickerOrderCovers(FOES.map((f) => f.emoji));
-function shuffleFoes(roster) {
-    const order = roster.map((f) => ({ ...f }));
-    for (let i = order.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [order[i], order[j]] = [order[j], order[i]];
-    }
-    return order;
-}
-function foesForHero(heroEmoji) {
-    return FOES.filter((f) => f.emoji !== heroEmoji);
-}
 function buildFoeOrder(heroEmoji) {
-    return shuffleFoes(foesForHero(heroEmoji));
+    return buildFoeOrderForHero(FOES, heroEmoji);
 }
 function getCampaignLength() {
     return CAMPAIGN_WAVES;
 }
 function restoreFoeOrder(ids, heroEmoji) {
-    const expected = foesForHero(heroEmoji);
-    if (ids?.length === expected.length) {
-        const byId = new Map(FOES.map((f) => [f.id, f]));
-        const restored = ids
-            .map((id) => byId.get(id))
-            .filter((f) => !!f && f.emoji !== heroEmoji);
-        if (restored.length === expected.length)
-            return restored;
-    }
-    return buildFoeOrder(heroEmoji);
+    return restoreFoeOrderForHero(ids, heroEmoji, FOES);
 }
-const danceResponses = [
-    // No hype — foe ignores, pans, or shuts you down.
-    { message: "{foe} boos loudly.", playerHype: 0 },
-    { message: "{foe} crosses their arms and watches silently.", playerHype: 0 },
-    { message: "{foe} refuses to acknowledge your performance.", playerHype: 0 },
-    { message: "{foe} looks disappointed in you personally.", playerHype: 0 },
-    { message: "{foe} throws a tomato at you.", playerHype: 0 },
-    { message: "{foe} rates your performance a 7/10.", playerHype: 0 },
-    { message: "{foe} checks their watch pointedly.", playerHype: 0 },
-    { message: "{foe} yawns mid-dance.", playerHype: 0 },
-    { message: "{foe} holds up a little sign that says 2/10.", playerHype: 0 },
-    { message: "{foe} pretends to take an important phone call.", playerHype: 0 },
-    { message: "{foe} slowly backs away from the dance floor.", playerHype: 0 },
-    { message: "{foe} eats a sandwich, unimpressed.", playerHype: 0 },
-    { message: "{foe} claps once, then stops forever.", playerHype: 0 },
-    { message: "{foe} puts on sunglasses and stares at the ceiling.", playerHype: 0 },
-    { message: "{foe} whispers they've seen better at a funeral.", playerHype: 0 },
-    { message: "{foe} looks terrified by your moves.", playerHype: 0 },
-    { message: "{foe} pretends to be a dance judge.", playerHype: 0 },
-    // +1 player hype — foe cheers from the sidelines but doesn't dance.
-    { message: "{foe} claps politely.", playerHype: 1 },
-    { message: "{foe} looks confused but supportive.", playerHype: 1 },
-    { message: "{foe} tosses you a shiny pebble.", playerHype: 1 },
-    { message: "{foe} looks genuinely impressed.", playerHype: 1 },
-    { message: "{foe} laughs so hard they snort.", playerHype: 1 },
-    { message: "{foe} chants your name.", playerHype: 1 },
-    { message: "{foe} gives you a thumbs up.", playerHype: 1 },
-    { message: "{foe} wipes away a tear.", playerHype: 1 },
-    { message: "{foe} screams for an encore.", playerHype: 1 },
-    { message: "{foe} pulls out a tiny fan and fans you.", playerHype: 1 },
-    { message: "{foe} wheezes ONE MORE TIME!", playerHype: 1 },
-    { message: "{foe} weeps with joy.", playerHype: 1 },
-    { message: "{foe} whispers teach me with awe.", playerHype: 1 },
-    { message: "{foe} faints from sheer awesomeness.", playerHype: 1 },
-    { message: "{foe} honks a party horn once, respectfully.", playerHype: 1 },
-    { message: "{foe} throws glitter into the air.", playerHype: 1 },
-    // +1 each — foe joins the dance.
-    { message: "{foe} starts dancing with you.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} starts stomping rhythmically.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} starts shadow dancing.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} spins in a circle.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} starts headbanging.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} tries to copy your moves.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} breakdances badly but with heart.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} grabs your hand for an awkward two-step.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} moonwalks three inches, triumphantly.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} does the worm. Approximately.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} vogues like their life depends on it.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} flosses. The dance. Not dental.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} starts a conga line of one.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} disco-points at the ceiling.", foeJoins: true, playerHype: 1 },
-    { message: "{foe} does the robot with suspicious fluidity.", foeJoins: true, playerHype: 1 },
-];
-const DANCE_OPENERS = [
-    "You bust out your signature critter shuffle.",
-    "You do a dramatic spin that almost works.",
-    "You attempt the floss. Your hips disagree.",
-    "You pop and lock. Mostly pop.",
-    "You moonwalk two inches to the left.",
-    "You jazz-hand with terrifying confidence.",
-    "You breakdance like nobody's watching. They are.",
-    "You vogue. Briefly. With commitment.",
-    "You do the robot. Badly. Proudly.",
-    "You twirl like you paid for it.",
-    "You drop into a squat and wiggle.",
-    "You air-guitar through an entire solo.",
-    "You square-dance alone. Respectfully.",
-    "You whip and nae nae at your own risk.",
-    "You do a tiny bow nobody asked for.",
-    "You cha-cha with unearned swagger.",
-    "You attempt a cartwheel. Gravity wins.",
-    "You disco-point at the ceiling. Twice.",
-    "You floss. The dance. Not dental.",
-];
 const player = {
     name: "Hero",
     hp: 20,
@@ -268,6 +154,8 @@ let pendingHeroColorTheme = DEFAULT_HERO_COLOR_THEME;
 let foeColorTheme = "amber";
 let lastFoeColorTheme = null;
 let defeatVerbIndex = 0;
+/** Keep showing the fleeing foe until exit poof finishes (run away). */
+let suppressFoePanelRender = false;
 const el = {
     arena: document.getElementById("arena"),
     battleStage: document.getElementById("battle-stage"),
@@ -467,9 +355,7 @@ function persist(snapshot) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
 function foeColorConflictsWithHero(theme) {
-    if (heroColorTheme === "green")
-        return false;
-    return heroColorTheme === theme;
+    return heroFoeColorConflicts(heroColorTheme, theme);
 }
 function getAvailableFoeColorThemes(excludeLast) {
     let options = FOE_COLOR_THEMES.filter((theme) => !foeColorConflictsWithHero(theme));
@@ -545,9 +431,6 @@ function applySnapshot(snapshot) {
 }
 function getHeroLabelForEmoji(emoji) {
     return HEROES.find((h) => h.emoji === emoji)?.label ?? DEFAULT_HERO_LABEL;
-}
-function normalizeHeroName(raw) {
-    return raw.trim().replace(/\s+/g, " ").slice(0, HERO_NAME_MAX_LENGTH);
 }
 function resolveSavedHeroName(save, emoji) {
     return save.heroName ?? save.heroLabel ?? getHeroLabelForEmoji(emoji);
@@ -657,22 +540,7 @@ function buildHeroColorSwatches() {
     updateHeroColorTogglePreview();
 }
 function getSetupBlockers() {
-    const blockers = [];
-    if (!pendingHeroEmoji) {
-        blockers.push("pick a critter");
-    }
-    if (!readHeroNameFromSetup()) {
-        blockers.push("enter your name");
-    }
-    return blockers;
-}
-function formatSetupBlockerMessage(blockers) {
-    if (blockers.length === 0)
-        return "";
-    if (blockers.length === 1) {
-        return `To fight, ${blockers[0]}.`;
-    }
-    return `To fight, ${blockers[0]} and ${blockers[1]}.`;
+    return getSetupBlockersForInput(pendingHeroEmoji, el.heroNameInput.value);
 }
 function updateSetupStartButton() {
     const blockers = getSetupBlockers();
@@ -726,9 +594,6 @@ function getEffectiveFoeAttack() {
         return 0;
     return foe.attack + getFoeHypeBonus();
 }
-function getPlayerHypeGain(response) {
-    return response.playerHype ?? 1;
-}
 function applyPlayerDanceBuff(amount = 1) {
     hypeLevel += amount;
 }
@@ -737,9 +602,6 @@ function applyFoeDanceBuff() {
 }
 function formatHypeLabel(level) {
     return `HYPE ${level}`;
-}
-function formatDanceHypeGain(gain) {
-    return `<span class="battle-hype-gain">+${gain} HYPE</span>`;
 }
 function clearAllHype() {
     hypeLevel = 0;
@@ -752,7 +614,7 @@ function foeDisplayName() {
     return foe?.name ?? "foe";
 }
 function formatFoeInText(template) {
-    return template.replace(/\{foe\}/g, foeDisplayName());
+    return formatFoeMessage(template, foeDisplayName());
 }
 function renderRecords() {
     const save = loadSave();
@@ -781,7 +643,7 @@ function playStageClass(className, ms) {
     });
 }
 function clearCombatAnimations() {
-    el.playerPanel.classList.remove("hero-death", "hero-death-knockback", "hero-victory-wobble", "hero-heal", "hero-dance", "hero-run-out", "hero-run-in");
+    el.playerPanel.classList.remove("hero-death", "hero-death-knockback", "hero-victory-wobble", "hero-heal", "hero-dance");
     el.foePanel.classList.remove("foe-poof", "foe-enter", "foe-dance", "foe-sprite-hidden");
     clearHitReact(el.playerPanel);
     clearHitReact(el.foePanel);
@@ -804,22 +666,10 @@ function playHeroDance() {
 function playFoeDance() {
     briefClass(el.foePanel, "foe-dance", DANCE_ANIM_MS);
 }
-async function playHeroRunOut() {
-    el.playerPanel.classList.remove("hero-run-in");
-    void el.playerPanel.offsetWidth;
-    el.playerPanel.classList.add("hero-run-out");
-    await pause(FOE_POOF_MS);
-}
-function playHeroRunIn() {
-    el.playerPanel.classList.remove("hero-run-out");
-    void el.playerPanel.offsetWidth;
-    briefClass(el.playerPanel, "hero-run-in", FOE_ENTRANCE_MS);
-}
 async function playRunExit() {
-    await Promise.all([playHeroRunOut(), playFoePoof()]);
+    await playFoePoof();
 }
 function playRunEntrance() {
-    playHeroRunIn();
     playFoeEntrance();
 }
 function playFoeEntrance() {
@@ -914,7 +764,7 @@ function render() {
     el.playerBuff.textContent = formatHypeLabel(hypeLevel);
     const playerHpBar = el.playerPanel.querySelector(".hp-bar");
     playerHpBar?.classList.toggle("hp-low", player.hp / player.maxHp < 0.3);
-    if (foe) {
+    if (foe && !suppressFoePanelRender) {
         applyFoeColorTheme(foeColorTheme);
         el.foeName.textContent = foe.name.toUpperCase();
         el.foeAttack.textContent = String(getEffectiveFoeAttack());
@@ -982,63 +832,61 @@ function logWaveTransitionComplete(previousName, transition, nextName, defeatVer
     ].join("");
     revealBattleLog();
 }
-async function transitionToNextWave(previousFoeName, transition, entrance = "foe") {
+async function transitionToNextWave(previousFoeName, transition, entrance = "foe", exitAnimPromise) {
     const defeatVerb = transition === "defeat" ? nextDefeatVerb() : undefined;
-    const actionText = transition === "flee"
-        ? `You run away from ${previousFoeName},`
-        : `You ${defeatVerb} ${previousFoeName},`;
-    logLine(actionText, "player");
-    await pause(COUNTER_ATTACK_DELAY_MS);
+    const fleeWithExitAnim = exitAnimPromise !== undefined;
+    if (fleeWithExitAnim) {
+        logLine(`You run away from ${previousFoeName},`, "player");
+    }
+    else {
+        const actionText = transition === "flee"
+            ? `You run away from ${previousFoeName},`
+            : `You ${defeatVerb} ${previousFoeName},`;
+        logLine(actionText, "player");
+        await pause(COUNTER_ATTACK_DELAY_MS);
+    }
     wave += 1;
     turn = 1;
     pickNextFoeColor();
     foe = makeFoeForWave(wave);
     foeHypeLevel = 0;
     pulseWaveHud();
-    applyFoeColorTheme(foeColorTheme);
-    logWaveTransitionComplete(previousFoeName, transition, foe.name, defeatVerb);
-    render();
-    if (entrance === "run") {
+    if (fleeWithExitAnim) {
+        suppressFoePanelRender = true;
+        render();
+        await exitAnimPromise;
+        suppressFoePanelRender = false;
+        render();
+        await pause(COUNTER_ATTACK_DELAY_MS);
+        logBattleLines({ text: `You run away from ${previousFoeName},`, kind: "player" }, { text: `but you run into ${foe.name}!`, kind: "foe" });
         playRunEntrance();
     }
     else {
-        playFoeEntrance();
+        applyFoeColorTheme(foeColorTheme);
+        render();
+        logWaveTransitionComplete(previousFoeName, transition, foe.name, defeatVerb);
+        if (entrance === "run") {
+            playRunEntrance();
+        }
+        else {
+            playFoeEntrance();
+        }
     }
     persist();
 }
 function clearLog() {
     logLine("What will you do?", "info");
 }
-function pickFoeTemplate(w) {
-    const idx = (w - 1) % foeOrder.length;
-    return foeOrder[idx];
-}
 function makeFoeForWave(w) {
-    const template = pickFoeTemplate(w);
-    const hp = template.baseHp + Math.max(0, w - 1) * 2;
-    const attack = template.baseAtk + Math.floor((w - 1) / 3);
-    return {
-        id: template.id,
-        name: template.name,
-        emoji: template.emoji,
-        hp,
-        maxHp: hp,
-        attack,
-    };
+    return buildWaveFoe(foeOrder, w);
 }
 function randomDamage(max) {
     return Math.floor(Math.random() * max) + 1;
 }
-function randomDanceResponse() {
-    return danceResponses[Math.floor(Math.random() * danceResponses.length)];
-}
-function randomDanceOpener() {
-    return DANCE_OPENERS[Math.floor(Math.random() * DANCE_OPENERS.length)];
-}
 function nextDefeatVerb() {
-    const verb = DEFEAT_VERBS[defeatVerbIndex % DEFEAT_VERBS.length];
-    defeatVerbIndex += 1;
-    return verb;
+    const result = advanceDefeatVerb(defeatVerbIndex, DEFEAT_VERBS);
+    defeatVerbIndex = result.nextIndex;
+    return result.verb;
 }
 function startWave() {
     pickNextFoeColor();
@@ -1203,15 +1051,6 @@ async function onHeal() {
         await handlePlayerDeath();
     }
 }
-function formatDanceHypeTail(playerGain, foeJoins) {
-    if (playerGain === 0) {
-        return "";
-    }
-    if (foeJoins) {
-        return `You both get ${formatDanceHypeGain(1)}!`;
-    }
-    return `You get ${formatDanceHypeGain(1)}!`;
-}
 function logDanceLines(opener, reactionHtml, tail) {
     const lines = [
         `<span class="battle-line battle-player">${opener}</span>`,
@@ -1225,7 +1064,7 @@ function logDanceLines(opener, reactionHtml, tail) {
     revealBattleLog();
 }
 async function onDance() {
-    const response = randomDanceResponse();
+    const response = pickRandomDanceResponse();
     const playerGain = getPlayerHypeGain(response);
     const joins = response.foeJoins === true;
     if (playerGain > 0) {
@@ -1234,7 +1073,7 @@ async function onDance() {
     if (joins) {
         applyFoeDanceBuff();
     }
-    const opener = escapeHtml(randomDanceOpener());
+    const opener = escapeHtml(pickRandomDanceOpener());
     logHtmlLine(`<span class="battle-line battle-player">${opener}</span>`, "player");
     playHeroDance();
     await pause(COUNTER_ATTACK_DELAY_MS);
@@ -1261,10 +1100,10 @@ async function onRun() {
         logLine("No fleeing the final foe!", "info");
         return;
     }
-    await playRunExit();
     clearAllHype();
     const fledFoe = foe.name;
-    await transitionToNextWave(fledFoe, "flee", "run");
+    const exitAnimPromise = playRunExit();
+    await transitionToNextWave(fledFoe, "flee", "run", exitAnimPromise);
 }
 function applyHeroChoice(emoji, label) {
     player.emoji = emoji;
@@ -1348,6 +1187,7 @@ function resetGame() {
     foeOrder = buildFoeOrder(player.emoji);
     clearAllHype();
     lastFoeColorTheme = null;
+    resetDancePicker();
     phase = "combat";
     clearCombatAnimations();
     el.gameOver.classList.add("hidden");
