@@ -6,5 +6,5 @@
     "strict": true,
     "lib": ["ES2020", "DOM"]
   },
-  "files": ["game.ts", "foes-data.ts", "alliteration.ts"]
+  "files": ["game.ts", "foes-data.ts", "alliteration.ts", "hero-groups.ts"]
 }

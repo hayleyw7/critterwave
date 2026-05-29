@@ -1,6 +1,6 @@
 import { FOES as FOES_RAW } from "./foes-data.js";
 import { assertAlliterativeName } from "./alliteration.js";
-
+import { assertHeroPickerOrderCovers, heroPickerOrderIndex } from "./hero-groups.js";
 type Player = {
   name: string;
   hp: number;
@@ -93,6 +93,8 @@ const FOE_ENTRANCE_MS = 550;
 const DEATH_BEAT_MS = 1200;
 const GOLD_FLASH_MS = 650;
 const KILL_KNOCKBACK_SETTLE_MS = 180;
+const HEAL_ANIM_MS = 420;
+const DANCE_ANIM_MS = 550;
 const DEFAULT_HERO_EMOJI = "🐱";
 const DEFAULT_HERO_LABEL = "Cat";
 
@@ -120,15 +122,15 @@ function heroesFromFoes(foes: FoeTemplate[]): HeroOption[] {
 }
 
 const FOES: FoeTemplate[] = FOES_RAW.map((f) => ({ ...f }));
-const HEROES: HeroOption[] = heroesFromFoes(FOES).sort((a, b) =>
-  a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+const HEROES: HeroOption[] = heroesFromFoes(FOES).sort(
+  (a, b) => heroPickerOrderIndex(a.emoji) - heroPickerOrderIndex(b.emoji)
 );
 
 for (const foe of FOES) {
   assertAlliterativeName(foe.name);
 }
 assertUniqueEmojis(FOES);
-
+assertHeroPickerOrderCovers(FOES.map((f) => f.emoji));
 function shuffleFoes(roster: FoeTemplate[]): FoeTemplate[] {
   const order = roster.map((f) => ({ ...f }));
   for (let i = order.length - 1; i > 0; i--) {
@@ -214,6 +216,29 @@ const danceResponses: DanceResponse[] = [
   { message: "{foe} disco-points at the ceiling.", foeJoins: true },
   { message: "{foe} does the robot with suspicious fluidity.", foeJoins: true },
 ];
+
+const DANCE_OPENERS = [
+  "You bust out your signature critter shuffle.",
+  "You do a dramatic spin that almost works.",
+  "You attempt the floss. Your hips disagree.",
+  "You pop and lock. Mostly pop.",
+  "You moonwalk two inches to the left.",
+  "You jazz-hand with terrifying confidence.",
+  "You breakdance like nobody's watching. They are.",
+  "You vogue. Briefly. With commitment.",
+  "You do the robot. Badly. Proudly.",
+  "You twirl like you paid for it.",
+  "You drop into a squat and wiggle.",
+  "You air-guitar through an entire solo.",
+  "You square-dance alone. Respectfully.",
+  "You dab. History groans.",
+  "You whip and nae nae at your own risk.",
+  "You do a tiny bow nobody asked for.",
+  "You cha-cha with unearned swagger.",
+  "You attempt a cartwheel. Gravity wins.",
+  "You disco-point at the ceiling. Twice.",
+  "You floss. The dance. Not dental.",
+] as const;
 
 const player: Player = {
   name: "Hero",
@@ -547,7 +572,11 @@ function applyFoeDanceBuff(): void {
 }
 
 function formatHypeLabel(level: number): string {
-  return `HYPE x${level}`;
+  return `HYPE ${level}`;
+}
+
+function formatDanceHypeGain(gain: number): string {
+  return `<span class="battle-hype-gain">+${gain} HYPE</span>`;
 }
 
 function clearAllHype(): void {
@@ -598,10 +627,47 @@ function clearCombatAnimations(): void {
     "hero-death",
     "hero-death-knockback",
     "hero-knockback",
-    "hero-victory-wobble"
+    "hero-victory-wobble",
+    "hero-heal",
+    "hero-dance",
+    "hero-run-out",
+    "hero-run-in"
   );
-  el.foePanel.classList.remove("foe-poof", "foe-enter", "foe-knockback");
+  el.foePanel.classList.remove("foe-poof", "foe-enter", "foe-knockback", "foe-dance");
   el.battleStage.classList.remove("stage-death-vignette", "stage-flash-gold");
+}
+
+function playHeroHeal(): void {
+  briefClass(el.playerPanel, "hero-heal", HEAL_ANIM_MS);
+}
+
+function playHeroDance(foeJoins: boolean): void {
+  briefClass(el.playerPanel, "hero-dance", DANCE_ANIM_MS);
+  if (foeJoins) {
+    window.setTimeout(() => briefClass(el.foePanel, "foe-dance", DANCE_ANIM_MS), 100);
+  }
+}
+
+async function playHeroRunOut(): Promise<void> {
+  el.playerPanel.classList.remove("hero-run-in");
+  void el.playerPanel.offsetWidth;
+  el.playerPanel.classList.add("hero-run-out");
+  await pause(FOE_POOF_MS);
+}
+
+function playHeroRunIn(): void {
+  el.playerPanel.classList.remove("hero-run-out");
+  void el.playerPanel.offsetWidth;
+  briefClass(el.playerPanel, "hero-run-in", FOE_ENTRANCE_MS);
+}
+
+async function playRunExit(): Promise<void> {
+  await Promise.all([playHeroRunOut(), playFoePoof()]);
+}
+
+function playRunEntrance(): void {
+  playHeroRunIn();
+  playFoeEntrance();
 }
 
 function playFoeEntrance(): void {
@@ -666,7 +732,6 @@ function render(): void {
   el.playerHpText.textContent = `${player.hp}/${player.maxHp}`;
   el.playerAttack.textContent = String(getEffectiveAttack());
   el.playerBuff.textContent = formatHypeLabel(hypeLevel);
-  el.playerBuff.classList.toggle("hidden", hypeLevel === 0);
 
   const playerHpBar = el.playerPanel.querySelector(".hp-bar");
   playerHpBar?.classList.toggle("hp-low", player.hp / player.maxHp < 0.3);
@@ -676,7 +741,6 @@ function render(): void {
     el.foeName.textContent = foe.name.toUpperCase();
     el.foeAttack.textContent = String(getEffectiveFoeAttack());
     el.foeBuff.textContent = formatHypeLabel(foeHypeLevel);
-    el.foeBuff.classList.toggle("hidden", foeHypeLevel === 0);
     el.foeEmoji.textContent = foe.emoji;
     el.foeEmoji.setAttribute("aria-label", foe.name);
     setHpBar(el.foeHpFill, foe.hp, foe.maxHp);
@@ -712,6 +776,12 @@ function logLine(text: string, kind: "info" | "player" | "foe" | "win" | "lose" 
   revealBattleLog();
 }
 
+function logHtmlLine(html: string, kind: "info" | "player" | "foe" | "win" | "lose" = "info"): void {
+  el.battleText.innerHTML = html;
+  el.battleText.className = `battle-text battle-${kind}`;
+  revealBattleLog();
+}
+
 function logBattleLines(
   primary: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" },
   secondary: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }
@@ -732,23 +802,55 @@ function pause(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
-function logWaveTransition(
+function logWaveTransitionComplete(
   previousName: string,
   transition: "flee" | "defeat",
-  nextName: string
+  nextName: string,
+  defeatVerb?: string
 ): void {
-  const actionClass = transition === "flee" ? "battle-player" : "battle-win";
   const actionLine =
     transition === "flee"
       ? `You run away from ${escapeHtml(previousName)},`
-      : `You ${escapeHtml(nextDefeatVerb())} ${escapeHtml(previousName)},`;
+      : `You ${escapeHtml(defeatVerb ?? nextDefeatVerb())} ${escapeHtml(previousName)},`;
 
   el.battleText.className = "battle-text";
   el.battleText.innerHTML = [
-    `<span class="battle-line ${actionClass}">${actionLine}</span>`,
+    `<span class="battle-line battle-player">${actionLine}</span>`,
     `<span class="battle-line battle-pause">but then...</span>`,
     `<span class="battle-line battle-foe">${escapeHtml(nextName)} appears!</span>`,
   ].join("");
+  revealBattleLog();
+}
+
+async function transitionToNextWave(
+  previousFoeName: string,
+  transition: "flee" | "defeat",
+  entrance: "run" | "foe" = "foe"
+): Promise<void> {
+  const defeatVerb = transition === "defeat" ? nextDefeatVerb() : undefined;
+  const actionText =
+    transition === "flee"
+      ? `You run away from ${previousFoeName},`
+      : `You ${defeatVerb} ${previousFoeName},`;
+
+  logLine(actionText, "player");
+  await pause(COUNTER_ATTACK_DELAY_MS);
+
+  wave += 1;
+  turn = 1;
+  pickNextFoeColor();
+  foe = makeFoeForWave(wave);
+  foeHypeLevel = 0;
+  pulseWaveHud();
+  logWaveTransitionComplete(previousFoeName, transition, foe.name, defeatVerb);
+  render();
+
+  if (entrance === "run") {
+    playRunEntrance();
+  } else {
+    playFoeEntrance();
+  }
+  persist();
 }
 
 function clearLog(): void {
@@ -782,24 +884,22 @@ function randomDanceResponse(): DanceResponse {
   return danceResponses[Math.floor(Math.random() * danceResponses.length)]!;
 }
 
+function randomDanceOpener(): string {
+  return DANCE_OPENERS[Math.floor(Math.random() * DANCE_OPENERS.length)]!;
+}
+
 function nextDefeatVerb(): string {
   const verb = DEFEAT_VERBS[defeatVerbIndex % DEFEAT_VERBS.length]!;
   defeatVerbIndex += 1;
   return verb;
 }
 
-function startWave(options?: { previousFoeName?: string; transition?: "flee" | "defeat" }): void {
+function startWave(): void {
   pickNextFoeColor();
   foe = makeFoeForWave(wave);
   foeHypeLevel = 0;
   pulseWaveHud();
-
-  if (options?.previousFoeName && options.transition) {
-    logWaveTransition(options.previousFoeName, options.transition, foe.name);
-  } else {
-    logLine(`${foe.name} appears!`, "foe");
-  }
-
+  logLine(`${foe.name} appears!`, "foe");
   render();
   playFoeEntrance();
   persist();
@@ -861,7 +961,7 @@ function winCampaign(): void {
   render();
 }
 
-function winWave(): void {
+async function winWave(): Promise<void> {
   if (!foe) return;
 
   const defeatedFoe = foe.name;
@@ -870,9 +970,7 @@ function winWave(): void {
     return;
   }
 
-  wave += 1;
-  turn = 1;
-  startWave({ previousFoeName: defeatedFoe, transition: "defeat" });
+  await transitionToNextWave(defeatedFoe, "defeat", "foe");
 }
 
 function playHitKnockback(victim: "hero" | "foe", fatal = false): void {
@@ -933,7 +1031,7 @@ async function onAttack(): Promise<void> {
     if (isFinal) {
       winCampaign();
     } else {
-      winWave();
+      await winWave();
     }
     return;
   }
@@ -959,6 +1057,7 @@ async function onHeal(): Promise<void> {
   const heal = 3;
   player.hp = Math.min(player.maxHp, player.hp + heal);
   showDamagePop("hero", `+${heal}`, "heal");
+  playHeroHeal();
   logLine(`You healed yourself for ${heal} HP.`, "player");
   render();
   await pause(COUNTER_ATTACK_DELAY_MS);
@@ -966,7 +1065,10 @@ async function onHeal(): Promise<void> {
   const counterHit = resolveFoeCounterAttack();
   if (counterHit === null) return;
 
-  logLine(`${foe!.name} hits you for ${counterHit} damage.`, "foe");
+  logBattleLines(
+    { text: `You healed yourself for ${heal} HP.`, kind: "player" },
+    { text: `${foe!.name} hits you for ${counterHit} damage.`, kind: "foe" }
+  );
   render();
   persist();
 
@@ -975,19 +1077,38 @@ async function onHeal(): Promise<void> {
   }
 }
 
+function formatDanceHypeTail(
+  playerGain: number,
+  foeJoins: boolean
+): string {
+  if (playerGain === 0) {
+    return `You get ${formatDanceHypeGain(0)}!`;
+  }
+  if (foeJoins) {
+    return `You get ${formatDanceHypeGain(1)}, but ${escapeHtml(foeDisplayName())} gets ${formatDanceHypeGain(1)} too!`;
+  }
+  return `You get ${formatDanceHypeGain(1)}!`;
+}
+
 function formatDanceHypeMessage(
   response: DanceResponse,
   playerGain: number,
   foeJoins: boolean
 ): string {
-  const line = formatFoeInText(response.message);
-  if (playerGain === 0) {
-    return `${line} You get +0 hype!`;
-  }
-  if (foeJoins) {
-    return `${line} You get +1 hype, but ${foeDisplayName()} gets +1 hype too!`;
-  }
-  return `${line} You get +1 hype!`;
+  const opener = escapeHtml(randomDanceOpener());
+  const reaction = escapeHtml(formatFoeInText(response.message));
+  const tail = formatDanceHypeTail(playerGain, foeJoins);
+
+  return [
+    `<span class="battle-line battle-player">${opener}</span>`,
+    `<span class="battle-line battle-foe">${reaction} ${tail}</span>`,
+  ].join("");
+}
+
+function logDanceMessage(html: string): void {
+  el.battleText.className = "battle-text";
+  el.battleText.innerHTML = html;
+  revealBattleLog();
 }
 
 function onDance(): void {
@@ -1002,14 +1123,15 @@ function onDance(): void {
     applyFoeDanceBuff();
   }
 
-  logLine(formatDanceHypeMessage(response, playerGain, joins), "foe");
+  playHeroDance(joins);
+  logDanceMessage(formatDanceHypeMessage(response, playerGain, joins));
 
   turn += 1;
   render();
   persist();
 }
 
-function onRun(): void {
+async function onRun(): Promise<void> {
   if (!foe) return;
 
   if (wave >= getCampaignLength()) {
@@ -1017,11 +1139,11 @@ function onRun(): void {
     return;
   }
 
+  await playRunExit();
+
   clearAllHype();
   const fledFoe = foe.name;
-  wave += 1;
-  turn = 1;
-  startWave({ previousFoeName: fledFoe, transition: "flee" });
+  await transitionToNextWave(fledFoe, "flee", "run");
 }
 
 function applyHeroChoice(emoji: string, label: string): void {
@@ -1033,6 +1155,10 @@ function applyHeroChoice(emoji: string, label: string): void {
 
 function buildHeroPicker(): void {
   el.heroPicker.innerHTML = "";
+
+  const grid = document.createElement("div");
+  grid.className = "emoji-picker-grid";
+
   for (const hero of HEROES) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -1040,7 +1166,7 @@ function buildHeroPicker(): void {
     btn.dataset.emoji = hero.emoji;
     btn.dataset.label = hero.label;
     btn.setAttribute("aria-label", hero.label);
-    btn.innerHTML = `<span class="emoji-pick-glyph" aria-hidden="true">${hero.emoji}</span><span class="emoji-pick-label">${hero.label}</span>`;
+    btn.innerHTML = `<span class="emoji-pick-glyph" aria-hidden="true">${hero.emoji}</span>`;
     if (hero.emoji === pendingHeroEmoji) {
       btn.classList.add("selected");
     }
@@ -1052,8 +1178,10 @@ function buildHeroPicker(): void {
       pendingHeroEmoji = hero.emoji;
       pendingHeroLabel = hero.label;
     });
-    el.heroPicker.appendChild(btn);
+    grid.appendChild(btn);
   }
+
+  el.heroPicker.appendChild(grid);
 }
 
 function showSetup(): void {
@@ -1177,7 +1305,7 @@ function bindActions(): void {
           onDance();
           break;
         case "run":
-          onRun();
+          await onRun();
           break;
       }
     });

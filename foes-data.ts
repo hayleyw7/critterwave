@@ -1,4 +1,4 @@
-/** 114 hand-picked foes — critters + fantasy creatures, sound-matched alliteration. */
+/** 120 hand-picked foes — critters + fantasy creatures, sound-matched alliteration. */
 export const FOES = [
   {
     "id": "cunning-cat",
@@ -6,6 +6,13 @@ export const FOES = [
     "emoji": "🐱",
     "baseHp": 10,
     "baseAtk": 3
+  },
+  {
+    "id": "vacuous-void",
+    "name": "Vacuous Void",
+    "emoji": "🐈‍⬛",
+    "baseHp": 10,
+    "baseAtk": 4
   },
   {
     "id": "dire-dog",
@@ -89,6 +96,13 @@ export const FOES = [
     "name": "Hostile Horse",
     "emoji": "🐴",
     "baseHp": 12,
+    "baseAtk": 3
+  },
+  {
+    "id": "dismal-donkey",
+    "name": "Dismal Donkey",
+    "emoji": "🫏",
+    "baseHp": 11,
     "baseAtk": 3
   },
   {
@@ -212,7 +226,7 @@ export const FOES = [
   },
   {
     "id": "mad-mammoth",
-    "name": "Mutant Mammoth",
+    "name": "Mighty Mammoth",
     "emoji": "🦣",
     "baseHp": 14,
     "baseAtk": 4
@@ -295,6 +309,13 @@ export const FOES = [
     "baseAtk": 4
   },
   {
+    "id": "placid-polar-bear",
+    "name": "Putrid Polar",
+    "emoji": "🐻‍❄️",
+    "baseHp": 14,
+    "baseAtk": 4
+  },
+  {
     "id": "kooky-koala",
     "name": "Knavish Koala",
     "emoji": "🐨",
@@ -330,8 +351,15 @@ export const FOES = [
     "baseAtk": 3
   },
   {
+    "id": "soggy-snowman",
+    "name": "Snappy Snowman",
+    "emoji": "⛄",
+    "baseHp": 11,
+    "baseAtk": 3
+  },
+  {
     "id": "kooky-kangaroo",
-    "name": "Killer Kang",
+    "name": "Rowdy Roo",
     "emoji": "🦘",
     "baseHp": 12,
     "baseAtk": 4
@@ -363,13 +391,6 @@ export const FOES = [
     "emoji": "🐓",
     "baseHp": 11,
     "baseAtk": 4
-  },
-  {
-    "id": "chirpy-chick",
-    "name": "Cheerless Chick",
-    "emoji": "🐥",
-    "baseHp": 9,
-    "baseAtk": 2
   },
   {
     "id": "bitter-bird",
@@ -436,7 +457,7 @@ export const FOES = [
   },
   {
     "id": "posh-peacock",
-    "name": "Pestilent Peacock",
+    "name": "Picky Peacock",
     "emoji": "🦚",
     "baseHp": 11,
     "baseAtk": 3
@@ -540,9 +561,16 @@ export const FOES = [
     "baseAtk": 3
   },
   {
-    "id": "foul-fish",
-    "name": "Foul Fish",
+    "id": "flaky-flounder",
+    "name": "Flaky Flounder",
     "emoji": "🐟",
+    "baseHp": 10,
+    "baseAtk": 3
+  },
+  {
+    "id": "tart-tang",
+    "name": "Tart Tang",
+    "emoji": "🐠",
     "baseHp": 10,
     "baseAtk": 3
   },
@@ -610,6 +638,13 @@ export const FOES = [
     "baseAtk": 2
   },
   {
+    "id": "creepy-coral",
+    "name": "Cold Coral",
+    "emoji": "🪸",
+    "baseHp": 10,
+    "baseAtk": 2
+  },
+  {
     "id": "sneaky-snail",
     "name": "Snotty Snail",
     "emoji": "🐌",
@@ -628,6 +663,20 @@ export const FOES = [
     "name": "Biting Bug",
     "emoji": "🐛",
     "baseHp": 9,
+    "baseAtk": 3
+  },
+  {
+    "id": "giant-germ",
+    "name": "Giant Germ",
+    "emoji": "🦠",
+    "baseHp": 12,
+    "baseAtk": 3
+  },
+  {
+    "id": "mutant-mushy",
+    "name": "Mutant Mushy",
+    "emoji": "🍄",
+    "baseHp": 13,
     "baseAtk": 3
   },
   {
@@ -790,12 +839,5 @@ export const FOES = [
     "emoji": "🧜",
     "baseHp": 11,
     "baseAtk": 3
-  },
-  {
-    "id": "evil-elf",
-    "name": "Evil Elf",
-    "emoji": "🧝",
-    "baseHp": 10,
-    "baseAtk": 4
   }
 ] as const;

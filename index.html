@@ -83,7 +83,6 @@
               <div class="name-plate hero-plate">
                 <span class="name" id="hero-name">HERO</span>
               </div>
-              <span class="buff-badge hero-buff hidden" id="player-buff" aria-label="Active buff"></span>
               <div class="hp-wrap hero-hp-wrap">
                 <div class="hp-row">
                   <span class="hp-tag hp-tag-hero">HP</span>
@@ -98,13 +97,17 @@
                     <div class="hp-fill player-hp" id="player-hp-fill"></div>
                   </div>
                   <span class="hp-numbers" id="player-hp-text">20/20</span>
-                  <span class="stat-mini">ATK <span id="player-attack">5</span></span>
+                  <div class="stat-group">
+                    <span class="stat-mini">ATK <span id="player-attack">5</span></span>
+                    <span class="stat-mini hype-stat" id="player-buff" aria-label="HYPE level">HYPE 0</span>
+                  </div>
                 </div>
               </div>
             </div>
             <div class="sprite-wrap">
               <div class="emoji-stack">
                 <span class="hit-mark hit-mark-hero" aria-hidden="true">💢</span>
+                <span class="heal-mark heal-mark-hero" aria-hidden="true">✨</span>
                 <span class="emoji-sprite hero-emoji" id="hero-emoji" role="img" aria-label="Hero">🦊</span>
               </div>
             </div>
@@ -117,7 +120,6 @@
               <div class="name-plate enemy-plate">
                 <span class="name" id="foe-name">FOE</span>
               </div>
-              <span class="buff-badge enemy-buff hidden" id="foe-buff" aria-label="Foe hype"></span>
               <div class="hp-wrap enemy-hp-wrap">
                 <div class="hp-row">
                   <span class="hp-tag hp-tag-enemy">HP</span>
@@ -132,7 +134,10 @@
                     <div class="hp-fill foe-hp" id="foe-hp-fill"></div>
                   </div>
                   <span class="hp-numbers" id="foe-hp-text">12/12</span>
-                  <span class="stat-mini">ATK <span id="foe-attack">3</span></span>
+                  <div class="stat-group">
+                    <span class="stat-mini">ATK <span id="foe-attack">3</span></span>
+                    <span class="stat-mini hype-stat" id="foe-buff" aria-label="Foe HYPE level">HYPE 0</span>
+                  </div>
                 </div>
               </div>
             </div>
