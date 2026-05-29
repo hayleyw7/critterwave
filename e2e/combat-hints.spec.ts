@@ -420,35 +420,29 @@ test.describe("combat hints — teach flashes", () => {
     await expect(page.locator("#player-hype-wrap")).not.toHaveClass(/hype-first-dance-flash/);
   });
 
-  test("first hype flash staggers text after bar", async ({ page }) => {
+  test("first hype flash pulses bar and text in unison", async ({ page }) => {
     await startFreshRun(page);
-    await patchSaveSnapshot(page, {
-      hypeLevel: 1,
-      combatHints: {
-        dismissedAttackHint: true,
-        dismissedHealHint: true,
-        dismissedDanceHint: true,
-        celebratedFirstPlayerHype: false,
-      },
+    await page.getByRole("button", { name: "Dance" }).click();
+    await expect(page.locator("#player-hype-wrap")).toHaveClass(/hype-first-dance-flash/, {
+      timeout: 10_000,
     });
-    await page.reload();
-
-    await expect(page.locator("#player-hype-wrap")).toHaveClass(/hype-first-dance-flash/);
 
     const delays = await page.evaluate(() => {
       const wrap = document.querySelector("#player-hype-wrap")!;
       const bar = wrap.querySelector(".hype-bar") as HTMLElement;
       const stat = wrap.querySelector(".hype-stat") as HTMLElement;
       return {
-        bar: getComputedStyle(bar).animationDelay,
-        text: getComputedStyle(stat).animationDelay,
-        stagger: getComputedStyle(wrap).getPropertyValue("--hype-meter-text-stagger").trim(),
+        barAnimation: getComputedStyle(bar).animationName,
+        textAnimation: getComputedStyle(stat).animationName,
+        barDelay: getComputedStyle(bar).animationDelay,
+        textDelay: getComputedStyle(stat).animationDelay,
       };
     });
 
-    expect(delays.stagger).toBe("200ms");
-    expect(delays.bar).toBe("0s");
-    expect(delays.text).toBe("0.2s");
+    expect(delays.barAnimation).toBe("hype-teach-flash");
+    expect(delays.textAnimation).toBe("hype-teach-flash");
+    expect(delays.barDelay).toBe("0s");
+    expect(delays.textDelay).toBe("0s");
   });
 });
 

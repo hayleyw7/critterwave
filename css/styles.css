@@ -1033,7 +1033,6 @@ body.is-booting .hype-stat-wrap.hype-maxed-flash .hype-stat {
   gap: 0.2rem;
   min-width: 0;
   max-width: 5.75rem;
-  --hype-meter-text-stagger: 200ms;
 }
 
 .hype-bar {
@@ -1087,22 +1086,11 @@ body.is-booting .hype-stat-wrap.hype-maxed-flash .hype-stat {
   text-shadow: 0 0 8px rgba(253, 224, 71, 0.85);
 }
 
-.hype-stat-wrap.hype-first-dance-flash .hype-bar {
-  animation: hype-teach-pulse 0.45s ease-out 3;
-}
-
-.hype-stat-wrap.hype-first-dance-flash .hype-stat {
-  animation: hype-teach-text-pulse 0.45s ease-out 3;
-  animation-delay: var(--hype-meter-text-stagger);
-}
-
-.hype-stat-wrap.hype-maxed-flash .hype-bar {
-  animation: hype-teach-pulse 0.45s ease-out 3;
-}
-
+.hype-stat-wrap.hype-first-dance-flash .hype-bar,
+.hype-stat-wrap.hype-first-dance-flash .hype-stat,
+.hype-stat-wrap.hype-maxed-flash .hype-bar,
 .hype-stat-wrap.hype-maxed-flash .hype-stat {
-  animation: hype-teach-text-pulse 0.45s ease-out 3;
-  animation-delay: var(--hype-meter-text-stagger);
+  animation: hype-teach-flash 0.45s ease-out 3;
 }
 
 .hype-stat-wrap.hype-capped-flash .hype-stat {
@@ -1633,29 +1621,19 @@ body.is-booting .hype-stat-wrap.hype-maxed-flash .hype-stat {
   animation: hp-teach-pulse 0.45s ease-out 3;
 }
 
-@keyframes hype-teach-pulse {
+@keyframes hype-teach-flash {
   0%,
   100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--highlight) 0%, transparent);
     filter: brightness(1);
-  }
-  50% {
-    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--highlight) 70%, transparent);
-    filter: brightness(1.2);
-  }
-}
-
-@keyframes hype-teach-text-pulse {
-  0%,
-  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--highlight) 0%, transparent);
     color: inherit;
     text-shadow: none;
-    filter: brightness(1);
   }
   50% {
+    filter: brightness(1.2);
+    box-shadow: 0 0 12px 2px color-mix(in srgb, var(--highlight) 70%, transparent);
     color: #fde047;
     text-shadow: 0 0 10px rgba(253, 224, 71, 0.95);
-    filter: brightness(1.15);
   }
 }
 

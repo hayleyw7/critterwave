@@ -120,9 +120,7 @@ import {
   stopVictoryCelebration,
 } from "./ui/victory-celebration.js";
 
-const HYPE_METER_TEXT_STAGGER_MS = FOE_FOLLOW_UP_DELAY_MS;
-/** Bar flash (3×) plus staggered text — matches floating pop beat. */
-const HYPE_METER_FLASH_MS = HYPE_METER_TEXT_STAGGER_MS + 450 * 3 + 50;
+const HYPE_METER_FLASH_MS = 450 * 3 + 50;
 
 declare global {
   interface Window {
