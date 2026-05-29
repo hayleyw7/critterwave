@@ -19,6 +19,7 @@ import {
   formatHypeLabel,
   formatSetupBlockerMessage,
   getSetupBlockers,
+  healHpAfterWaveVictory,
   heroLabelFromFoeName,
   HERO_NAME_MAX_LENGTH,
   hypeAttackBonus,
@@ -48,6 +49,8 @@ import {
   scaleFoeAttack,
   scaleFoeHp,
   shuffleArray,
+  waveVictoryHealGain,
+  WAVE_VICTORY_HEAL_RATIO,
 } from "../src/lib/game-logic.js";
 
 const SAMPLE_FOES = [
@@ -149,11 +152,11 @@ describe("level progression", () => {
       level: 1,
       maxHp: 20,
       attack: 5,
-      healMax: 3,
+      healMax: 5,
     });
     expect(playerStatsForLevel(5).maxHp).toBe(32);
     expect(playerStatsForLevel(10).attack).toBe(14);
-    expect(playerStatsForLevel(10).healMax).toBe(12);
+    expect(playerStatsForLevel(10).healMax).toBe(14);
   });
 
   it("derives wave stats from the wave band", () => {
@@ -246,21 +249,28 @@ describe("level progression", () => {
     expect(refreshed.hp).toBeLessThanOrEqual(refreshed.maxHp);
     expect(refreshed.attack).toBe(makeFoeFromTemplate(hard, 5).attack);
   });
+  it("tops up hp partially after wave wins", () => {
+    expect(WAVE_VICTORY_HEAL_RATIO).toBe(0.5);
+    expect(waveVictoryHealGain(20, 20)).toBe(0);
+    expect(waveVictoryHealGain(8, 20)).toBe(10);
+    expect(healHpAfterWaveVictory(8, 20)).toBe(18);
+    expect(healHpAfterWaveVictory(14, 20)).toBe(20);
+  });
 });
 
 describe("wave scaling", () => {
-  it("softens level-1 foes", () => {
-    expect(scaleFoeHp(10, 1)).toBe(7);
-    expect(scaleFoeAttack(3, 1)).toBe(2);
+  it("lightly softens low-level foe hp", () => {
+    expect(scaleFoeHp(10, 1)).toBe(10);
+    expect(scaleFoeAttack(3, 1)).toBe(3);
   });
 
   it("softens level-2 foe hp slightly", () => {
-    expect(scaleFoeHp(10, 2)).toBe(11);
+    expect(scaleFoeHp(10, 2)).toBe(12);
     expect(scaleFoeAttack(3, 2)).toBe(4);
   });
 
   it("scales hp and attack by foe level", () => {
-    expect(scaleFoeHp(10, 3)).toBe(14);
+    expect(scaleFoeHp(10, 3)).toBe(16);
     expect(scaleFoeAttack(3, 3)).toBe(5);
   });
 

@@ -15,9 +15,9 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 - **Levels 1–10** — classic RPG pacing: stay Lv 1 for waves 1–10, level up at **11, 21, 31…**; HP, ATK, and max heal grow with you
 - Foe **LV** varies around yours — easier critters fight below your level, tougher ones above (same rules from wave 1)
 - Pick any roster emoji as your hero
-- **Heal** (1–3 HP, random) on your turn — foe may counterattack
+- **Heal** (1–5 HP at Lv 1, grows with level) on your turn — foe may counterattack; **+1 HYPE** when you heal
 - **Dance** for random foe reactions — hype for you, hype for them, both, or neither (max **5 HYPE** each; +1 ATK per level)
-- **Full HP restore after each wave victory** (sparkle + floating heal number if you were hurt)
+- **Partial HP restore after each wave victory** — half your max HP (sparkle + floating heal number); in-combat heals and hype matter more
 - Shuffled foe order each run
 - **Scores persist** in this browser (best wave, run count)
 - **Mid-run save** — refresh and your fight continues (with a “restored” message)
@@ -27,7 +27,7 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 | Action | Button | Notes |
 |--------|--------|--------|
 | Attack | ⚔️ | |
-| Heal | 💚 | 1–max HP (random); max heal grows with your level |
+| Heal | 💚 | 1–max HP (random); +1 HYPE when you heal; max heal grows with your level |
 | Dance | 🕺 | Random reactions; +1 HYPE (max 5) for you, them, or both |
 | Run | 🏃 | Skip to the next wave — **not on wave 100** |
 

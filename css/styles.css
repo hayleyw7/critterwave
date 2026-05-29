@@ -2083,13 +2083,14 @@ body.is-booting .game-shell {
   }
 }
 
-@media (max-height: 700px) and (max-width: 480px) {
-  .title-bar {
-    display: none;
-  }
-}
-
 @media (max-height: 700px) {
+  .title-bar {
+    padding: var(--space-1) 0 0;
+  }
+
+  .title {
+    font-size: clamp(1.35rem, 6vw, 1.75rem);
+  }
   .records-bar {
     font-size: 0.85rem;
     gap: 0.35rem 0.5rem;

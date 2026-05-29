@@ -15,6 +15,7 @@ import {
   applyPlayerStatsForWave,
   clampHype,
   formatHypeLabel as formatHypeStatLabel,
+  healHpAfterWaveVictory,
   hypeHeadroom,
   isLevelBandFinale,
   makeFoeForWave as buildWaveFoe,
@@ -1538,7 +1539,7 @@ function onAttack(): void {
 
 function applyWaveVictoryHeal(): void {
   const before = player.hp;
-  player.hp = player.maxHp;
+  player.hp = healHpAfterWaveVictory(before, player.maxHp);
   const gained = player.hp - before;
   if (gained <= 0) {
     return;
@@ -1554,9 +1555,14 @@ function onHeal(): void {
   const currentFoe = foe!;
 
   const heal = rollHeal(getHealMax());
+  const hpBefore = player.hp;
   player.hp = Math.min(player.maxHp, player.hp + heal);
   showDamagePop("hero", `+${heal}`, "heal");
   void playHeroHeal();
+
+  if (hpBefore < player.maxHp) {
+    hypeLevel = applyHypeGain(hypeLevel, 1);
+  }
 
   applyCombatGateState(beginAwaitingFoeResponse(combatGateState()));
   const counterHit = applyFoeCounterAttack();

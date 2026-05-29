@@ -7,14 +7,18 @@ export const WAVES_PER_LEVEL = 10;
 
 export const BASE_PLAYER_MAX_HP = 20;
 export const BASE_PLAYER_ATTACK = 5;
-export const BASE_HEAL_MAX = 3;
+export const BASE_HEAL_MAX = 5;
 export const PLAYER_HP_PER_LEVEL = 3;
 export const PLAYER_ATK_PER_LEVEL = 1;
 export const HEAL_MAX_PER_LEVEL = 1;
 
-export const FOE_HP_PER_LEVEL = 2;
+/** Fraction of max HP restored after each wave win (not a full reset). */
+export const WAVE_VICTORY_HEAL_RATIO = 0.5;
+
+export const FOE_HP_PER_LEVEL = 3;
 export const FOE_ATK_PER_LEVEL = 1;
-export const FOE_LEVEL1_HP_MULTIPLIER = 0.72;
+export const FOE_LEVEL1_HP_MULTIPLIER = 0.95;
+export const FOE_LEVEL2_HP_MULTIPLIER = 0.95;
 
 export const DEFEAT_VERBS = [
   "defeat",
@@ -255,18 +259,27 @@ export function scaleFoeHp(baseHp: number, foeLevel: number): number {
   if (foeLevel === 1) {
     hp = Math.round(hp * FOE_LEVEL1_HP_MULTIPLIER);
   } else if (foeLevel === 2) {
-    hp = Math.round(hp * 0.92);
+    hp = Math.round(hp * FOE_LEVEL2_HP_MULTIPLIER);
   }
   return Math.max(4, hp);
 }
 
 export function scaleFoeAttack(baseAtk: number, foeLevel: number): number {
   const levelBonus = Math.max(0, foeLevel - 1) * FOE_ATK_PER_LEVEL;
-  let atk = baseAtk + levelBonus;
-  if (foeLevel === 1) {
-    atk -= 1;
+  return Math.max(1, baseAtk + levelBonus);
+}
+
+/** HP gained from the between-wave victory top-up (capped at max). */
+export function waveVictoryHealGain(currentHp: number, maxHp: number): number {
+  const room = Math.max(0, maxHp - currentHp);
+  if (room <= 0) {
+    return 0;
   }
-  return Math.max(1, atk);
+  return Math.min(room, Math.ceil(maxHp * WAVE_VICTORY_HEAL_RATIO));
+}
+
+export function healHpAfterWaveVictory(currentHp: number, maxHp: number): number {
+  return Math.min(maxHp, currentHp + waveVictoryHealGain(currentHp, maxHp));
 }
 
 export function makeFoeFromTemplate(
