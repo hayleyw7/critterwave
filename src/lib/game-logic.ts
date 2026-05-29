@@ -132,7 +132,9 @@ export function clampBattleLevel(level: number): number {
 }
 
 export function playerLevelForWave(wave: number): number {
-  return clampBattleLevel(Math.floor((Math.max(1, wave) - 1) / WAVES_PER_LEVEL) + 1);
+  return clampBattleLevel(
+    Math.floor((Math.max(1, wave) - 1) / WAVES_PER_LEVEL) + 1
+  );
 }
 
 export function playerStatsForLevel(level: number): PlayerCombatStats {
@@ -150,7 +152,7 @@ export function playerStatsForWave(wave: number): PlayerCombatStats {
   return playerStatsForLevel(playerLevelForWave(wave));
 }
 
-/** Progress through the current level band — one wave = 10% (waves 1–10 → 10%…100%). */
+/** XP toward the next level-up — full bar on wave 10, then level up at 11. */
 export function xpProgressForWave(wave: number): { current: number; max: number } {
   const max = WAVES_PER_LEVEL;
   const current = ((Math.max(1, wave) - 1) % max) + 1;

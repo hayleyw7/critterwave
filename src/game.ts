@@ -254,7 +254,6 @@ const el = {
   foePanel: document.getElementById("foe-panel")!,
   foeStatus: document.querySelector("#foe-panel .enemy-status") as HTMLElement,
   damageLayer: document.getElementById("damage-layer")!,
-  levelUpToast: document.getElementById("level-up-toast")!,
   xpBar: document.getElementById("xp-bar")!,
   xpFill: document.getElementById("xp-fill")!,
   xpText: document.getElementById("xp-text")!,
@@ -966,10 +965,26 @@ function spritePopAnchor(side: "hero" | "foe"): { left: string; top: string } {
   return { left: `${centerX}%`, top: `${anchorY}%` };
 }
 
+function heroHpPopAnchor(): { left: string; top: string } {
+  const hpWrap = el.playerPanel.querySelector(".hero-hp-wrap");
+  const layerRect = el.damageLayer.getBoundingClientRect();
+  if (!hpWrap || layerRect.width <= 0 || layerRect.height <= 0) {
+    return { left: "22%", top: "58%" };
+  }
+  const wrapRect = hpWrap.getBoundingClientRect();
+  const centerX =
+    ((wrapRect.left + wrapRect.width / 2 - layerRect.left) / layerRect.width) * 100;
+  const gapAbove = 28;
+  const anchorY =
+    ((wrapRect.top - gapAbove - layerRect.top) / layerRect.height) * 100;
+  return { left: `${centerX}%`, top: `${anchorY}%` };
+}
+
 function showDamagePop(
   side: "hero" | "foe",
   text: string,
-  kind: "damage" | "heal" | "hype"
+  kind: "damage" | "heal" | "hype" | "level",
+  anchorOverride?: { left: string; top: string }
 ): void {
   const pop = document.createElement("span");
   pop.className =
@@ -977,9 +992,11 @@ function showDamagePop(
       ? "damage-pop heal-pop"
       : kind === "hype"
         ? "damage-pop hype-pop"
-        : "damage-pop";
+        : kind === "level"
+          ? "damage-pop hype-pop"
+          : "damage-pop";
   pop.textContent = text;
-  const anchor = spritePopAnchor(side);
+  const anchor = anchorOverride ?? spritePopAnchor(side);
   pop.style.left = anchor.left;
   pop.style.top = anchor.top;
   el.damageLayer.appendChild(pop);
@@ -999,19 +1016,12 @@ function showHypeGainPops(playerGain: number, foeGain: number): void {
   }
 }
 
-const LEVEL_UP_NOTICE_MS = 1500;
+const LEVEL_UP_NOTICE_MS = 900;
 
 function playLevelUpNotice(): Promise<void> {
   return new Promise((resolve) => {
-    el.levelUpToast.classList.remove("hidden", "level-up-show");
-    void el.levelUpToast.offsetWidth;
-    el.levelUpToast.classList.add("level-up-show");
-    briefClass(el.playerPanel, "hero-level-up", 900);
-    window.setTimeout(() => {
-      el.levelUpToast.classList.remove("level-up-show");
-      el.levelUpToast.classList.add("hidden");
-      resolve();
-    }, LEVEL_UP_NOTICE_MS);
+    showDamagePop("hero", "LEVEL UP", "hype", heroHpPopAnchor());
+    window.setTimeout(resolve, LEVEL_UP_NOTICE_MS);
   });
 }
 
