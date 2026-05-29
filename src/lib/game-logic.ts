@@ -209,6 +209,25 @@ export function xpPercentForWave(wave: number): number {
   return Math.round((current / max) * 100);
 }
 
+export type XpDisplayPhase = "combat" | "gameover" | "victory";
+
+/** XP bar values for UI — full bar on the campaign victory screen. */
+export function xpProgressForDisplay(
+  wave: number,
+  phase: XpDisplayPhase
+): { current: number; max: number } {
+  const progress = xpProgressForWave(wave);
+  if (phase === "victory") {
+    return { current: progress.max, max: progress.max };
+  }
+  return progress;
+}
+
+export function xpPercentForDisplay(wave: number, phase: XpDisplayPhase): number {
+  const { current, max } = xpProgressForDisplay(wave, phase);
+  return Math.round((current / max) * 100);
+}
+
 /** Rough power score from roster base stats — used to nudge foe level up/down. */
 export function foeStatScore(template: FoeTemplate): number {
   return template.baseHp + template.baseAtk * 2;

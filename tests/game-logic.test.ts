@@ -38,7 +38,9 @@ import {
   playerStatsForWave,
   refreshWaveFoeFromTemplate,
   WAVES_PER_LEVEL,
+  xpProgressForDisplay,
   xpProgressForWave,
+  xpPercentForDisplay,
   xpPercentForWave,
   randomDamage,
   randomHeal,
@@ -171,6 +173,12 @@ describe("level progression", () => {
     expect(xpProgressForWave(20)).toEqual({ current: 9, max: 10 });
     expect(xpPercentForWave(20)).toBe(90);
     expect(xpPercentForWave(100)).toBe(90);
+  });
+
+  it("shows a full xp bar on the campaign victory screen", () => {
+    expect(xpPercentForDisplay(100, "victory")).toBe(100);
+    expect(xpProgressForDisplay(100, "victory")).toEqual({ current: 10, max: 10 });
+    expect(xpPercentForDisplay(100, "combat")).toBe(90);
   });
 
   it("flags level-band finales before the campaign ends", () => {

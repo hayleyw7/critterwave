@@ -25,7 +25,9 @@ import {
   playerStatsForWave,
   refreshWaveFoeFromTemplate,
   WAVES_PER_LEVEL,
+  xpProgressForDisplay,
   xpProgressForWave,
+  xpPercentForDisplay,
   xpPercentForWave,
   heroLabelFromFoeName,
   normalizeHeroName,
@@ -1045,9 +1047,9 @@ function render(): void {
   renderHeroSprite();
   el.waveBanner.textContent = `${Math.min(wave, getCampaignLength())} / ${getCampaignLength()}`;
   el.turnLabel.textContent = String(turn);
-  const xp = xpProgressForWave(wave);
+  const xp = xpProgressForDisplay(wave, phase);
   setHpBar(el.xpFill, xp.current, xp.max);
-  el.xpText.textContent = `${xpPercentForWave(wave)}%`;
+  el.xpText.textContent = `${xpPercentForDisplay(wave, phase)}%`;
   el.xpBar.setAttribute("aria-valuenow", String(xp.current));
   el.xpBar.setAttribute("aria-valuemax", String(xp.max));
 
@@ -1505,9 +1507,10 @@ function onAttack(): void {
     render();
     const isFinal = wave >= getCampaignLength();
     void playFoeDefeat(isFinal)
-      .then(() => {
+      .then(async () => {
         if (isFinal) {
           applyWaveVictoryHeal();
+          await playXpBarFullBeat();
           winCampaign();
         } else {
           return winWave(defeatVerb);
