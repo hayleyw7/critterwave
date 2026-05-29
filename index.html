@@ -150,7 +150,20 @@
                   <span class="hp-numbers" id="player-hp-text">20/20</span>
                   <div class="stat-group">
                     <span class="stat-mini">ATK <span id="player-attack">5</span></span>
-                    <span class="stat-mini hype-stat" id="player-buff" aria-label="HYPE level">HYPE 0</span>
+                    <div class="hype-stat-wrap" id="player-hype-wrap">
+                      <span class="stat-mini hype-stat" id="player-buff" aria-label="HYPE level">HYPE 0/5</span>
+                      <div
+                        class="hype-bar"
+                        id="player-hype-bar"
+                        role="progressbar"
+                        aria-label="HYPE meter"
+                        aria-valuemin="0"
+                        aria-valuemax="5"
+                        aria-valuenow="0"
+                      >
+                        <div class="hype-fill player-hype-fill" id="player-hype-fill"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -187,7 +200,20 @@
                   <span class="hp-numbers" id="foe-hp-text">12/12</span>
                   <div class="stat-group">
                     <span class="stat-mini">ATK <span id="foe-attack">3</span></span>
-                    <span class="stat-mini hype-stat" id="foe-buff" aria-label="Foe HYPE level">HYPE 0</span>
+                    <div class="hype-stat-wrap" id="foe-hype-wrap">
+                      <span class="stat-mini hype-stat" id="foe-buff" aria-label="Foe HYPE level">HYPE 0/5</span>
+                      <div
+                        class="hype-bar"
+                        id="foe-hype-bar"
+                        role="progressbar"
+                        aria-label="Foe HYPE meter"
+                        aria-valuemin="0"
+                        aria-valuemax="5"
+                        aria-valuenow="0"
+                      >
+                        <div class="hype-fill foe-hype-fill" id="foe-hype-fill"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,19 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { FOES } from "../src/data/foes-data.js";
 import {
+  applyHypeGain,
   buildFoeOrder,
   CAMPAIGN_WAVE_COUNT,
   canFleeWave,
+  clampHype,
   DEFEAT_VERBS,
   effectiveAttack,
   foeColorConflictsWithHero,
   foesForHero,
   formatFoeInText,
+  formatHypeLabel,
   formatSetupBlockerMessage,
   getSetupBlockers,
   heroLabelFromFoeName,
   HERO_NAME_MAX_LENGTH,
   hypeAttackBonus,
+  hypeHeadroom,
+  HYPE_MAX,
   makeFoeForWave,
   makeFoeFromTemplate,
   nextDefeatVerb,
@@ -233,6 +238,16 @@ describe("combat math", () => {
     expect(hypeAttackBonus(2)).toBe(2);
     expect(hypeAttackBonus(-1)).toBe(0);
     expect(effectiveAttack(5, 2)).toBe(7);
+  });
+
+  it("clamps hype to max", () => {
+    expect(clampHype(6)).toBe(HYPE_MAX);
+    expect(clampHype(-1)).toBe(0);
+    expect(applyHypeGain(4, 2)).toBe(HYPE_MAX);
+    expect(hypeHeadroom(HYPE_MAX)).toBe(0);
+    expect(hypeHeadroom(3)).toBe(2);
+    expect(formatHypeLabel(3)).toBe("HYPE 3/5");
+    expect(formatHypeLabel(7)).toBe("HYPE 5/5");
   });
 });
 

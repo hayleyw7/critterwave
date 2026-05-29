@@ -75,6 +75,24 @@ describe("formatDanceHypeTail", () => {
     expect(formatDanceHypeTail(1, 1)).toContain("You both get");
     expect(formatDanceHypeTail(1, 1)).not.toContain("You get +1");
   });
+
+  it("reports capped hype when a side cannot gain more", () => {
+    expect(formatDanceHypeTail(0, 0, undefined, { playerCapped: true })).toBe(
+      "You're max hype!"
+    );
+    expect(formatDanceHypeTail(0, 0, "Rabid Rabbit", { foeCapped: true })).toBe(
+      "Rabid Rabbit is max hype!"
+    );
+    expect(
+      formatDanceHypeTail(0, 0, undefined, { playerCapped: true, foeCapped: true })
+    ).toBe("You're both max hype!");
+    expect(
+      formatDanceHypeTail(0, 1, "Rabid Rabbit", { playerCapped: true })
+    ).toContain("Rabid Rabbit gets");
+    expect(
+      formatDanceHypeTail(0, 1, "Rabid Rabbit", { playerCapped: true })
+    ).toContain("You're max hype!");
+  });
 });
 
 describe("dance content invariants", () => {

@@ -9,6 +9,12 @@ import {
   formatSetupBlockerMessage,
   getSetupBlockers as getSetupBlockersForInput,
   HERO_NAME_MAX_LENGTH,
+  HYPE_ATTACK_PER_LEVEL,
+  HYPE_MAX,
+  applyHypeGain,
+  clampHype,
+  formatHypeLabel as formatHypeStatLabel,
+  hypeHeadroom,
   makeFoeForWave as buildWaveFoe,
   nextDefeatVerb as advanceDefeatVerb,
   heroLabelFromFoeName,
@@ -118,7 +124,6 @@ type GameSnapshot = {
 const STORAGE_KEY = "critterwave-v1";
 const LEGACY_STORAGE_KEYS = ["goblinwave-v4", "goblinwave-v1"] as const;
 const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
-const HYPE_ATTACK_PER_LEVEL = 1;
 const COUNTER_ATTACK_DELAY_MS = 1000;
 const FOE_POOF_MS = 450;
 const FOE_ENTRANCE_MS = 550;
@@ -202,7 +207,9 @@ const el = {
   arena: document.getElementById("arena")!,
   battleStage: document.getElementById("battle-stage")!,
   playerPanel: document.getElementById("player-panel")!,
+  playerStatus: document.querySelector("#player-panel .hero-status") as HTMLElement,
   foePanel: document.getElementById("foe-panel")!,
+  foeStatus: document.querySelector("#foe-panel .enemy-status") as HTMLElement,
   damageLayer: document.getElementById("damage-layer")!,
   bestWave: document.getElementById("stat-best-wave")!,
   runs: document.getElementById("stat-runs")!,
@@ -211,11 +218,17 @@ const el = {
   playerHpText: document.getElementById("player-hp-text")!,
   playerAttack: document.getElementById("player-attack")!,
   playerBuff: document.getElementById("player-buff")!,
+  playerHypeWrap: document.getElementById("player-hype-wrap")!,
+  playerHypeBar: document.getElementById("player-hype-bar")!,
+  playerHypeFill: document.getElementById("player-hype-fill")!,
   playerEmoji: document.getElementById("hero-emoji")!,
   playerName: document.getElementById("hero-name")!,
   foeName: document.getElementById("foe-name")!,
   foeAttack: document.getElementById("foe-attack")!,
   foeBuff: document.getElementById("foe-buff")!,
+  foeHypeWrap: document.getElementById("foe-hype-wrap")!,
+  foeHypeBar: document.getElementById("foe-hype-bar")!,
+  foeHypeFill: document.getElementById("foe-hype-fill")!,
   foeEmoji: document.getElementById("foe-emoji")!,
   foeHpFill: document.getElementById("foe-hp-fill")!,
   foeHpText: document.getElementById("foe-hp-text")!,
@@ -492,8 +505,8 @@ function applySnapshot(snapshot: GameSnapshot): void {
   turn = snapshot.turn;
   wave = snapshot.wave;
   phase = snapshot.phase;
-  hypeLevel = snapshot.hypeLevel ?? 0;
-  foeHypeLevel = snapshot.foeHypeLevel ?? 0;
+  hypeLevel = clampHype(snapshot.hypeLevel ?? 0);
+  foeHypeLevel = clampHype(snapshot.foeHypeLevel ?? 0);
   foeOrder = restoreFoeOrder(snapshot.foeOrderIds, snapshot.player.emoji);
   if (snapshot.heroColorTheme) {
     applyHeroColorTheme(snapshot.heroColorTheme);
@@ -691,11 +704,11 @@ function showSetupBlockedHint(): void {
 }
 
 function getPlayerHypeBonus(): number {
-  return hypeLevel * HYPE_ATTACK_PER_LEVEL;
+  return clampHype(hypeLevel) * HYPE_ATTACK_PER_LEVEL;
 }
 
 function getFoeHypeBonus(): number {
-  return foeHypeLevel * HYPE_ATTACK_PER_LEVEL;
+  return clampHype(foeHypeLevel) * HYPE_ATTACK_PER_LEVEL;
 }
 
 function getEffectiveAttack(): number {
@@ -708,15 +721,16 @@ function getEffectiveFoeAttack(): number {
 }
 
 function applyPlayerDanceBuff(amount = 1): void {
-  hypeLevel += amount;
+  hypeLevel = applyHypeGain(hypeLevel, amount);
 }
 
 function applyFoeDanceBuff(amount = 1): void {
-  foeHypeLevel += amount;
+  foeHypeLevel = applyHypeGain(foeHypeLevel, amount);
 }
 
-function formatHypeLabel(level: number): string {
-  return `HYPE ${level}`;
+function formatHypeAriaLabel(level: number): string {
+  const clamped = clampHype(level);
+  return `HYPE ${clamped} of ${HYPE_MAX}`;
 }
 
 function clearAllHype(): void {
@@ -726,6 +740,23 @@ function clearAllHype(): void {
 
 function applyPlayerHitHypeLoss(): void {
   hypeLevel = Math.max(0, hypeLevel - 1);
+}
+
+function renderHypeMeter(
+  wrap: HTMLElement,
+  statusPanel: HTMLElement,
+  bar: HTMLElement,
+  fill: HTMLElement,
+  label: HTMLElement,
+  level: number
+): void {
+  const clamped = clampHype(level);
+  label.textContent = formatHypeStatLabel(clamped);
+  label.setAttribute("aria-label", formatHypeAriaLabel(clamped));
+  setHpBar(fill, clamped, HYPE_MAX);
+  bar.setAttribute("aria-valuenow", String(clamped));
+  bar.setAttribute("aria-valuemax", String(HYPE_MAX));
+  statusPanel.classList.toggle("hype-full", clamped >= HYPE_MAX);
 }
 
 function foeDisplayName(): string {
@@ -937,7 +968,14 @@ function render(): void {
   setHpBar(el.playerHpFill, player.hp, player.maxHp);
   el.playerHpText.textContent = `${player.hp}/${player.maxHp}`;
   el.playerAttack.textContent = String(getEffectiveAttack());
-  el.playerBuff.textContent = formatHypeLabel(hypeLevel);
+  renderHypeMeter(
+    el.playerHypeWrap,
+    el.playerStatus,
+    el.playerHypeBar,
+    el.playerHypeFill,
+    el.playerBuff,
+    hypeLevel
+  );
 
   const playerHpBar = el.playerPanel.querySelector(".hp-bar");
   playerHpBar?.classList.toggle("hp-low", player.hp / player.maxHp < 0.3);
@@ -946,13 +984,22 @@ function render(): void {
     applyFoeColorTheme(foeColorTheme);
     el.foeName.textContent = foe.name.toUpperCase();
     el.foeAttack.textContent = String(getEffectiveFoeAttack());
-    el.foeBuff.textContent = formatHypeLabel(foeHypeLevel);
+    renderHypeMeter(
+      el.foeHypeWrap,
+      el.foeStatus,
+      el.foeHypeBar,
+      el.foeHypeFill,
+      el.foeBuff,
+      foeHypeLevel
+    );
     el.foeEmoji.textContent = foe.emoji;
     el.foeEmoji.setAttribute("aria-label", foe.name);
     setHpBar(el.foeHpFill, foe.hp, foe.maxHp);
     el.foeHpText.textContent = `${foe.hp}/${foe.maxHp}`;
     const foeHpBar = el.foePanel.querySelector(".hp-bar");
     foeHpBar?.classList.toggle("hp-low", foe.hp / foe.maxHp < 0.3);
+  } else {
+    el.foeStatus.classList.remove("hype-full");
   }
 
   const inEndScreen = phase === "gameover" || phase === "victory";
@@ -1376,15 +1423,21 @@ function logDanceLines(opener: string, reactionHtml: string, tail: string): void
 
 async function onDance(): Promise<void> {
   const response = pickRandomDanceResponse();
-  const playerGain = getPlayerHypeGain(response);
-  const foeGain = getFoeHypeGain(response);
+  const attemptedPlayerGain = getPlayerHypeGain(response);
+  const attemptedFoeGain = getFoeHypeGain(response);
   const joins = response.foeJoins === true;
 
-  if (playerGain > 0) {
-    applyPlayerDanceBuff(playerGain);
+  const actualPlayerGain = Math.min(attemptedPlayerGain, hypeHeadroom(hypeLevel));
+  const actualFoeGain = Math.min(attemptedFoeGain, hypeHeadroom(foeHypeLevel));
+  const playerCapped =
+    attemptedPlayerGain > 0 && actualPlayerGain < attemptedPlayerGain;
+  const foeCapped = attemptedFoeGain > 0 && actualFoeGain < attemptedFoeGain;
+
+  if (actualPlayerGain > 0) {
+    applyPlayerDanceBuff(actualPlayerGain);
   }
-  if (foeGain > 0) {
-    applyFoeDanceBuff(foeGain);
+  if (actualFoeGain > 0) {
+    applyFoeDanceBuff(actualFoeGain);
   }
 
   const opener = escapeHtml(pickRandomDanceOpener());
@@ -1393,16 +1446,25 @@ async function onDance(): Promise<void> {
   await pause(COUNTER_ATTACK_DELAY_MS);
 
   const reaction = escapeHtml(formatFoeInText(response.message));
-  const tail = formatDanceHypeTail(playerGain, foeGain, foe?.name);
+  const tail = formatDanceHypeTail(actualPlayerGain, actualFoeGain, foe?.name, {
+    playerCapped,
+    foeCapped,
+  });
   logDanceLines(opener, reaction, "");
-  if (joins || foeGain > 0) {
+  if (joins || attemptedFoeGain > 0) {
     playFoeDance();
   }
 
   if (tail) {
     await pause(COUNTER_ATTACK_DELAY_MS);
     logDanceLines(opener, reaction, tail);
-    showHypeGainPops(playerGain, foeGain);
+    showHypeGainPops(actualPlayerGain, actualFoeGain);
+    if (playerCapped) {
+      briefClass(el.playerHypeWrap, "hype-capped-flash", 420);
+    }
+    if (foeCapped) {
+      briefClass(el.foeHypeWrap, "hype-capped-flash", 420);
+    }
     render();
   }
 

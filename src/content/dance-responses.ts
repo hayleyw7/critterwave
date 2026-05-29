@@ -145,6 +145,11 @@ export function getFoeHypeGain(response: DanceResponse): number {
   return 0;
 }
 
+export type DanceHypeTailOptions = {
+  playerCapped?: boolean;
+  foeCapped?: boolean;
+};
+
 function formatDanceHypeGain(gain: number): string {
   return `<span class="battle-hype-gain">+${gain} HYPE</span>`;
 }
@@ -160,19 +165,46 @@ function escapeHtml(text: string): string {
 export function formatDanceHypeTail(
   playerGain: number,
   foeGain: number,
-  foeName?: string
+  foeName?: string,
+  options?: DanceHypeTailOptions
 ): string {
+  const playerCapped = options?.playerCapped ?? false;
+  const foeCapped = options?.foeCapped ?? false;
+
   if (playerGain === 0 && foeGain === 0) {
+    if (playerCapped && foeCapped) {
+      return "You're both max hype!";
+    }
+    if (playerCapped) {
+      return "You're max hype!";
+    }
+    if (foeCapped) {
+      const label = foeName ? escapeHtml(foeName) : "They";
+      return `${label} is max hype!`;
+    }
     return "";
   }
+
+  const segments: string[] = [];
+
   if (playerGain > 0 && foeGain > 0) {
-    return `You both get ${formatDanceHypeGain(1)}!`;
-  }
-  if (foeGain > 0) {
+    segments.push(`You both get ${formatDanceHypeGain(1)}!`);
+  } else if (foeGain > 0) {
     const label = foeName ? escapeHtml(foeName) : "They";
-    return `${label} gets ${formatDanceHypeGain(foeGain)}!`;
+    segments.push(`${label} gets ${formatDanceHypeGain(foeGain)}!`);
+  } else if (playerGain > 0) {
+    segments.push(`You get ${formatDanceHypeGain(playerGain)}!`);
   }
-  return `You get ${formatDanceHypeGain(playerGain)}!`;
+
+  if (playerCapped) {
+    segments.push("You're max hype!");
+  }
+  if (foeCapped) {
+    const label = foeName ? escapeHtml(foeName) : "They";
+    segments.push(`${label} is max hype!`);
+  }
+
+  return segments.join(" ");
 }
 
 let lastDanceResponseIndex = -1;

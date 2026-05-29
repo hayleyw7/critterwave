@@ -1,6 +1,7 @@
 export const CAMPAIGN_WAVE_COUNT = 100;
 export const HERO_NAME_MAX_LENGTH = 16;
 export const HYPE_ATTACK_PER_LEVEL = 1;
+export const HYPE_MAX = 5;
 
 export const DEFEAT_VERBS = [
   "defeat",
@@ -195,6 +196,26 @@ export function randomHeal(max: number, random: () => number): number {
 
 export function hypeAttackBonus(hypeLevel: number): number {
   return Math.max(0, hypeLevel) * HYPE_ATTACK_PER_LEVEL;
+}
+
+export function clampHype(level: number, max = HYPE_MAX): number {
+  return Math.max(0, Math.min(max, level));
+}
+
+export function applyHypeGain(
+  current: number,
+  amount: number,
+  max = HYPE_MAX
+): number {
+  return clampHype(current + amount, max);
+}
+
+export function hypeHeadroom(current: number, max = HYPE_MAX): number {
+  return Math.max(0, max - clampHype(current, max));
+}
+
+export function formatHypeLabel(level: number, max = HYPE_MAX): string {
+  return `HYPE ${clampHype(level, max)}/${max}`;
 }
 
 export function effectiveAttack(baseAttack: number, hypeLevel: number): number {

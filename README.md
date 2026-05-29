@@ -14,7 +14,7 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 - **100 waves** to win; **117** hand-picked alliterative foes (critters and fantasy creatures)
 - Pick any roster emoji as your hero
 - **Heal** (1–3 HP, random) on your turn — foe may counterattack
-- **Dance** for random foe reactions — hype for you, hype for them, both, or neither
+- **Dance** for random foe reactions — hype for you, hype for them, both, or neither (max **5 HYPE** each; +1 ATK per level)
 - **+1–3 HP after each wave victory** (sparkle on your critter; no battle-log line)
 - Shuffled foe order each run
 - **Scores persist** in this browser (best wave, run count)
@@ -26,7 +26,7 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 |--------|--------|--------|
 | Attack | ⚔️ | |
 | Heal | 💚 | 1–3 HP (random); costs your turn |
-| Dance | 🕺 | Random reactions; +1 HYPE for you, them, or both |
+| Dance | 🕺 | Random reactions; +1 HYPE (max 5) for you, them, or both |
 | Run | 🏃 | Skip to the next wave — **not on wave 100** |
 
 ## Footer

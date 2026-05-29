@@ -669,6 +669,7 @@ body.is-booting .game-shell {
   border-radius: 0;
   overflow: hidden;
   box-shadow: none;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 #player-panel {
@@ -830,6 +831,70 @@ body.is-booting .game-shell {
 .hype-stat {
   min-width: 0;
   text-align: right;
+}
+
+.hype-stat-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  min-width: 0;
+  max-width: 5.75rem;
+}
+
+.hype-bar {
+  width: 100%;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.hype-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  transition: width 0.2s ease;
+}
+
+.player-hype-fill {
+  background: var(--hero);
+}
+
+.foe-hype-fill {
+  background: var(--foe-accent);
+}
+
+.hero-status.hype-full {
+  border-color: var(--hero);
+  box-shadow:
+    0 0 0 1px var(--hero),
+    0 0 16px color-mix(in srgb, var(--hero) 60%, transparent),
+    0 0 32px color-mix(in srgb, var(--hero) 30%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--hero) 18%, transparent);
+}
+
+.enemy-status.hype-full {
+  border-color: var(--foe-accent);
+  box-shadow:
+    0 0 0 1px var(--foe-accent),
+    0 0 16px color-mix(in srgb, var(--foe-accent) 60%, transparent),
+    0 0 32px color-mix(in srgb, var(--foe-accent) 30%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--foe-accent) 18%, transparent);
+}
+
+.hype-stat-wrap.hype-capped-flash .hype-stat {
+  animation: hype-capped-pulse 0.42s ease-out;
+}
+
+@keyframes hype-capped-pulse {
+  0%,
+  100% {
+    opacity: 0.95;
+  }
+  40% {
+    opacity: 0.45;
+  }
 }
 
 .sprite-wrap {
