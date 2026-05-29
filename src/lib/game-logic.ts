@@ -152,10 +152,10 @@ export function playerStatsForWave(wave: number): PlayerCombatStats {
   return playerStatsForLevel(playerLevelForWave(wave));
 }
 
-/** XP toward the next level-up — full bar on wave 10, then level up at 11. */
+/** XP toward the next level-up — 0% on wave 1, 90% on wave 10 (last mob of the band), level up at 11. */
 export function xpProgressForWave(wave: number): { current: number; max: number } {
   const max = WAVES_PER_LEVEL;
-  const current = ((Math.max(1, wave) - 1) % max) + 1;
+  const current = (Math.max(1, wave) - 1) % max;
   return { current, max };
 }
 

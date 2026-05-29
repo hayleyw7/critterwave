@@ -137,14 +137,14 @@ describe("level progression", () => {
   });
 
   it("tracks xp progress within each 10-wave band", () => {
-    expect(xpProgressForWave(1)).toEqual({ current: 1, max: 10 });
-    expect(xpPercentForWave(1)).toBe(10);
-    expect(xpProgressForWave(10)).toEqual({ current: 10, max: 10 });
-    expect(xpPercentForWave(10)).toBe(100);
-    expect(xpProgressForWave(11)).toEqual({ current: 1, max: 10 });
-    expect(xpPercentForWave(11)).toBe(10);
-    expect(xpProgressForWave(20)).toEqual({ current: 10, max: 10 });
-    expect(xpPercentForWave(20)).toBe(100);
+    expect(xpProgressForWave(1)).toEqual({ current: 0, max: 10 });
+    expect(xpPercentForWave(1)).toBe(0);
+    expect(xpProgressForWave(10)).toEqual({ current: 9, max: 10 });
+    expect(xpPercentForWave(10)).toBe(90);
+    expect(xpProgressForWave(11)).toEqual({ current: 0, max: 10 });
+    expect(xpPercentForWave(11)).toBe(0);
+    expect(xpProgressForWave(20)).toEqual({ current: 9, max: 10 });
+    expect(xpPercentForWave(20)).toBe(90);
   });
 
   it("offsets foe level from roster toughness", () => {

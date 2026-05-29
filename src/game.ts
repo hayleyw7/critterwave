@@ -21,6 +21,7 @@ import {
   pickFoeFromOrder,
   playerLevelForWave,
   playerStatsForWave,
+  WAVES_PER_LEVEL,
   xpProgressForWave,
   xpPercentForWave,
   heroLabelFromFoeName,
@@ -139,6 +140,7 @@ const DEATH_BEAT_MS = 1200;
 const GOLD_FLASH_MS = 650;
 const HEAL_ANIM_MS = 420;
 const DANCE_ANIM_MS = 550;
+const XP_FILL_BEAT_MS = 220;
 const DEFAULT_HERO_EMOJI = "🐱";
 const DEFAULT_HERO_LABEL = "Cat";
 
@@ -828,6 +830,15 @@ function setHpBar(fill: HTMLElement, current: number, max: number): void {
   fill.style.width = `${pct}%`;
 }
 
+function playXpBarFullBeat(): Promise<void> {
+  const { max } = xpProgressForWave(wave);
+  setHpBar(el.xpFill, max, max);
+  el.xpText.textContent = "100%";
+  el.xpBar.setAttribute("aria-valuenow", String(max));
+  el.xpBar.setAttribute("aria-valuemax", String(max));
+  return pause(XP_FILL_BEAT_MS);
+}
+
 function briefClass(element: HTMLElement, className: string, ms: number): void {
   element.classList.remove(className);
   void element.offsetWidth;
@@ -1174,6 +1185,13 @@ async function transitionToNextWave(
     if (transition === "defeat") {
       void applyWaveVictoryHeal();
     }
+  }
+
+  const completedWave = wave;
+  const isLevelBandFinale =
+    completedWave % WAVES_PER_LEVEL === 0 && completedWave < getCampaignLength();
+  if (isLevelBandFinale) {
+    await playXpBarFullBeat();
   }
 
   wave += 1;
