@@ -2,7 +2,7 @@
 export const FOES = [
   {
     "id": "cunning-cat",
-    "name": "Cowardly Cat",
+    "name": "Conniving Cat",
     "emoji": "🐱",
     "baseHp": 10,
     "baseAtk": 3
