@@ -984,8 +984,8 @@ function syncHypeMaxPresentation(
   }
 }
 
-function applyPlayerHitHypeLoss(): void {
-  hypeLevel = Math.max(0, hypeLevel - 1);
+function applyPlayerHitHypeLoss(damageDealt: number): void {
+  hypeLevel = hypeAfterTakingHit(hypeLevel, damageDealt);
 }
 
 function applyFoeHitHypeLoss(damageDealt: number): void {
@@ -1828,8 +1828,8 @@ function applyFoeCounterAttack(): number | null {
     if (damageHint.flashHp) {
       playFirstPlayerDamageHpFlash();
     }
+    applyPlayerHitHypeLoss(hit);
   }
-  applyPlayerHitHypeLoss();
 
   if (player.hp > 0) {
     turn += 1;
@@ -1984,16 +1984,11 @@ function onHeal(): void {
   showPlayerHealRoll(rolled);
 
   const healGrantsHype = hpBefore < player.maxHp;
-  const deferHealHypeGain = healGrantsHype && hypeLevel === 0;
-
-  if (healGrantsHype && !deferHealHypeGain) {
-    gainPlayerHype(1);
-  }
 
   applyCombatGateState(beginAwaitingFoeResponse(combatGateState()));
   const counterHit = applyFoeCounterAttack();
 
-  if (deferHealHypeGain && counterHit === null) {
+  if (healGrantsHype && counterHit === null) {
     gainPlayerHype(1);
   }
   syncCombatHintClasses();

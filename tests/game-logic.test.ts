@@ -487,12 +487,13 @@ describe("combat math", () => {
     expect(formatHypeLabel(7)).toBe("HYPE 5/5");
   });
 
-  it("heal hype skips transient gain when counter zeros from 0", () => {
+  it("heal hype applies only when the foe does not counter", () => {
     expect(hypeAfterHealAndCounter(0, true, true)).toBe(0);
     expect(hypeAfterHealAndCounter(0, true, false)).toBe(1);
-    expect(hypeAfterHealAndCounter(3, true, true)).toBe(3);
-    expect(hypeAfterHealAndCounter(4, true, true)).toBe(4);
-    expect(hypeAfterHealAndCounter(2, false, true)).toBe(2);
+    expect(hypeAfterHealAndCounter(3, true, true)).toBe(2);
+    expect(hypeAfterHealAndCounter(4, true, true)).toBe(3);
+    expect(hypeAfterHealAndCounter(2, false, true)).toBe(1);
+    expect(hypeAfterHealAndCounter(2, false, true, 0)).toBe(2);
   });
 });
 
