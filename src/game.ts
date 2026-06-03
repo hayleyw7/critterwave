@@ -47,6 +47,7 @@ import {
   getFoeHypeGain,
   pickRandomDanceOpener,
   pickRandomDanceResponse,
+  pickFirstDanceResponse,
   resetDancePicker,
 } from "./content/dance-responses.js";
 import { appendBattleHypeTail, setBattleLines } from "./lib/battle-log-dom.js";
@@ -2015,10 +2016,13 @@ function onDance(): void {
   if (generation === null) return;
   const currentFoe = foe!;
 
+  const isFirstDance = !combatHints.celebratedFirstDance;
   combatHints = recordDanceForHints(combatHints);
   syncCombatHintClasses();
 
-  const response = pickRandomDanceResponse();
+  const response = isFirstDance
+    ? pickFirstDanceResponse()
+    : pickRandomDanceResponse();
   const attemptedPlayerGain = getPlayerHypeGain(response);
   const attemptedFoeGain = getFoeHypeGain(response);
   const joins = response.foeJoins === true;

@@ -44,6 +44,16 @@ test.describe("Critterwave — happy paths", () => {
     });
   });
 
+  test("first dance gives player hype only", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "Dance" }).click();
+    await expect(page.locator("#battle-text")).toContainText(/You get.*\+1 HYPE/i, {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#player-buff")).toHaveText("HYPE 1/5");
+    await expect(page.locator("#foe-buff")).toHaveText("HYPE 0/5");
+  });
+
   test("run away keeps wave and shows next foe", async ({ page }) => {
     await startFreshRun(page);
     const waveBefore = await page.locator("#wave-banner").textContent();

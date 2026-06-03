@@ -5,8 +5,10 @@ import {
   formatDanceHypeTail,
   getFoeHypeGain,
   getPlayerHypeGain,
+  pickFirstDanceResponse,
   pickRandomDanceOpener,
   pickRandomDanceResponse,
+  PLAYER_ONLY_DANCE_RESPONSES,
   resetDancePicker,
 } from "../src/content/dance-responses.js";
 
@@ -204,5 +206,28 @@ describe("random pickers", () => {
     pickRandomDanceResponse(() => 0);
     resetDancePicker();
     expect(pickRandomDanceResponse(() => 0)).toBe(DANCE_RESPONSES[0]);
+  });
+});
+
+describe("pickFirstDanceResponse", () => {
+  beforeEach(() => {
+    resetDancePicker();
+  });
+
+  it("only picks player-only reactions", () => {
+    for (let i = 0; i < 30; i++) {
+      const response = pickFirstDanceResponse();
+      expect(getPlayerHypeGain(response)).toBe(1);
+      expect(getFoeHypeGain(response)).toBe(0);
+      expect(response.foeJoins).not.toBe(true);
+      expect(PLAYER_ONLY_DANCE_RESPONSES).toContain(response);
+    }
+  });
+
+  it("does not repeat the same first-dance line twice in a row", () => {
+    const alwaysFirst = () => 0;
+    const first = pickFirstDanceResponse(alwaysFirst);
+    const second = pickFirstDanceResponse(alwaysFirst);
+    expect(second).not.toBe(first);
   });
 });
