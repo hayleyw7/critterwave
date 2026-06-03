@@ -37,10 +37,11 @@ describe("teach flash presentation", () => {
     );
   });
 
-  it("defines hp teach pulse for player and foe bars", () => {
-    expect(styles).toContain(".hp-bar.hp-first-heal-flash .player-hp");
-    expect(styles).toContain(".hp-bar.hp-first-attack-flash .foe-hp");
-    expect(styles).toContain(".hp-bar.hp-first-wave-heal-flash .player-hp");
+  it("defines hp teach pulse on the bar track (not the fill)", () => {
+    expect(styles).toContain(".hp-bar.hp-first-heal-flash");
+    expect(styles).toContain(".hp-bar.hp-first-attack-flash");
+    expect(styles).toContain(".hp-bar.hp-first-wave-heal-flash");
     expect(styles).toContain("@keyframes hp-teach-pulse");
+    expect(styles).not.toMatch(/\.hp-bar\.hp-first-heal-flash \.player-hp[\s\S]*?animation: hp-teach-pulse/);
   });
 });

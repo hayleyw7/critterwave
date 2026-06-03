@@ -173,6 +173,9 @@ export function shouldShowDanceHint(
   foeHypeLevel: number,
   hypeMax = HYPE_MAX
 ): boolean {
+  if (flags.dismissedDanceHint) {
+    return false;
+  }
   if (phase !== "combat" || !hasFoe) {
     return false;
   }
@@ -228,6 +231,9 @@ export function shouldArmDanceHintForNewFoe(
   flags: CombatHintsState,
   ctx: NewFoeDanceHintContext
 ): boolean {
+  if (flags.dismissedDanceHint) {
+    return false;
+  }
   if (ctx.hypeLevel >= 1) {
     return false;
   }
@@ -355,6 +361,7 @@ export function recordDanceForHints(flags: CombatHintsState): CombatHintsState {
   return {
     ...flags,
     celebratedFirstDance: true,
+    dismissedDanceHint: true,
     showDanceHintThisFoe: false,
   };
 }

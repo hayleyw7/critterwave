@@ -145,13 +145,13 @@ describe("combat hints — per-run dismissals", () => {
     expect(shouldShowHealHint(full, 8, 20, combat, true)).toBe(true);
   });
 
-  it("dance hint stops for this foe after dance until next kill", () => {
+  it("dance hint stops for this foe after dance and stays off for the run", () => {
     const armed = newFoeAfterKill(recordAttackForHints(fresh()));
     const danced = recordDanceForHints(armed);
     expect(shouldShowDanceHint(danced, 20, 20, combat, true, 0, 3, 0)).toBe(false);
 
     const next = newFoeAfterKill(danced);
-    expect(shouldShowDanceHint(next, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+    expect(shouldShowDanceHint(next, 20, 20, combat, true, 0, 3, 0)).toBe(false);
     expect(shouldShowDanceHint(next, 20, 20, combat, true, 1, 3, 0)).toBe(false);
   });
 
@@ -336,12 +336,12 @@ describe("combat hints — dance arming edge cases", () => {
     expect(dismissDanceHintThisFoe(cleared)).toBe(cleared);
   });
 
-  it("recordDanceForHints does not permanently dismiss future dance hints", () => {
+  it("recordDanceForHints permanently dismisses future dance hints", () => {
     const danced = recordDanceForHints(newFoeAfterKill(afterAttack()));
-    expect(danced.dismissedDanceHint).toBe(false);
+    expect(danced.dismissedDanceHint).toBe(true);
     expect(danced.showDanceHintThisFoe).toBe(false);
     const next = newFoeAfterKill(danced);
-    expect(next.showDanceHintThisFoe).toBe(true);
+    expect(next.showDanceHintThisFoe).toBe(false);
   });
 });
 
@@ -489,7 +489,7 @@ describe("combat hints — full first-run tutorial flow", () => {
     expect(hintSnapshot(flags, { hp: 20, hype: 0 })).toEqual({
       attack: false,
       heal: false,
-      dance: true,
+      dance: false,
       run: false,
     });
 

@@ -1889,6 +1889,7 @@ function onAttack(): void {
 
   const firstAttack = !combatHints.dismissedAttackHint;
   combatHints = recordAttackForHints(combatHints);
+  syncCombatHintClasses();
   if (firstAttack) {
     playFirstAttackFoeHpFlash();
   }
@@ -1978,6 +1979,7 @@ function onHeal(): void {
   const firstMeaningfulHeal =
     !combatHints.dismissedHealHint && gained > 0;
   combatHints = recordHealForHints(combatHints, { armDance: gained > 0 });
+  syncCombatHintClasses();
   if (firstMeaningfulHeal) {
     playFirstHealHpFlash();
   }
@@ -2014,6 +2016,7 @@ function onDance(): void {
   const currentFoe = foe!;
 
   combatHints = recordDanceForHints(combatHints);
+  syncCombatHintClasses();
 
   const response = pickRandomDanceResponse();
   const attemptedPlayerGain = getPlayerHypeGain(response);
@@ -2268,6 +2271,7 @@ function bindActions(): void {
         onRun();
         break;
     }
+    target.blur();
   });
 
   el.restartBtn.addEventListener("click", () => {
