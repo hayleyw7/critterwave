@@ -30,6 +30,13 @@ test.describe("combat hints — button glow", () => {
       /Restore HP — foe will hit back\./i
     );
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
+
+    await page.getByRole("button", { name: "Heal" }).click();
+    await expect(page.locator("#battle-text")).toContainText(/healed yourself/i, {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "off");
+    await expect(page.locator("#cmd-heal-teach")).toBeHidden();
   });
 
   test("run glows at lethal hp and hides heal hint", async ({ page }) => {
@@ -50,6 +57,13 @@ test.describe("combat hints — button glow", () => {
       /Run away — heal a little, face the next foe, & lose all HYPE\./i
     );
     await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "off");
+
+    await clickCombatRun(page);
+    await expect(page.locator("#battle-text")).toContainText(/run into/i, {
+      timeout: 15_000,
+    });
+    await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "off");
+    await expect(page.locator("#cmd-run-teach")).toBeHidden();
 
     await patchSaveSnapshot(page, { player: { hp: 20, maxHp: 20 } });
     await page.reload();
@@ -425,6 +439,27 @@ test.describe("combat hints — teach flashes", () => {
 
     await page.waitForTimeout(1500);
     await expect(page.locator(".hero-hp-wrap .hp-bar")).not.toHaveClass(/hp-first-heal-flash/);
+  });
+
+  test("attack counter drops hype when player already had hype", async ({ page }) => {
+    await startFreshRun(page);
+    await patchSaveSnapshot(page, {
+      player: { hp: 20, maxHp: 20 },
+      hypeLevel: 3,
+      foe: { hp: 50, maxHp: 50 },
+      combatHints: { dismissedAttackHint: true },
+    });
+    await page.reload();
+
+    await expect(page.locator("#player-buff")).toHaveText("HYPE 3/5");
+    await page.getByRole("button", { name: "Attack" }).click();
+    await expect(page.locator("#battle-text")).toContainText(/You hit/i, {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#battle-text")).toContainText(/hits you for/i, {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#player-buff")).toHaveText("HYPE 2/5");
   });
 
   test("heal does not grant hype without a dance", async ({ page }) => {

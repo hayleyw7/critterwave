@@ -447,21 +447,21 @@ describe("combat hints — teach flashes", () => {
     expect(playerSecond.flashFirstHype).toBe(true);
   });
 
-  it("heal turn that loses hype to a counter does not flash at 0", () => {
+  it("counter at 0 hype does not trigger first-hype flash", () => {
     let flags = fresh();
     flags = tryCelebrateFirstPlayerHype(flags, 0).flags;
     expect(tryCelebrateFirstPlayerHype(flags, 0).flashFirstHype).toBe(false);
     expect(flags.celebratedFirstPlayerHype).toBe(false);
   });
 
-  it("heal turn with counter at 0 hype never reaches 1 in displayed state", () => {
+  it("counter at 0 hype never reaches 1 for first-hype flash", () => {
     expect(hypeAfterCounterHit(0, true)).toBe(0);
     expect(
       tryCelebrateFirstPlayerHype(fresh(), hypeAfterCounterHit(0, true)).flashFirstHype
     ).toBe(false);
   });
 
-  it("heal turn that keeps hype flashes once on render", () => {
+  it("first player hype flash fires once at hype 1", () => {
     const healed = tryCelebrateFirstPlayerHype(fresh(), 1);
     expect(healed.flashFirstHype).toBe(true);
     expect(tryCelebrateFirstPlayerHype(healed.flags, 1).flashFirstHype).toBe(false);
