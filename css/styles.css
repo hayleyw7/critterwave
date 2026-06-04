@@ -189,7 +189,7 @@ html[data-theme="light"] {
   --focus-ring: #fde047;
   --hp-inset-shadow: var(--panel-edge);
   --hp-bar-depth: inset 0 1px 2px color-mix(in srgb, var(--panel-edge) 22%, transparent);
-  --sprite-shadow: rgba(0, 0, 0, 0.45);
+  --sprite-shadow: color-mix(in srgb, var(--panel-edge) 28%, transparent);
   --records-divider: rgba(124, 92, 191, 0.4);
   --starfield-ellipse: #c4b0e8;
   --damage-shadow: #fff;
