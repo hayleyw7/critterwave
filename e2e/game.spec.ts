@@ -112,6 +112,25 @@ test.describe("Critterwave — happy paths", () => {
     ).toBeVisible();
     await expect(page.locator('.emoji-pick[data-emoji="😈"]')).toHaveCount(1);
   });
+
+  test("theme toggle switches palette and persists", async ({ page }) => {
+    await startFreshRun(page);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+
+    await page.getByRole("button", { name: "Switch to light mode" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator("#battle-text")).toHaveCSS("color", "rgb(26, 15, 46)");
+
+    const saveAfterToggle = await page.evaluate((key) => {
+      const raw = localStorage.getItem(key);
+      return raw ? (JSON.parse(raw) as { colorMode?: string }) : null;
+    }, STORAGE_KEY);
+    expect(saveAfterToggle?.colorMode).toBe("light");
+
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.getByRole("button", { name: "Switch to dark mode" })).toBeVisible();
+  });
 });
 
 test.describe("Critterwave — sad paths", () => {

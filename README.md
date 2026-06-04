@@ -15,22 +15,23 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 - **Levels 1–10** — classic RPG pacing: stay Lv 1 for waves 1–10, level up at **11, 21, 31…**; HP, ATK, and max heal grow with you
 - Foe **LV** varies around yours — easier critters fight below your level, tougher ones above (same rules from wave 1)
 - Pick any roster emoji as your hero
-- **Heal** (1–5 HP at Lv 1, grows with level) on your turn — foe may counterattack
-- **Dance** for random foe reactions — hype for you, hype for them, both, or neither (max **5 HYPE** each; +1 ATK per level)
+- **Heal** (1–5 HP at Lv 1, grows with level) on your turn — foe may counterattack; does not build HYPE
+- **Dance** for random foe reactions — HYPE for you &/or the foe when the line grants it, or neither (max **5 HYPE** each; **+1 ATK per HYPE**)
+- Taking damage drops **1 HYPE** (yours or theirs when they get hit)
 - **Full HP restore after each wave victory** — sparkle + floating heal number when you had missing HP
 - Shuffled foe order each run
 - **Scores persist** in this browser (high score, runs played)
-- **Combat hints** — action buttons glow on early fights to teach Attack, Heal, Dance, and Run
+- **Combat hints** — buttons glow and show one-time tooltips on early fights (Attack, Heal, Dance, Run)
 - **Mid-run save** — refresh and your fight continues (with a “restored” message; wave counter flashes briefly)
 
 ## Controls
 
 | Action | Button | Notes |
 |--------|--------|--------|
-| Attack | ⚔️ | |
+| Attack | ⚔️ | Foe may counterattack; counter damage drops 1 HYPE |
 | Heal | 💚 | 1–max HP (random); foe may counterattack; max heal grows with your level |
-| Dance | 🕺 | Random reactions; +1 HYPE (max 5) for you, them, or both |
-| Run | 🏃 | Skip to the next wave — **not on wave 100** |
+| Dance | 🕺 | Random reactions; HYPE for you &/or foe when granted; +1 ATK per HYPE |
+| Run | 🏃 | Flee this foe — heal a little, same wave, next foe, lose all HYPE; **not on wave 100** |
 
 ## Footer
 

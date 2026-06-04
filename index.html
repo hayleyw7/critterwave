@@ -36,10 +36,12 @@
       content="Choose your critter. Dance for foes. Survive 100 waves."
     />
     <meta name="twitter:image" content="images/og-image.png" />
+    <meta name="theme-color" content="#0a0612" />
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
     <link rel="manifest" href="site.webmanifest" />
+    <script src="assets/theme-boot.js"></script>
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body class="is-booting">
@@ -336,6 +338,16 @@
           </span>
         </div>
         <div class="meta-actions">
+          <button
+            type="button"
+            class="meta-btn theme-toggle"
+            id="theme-toggle"
+            aria-pressed="false"
+            aria-label="Switch to light mode"
+          >
+            <span class="theme-toggle-icon" aria-hidden="true">☀</span>
+            <span class="theme-toggle-label">Light</span>
+          </button>
           <button type="button" class="meta-btn" id="quit-btn">New Run</button>
           <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
             Clear Data

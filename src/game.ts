@@ -76,9 +76,12 @@ import {
   COLOR_THEMES,
   DEFAULT_COLOR_THEME,
   getColorTheme,
+  colorThemeSurfaces,
   isColorThemeId,
   type ColorThemeId,
+  type ColorThemeSurfaces,
 } from "./lib/color-themes.js";
+import { applyColorMode, parseColorMode, type ColorMode } from "./lib/color-mode.js";
 import {
   beginAwaitingFoeResponse,
   blockCombatForScreenEnd,
@@ -182,6 +185,7 @@ const DEFAULT_HERO_COLOR_THEME: HeroColorTheme = DEFAULT_COLOR_THEME;
 type SaveData = {
   bestWave: number;
   runsPlayed: number;
+  colorMode?: ColorMode;
   playerEmoji?: string;
   /** Custom display name chosen by the player. */
   heroName?: string;
@@ -213,6 +217,7 @@ type GameSnapshot = {
 
 const STORAGE_KEY = "critterwave-v1";
 const LEGACY_STORAGE_KEYS = ["goblinwave-v4", "goblinwave-v1"] as const;
+let currentColorMode: ColorMode = "dark";
 const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
 const FOE_POOF_MS = 450;
 const FOE_ENTRANCE_MS = 550;
@@ -423,6 +428,9 @@ const el = {
   restartBtn: document.getElementById("restart-btn")!,
   quitBtn: document.getElementById("quit-btn")!,
   resetStatsBtn: document.getElementById("reset-stats-btn")!,
+  themeToggle: document.getElementById("theme-toggle")!,
+  themeToggleIcon: document.querySelector("#theme-toggle .theme-toggle-icon")!,
+  themeToggleLabel: document.querySelector("#theme-toggle .theme-toggle-label")!,
   confirmOverlay: document.getElementById("confirm-overlay")!,
   confirmTitle: document.getElementById("confirm-title")!,
   confirmMessage: document.getElementById("confirm-message")!,
@@ -511,14 +519,81 @@ function loadSave(): SaveData {
   try {
     const raw = getStorageRaw();
     if (!raw) {
-      return { bestWave: 0, runsPlayed: 0 };
+      return { bestWave: 0, runsPlayed: 0, colorMode: currentColorMode };
     }
     return parseSaveMeta(JSON.parse(raw) as unknown, {
       allowedHeroEmojis: HERO_EMOJIS,
       campaignWaves: CAMPAIGN_WAVES,
     });
   } catch {
-    return { bestWave: 0, runsPlayed: 0 };
+    return { bestWave: 0, runsPlayed: 0, colorMode: currentColorMode };
+  }
+}
+
+function withSaveMeta(fields: Record<string, unknown> = {}): Record<string, unknown> {
+  const save = loadSave();
+  return {
+    bestWave: save.bestWave,
+    runsPlayed: save.runsPlayed,
+    colorMode: currentColorMode,
+    ...fields,
+  };
+}
+
+function initColorMode(): void {
+  currentColorMode = parseColorMode(loadSave().colorMode);
+  applyColorMode(currentColorMode);
+  updateThemeToggleUi();
+  applyHeroColorTheme(heroColorTheme);
+  applyFoeColorTheme(foeColorTheme);
+}
+
+function updateThemeToggleUi(): void {
+  const isDark = currentColorMode === "dark";
+  el.themeToggle.setAttribute("aria-pressed", isDark ? "false" : "true");
+  el.themeToggle.setAttribute(
+    "aria-label",
+    isDark ? "Switch to light mode" : "Switch to dark mode"
+  );
+  el.themeToggleIcon.textContent = isDark ? "☀" : "☾";
+  el.themeToggleLabel.textContent = isDark ? "Light" : "Dark";
+}
+
+function toggleColorMode(): void {
+  currentColorMode = currentColorMode === "dark" ? "light" : "dark";
+  applyColorMode(currentColorMode);
+  updateThemeToggleUi();
+  applyHeroColorTheme(heroColorTheme);
+  applyFoeColorTheme(foeColorTheme);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(withSaveMeta(readPersistedFields())));
+}
+
+function readPersistedFields(): Record<string, unknown> {
+  try {
+    const raw = getStorageRaw();
+    if (!raw) {
+      return {};
+    }
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const fields: Record<string, unknown> = {};
+    if (typeof parsed.playerEmoji === "string") {
+      fields.playerEmoji = parsed.playerEmoji;
+    }
+    if (typeof parsed.heroName === "string") {
+      fields.heroName = parsed.heroName;
+    }
+    if (typeof parsed.heroColorTheme === "string") {
+      fields.heroColorTheme = parsed.heroColorTheme;
+    }
+    if (parsed.setupActive === true) {
+      fields.setupActive = true;
+    }
+    if (parsed.snapshot && typeof parsed.snapshot === "object") {
+      fields.snapshot = parsed.snapshot;
+    }
+    return fields;
+  } catch {
+    return {};
   }
 }
 
@@ -577,17 +652,16 @@ function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
 }
 
 function persistStatsOnly(): void {
-  const save = loadSave();
   localStorage.setItem(
     STORAGE_KEY,
-    JSON.stringify({
-      bestWave: save.bestWave,
-      runsPlayed: save.runsPlayed,
-      playerEmoji: player.emoji,
-      heroName: player.name,
-      heroColorTheme,
-      setupActive: false,
-    })
+    JSON.stringify(
+      withSaveMeta({
+        playerEmoji: player.emoji,
+        heroName: player.name,
+        heroColorTheme,
+        setupActive: false,
+      })
+    )
   );
 }
 
@@ -595,43 +669,37 @@ function persistSetupDraft(): void {
   if (el.setupOverlay.classList.contains("hidden")) {
     return;
   }
-  const save = loadSave();
   const name = readHeroNameFromSetup();
   localStorage.setItem(
     STORAGE_KEY,
-    JSON.stringify({
-      bestWave: save.bestWave,
-      runsPlayed: save.runsPlayed,
-      playerEmoji: pendingHeroEmoji,
-      heroName: name || undefined,
-      heroColorTheme: pendingHeroColorTheme,
-      setupActive: true,
-    })
+    JSON.stringify(
+      withSaveMeta({
+        playerEmoji: pendingHeroEmoji,
+        heroName: name || undefined,
+        heroColorTheme: pendingHeroColorTheme,
+        setupActive: true,
+      })
+    )
   );
 }
 
 function persist(snapshot?: GameSnapshot): void {
-  const save = loadSave();
   const activeSnapshot =
     phase === "gameover" || phase === "victory" ? undefined : (snapshot ?? getSnapshot());
   const payload = activeSnapshot
-    ? {
-        bestWave: save.bestWave,
-        runsPlayed: save.runsPlayed,
+    ? withSaveMeta({
         playerEmoji: player.emoji,
         heroName: player.name,
         heroColorTheme,
         setupActive: false,
         snapshot: activeSnapshot,
-      }
-    : {
-        bestWave: save.bestWave,
-        runsPlayed: save.runsPlayed,
+      })
+    : withSaveMeta({
         playerEmoji: player.emoji,
         heroName: player.name,
         heroColorTheme,
         setupActive: false,
-      };
+      });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
@@ -670,13 +738,25 @@ function ensureFoeColorDistinctFromHero(): void {
 }
 
 function applyFoeColorTheme(theme: FoeColorTheme): void {
-  const panel = el.foePanel.querySelector(".enemy-status");
+  const panel = el.foePanel.querySelector(".enemy-status") as HTMLElement | null;
   if (!panel) return;
   for (const name of FOE_COLOR_THEMES) {
     panel.classList.remove(`foe-theme-${name}`);
   }
   panel.classList.add(`foe-theme-${theme}`);
-  el.gameShell.style.setProperty("--foe-accent", getColorTheme(theme).accent);
+  const colors = colorThemeSurfaces(getColorTheme(theme), currentColorMode);
+  panel.style.setProperty("--foe-accent", colors.accent);
+  panel.style.setProperty("--foe-accent-dark", colors.dark);
+  panel.style.setProperty("--foe-panel-bg", colors.panelBg);
+  panel.style.setProperty("--foe-plate-bg", colors.plateBg);
+  panel.style.setProperty("--foe-plate-text", colors.plateText);
+  panel.style.setProperty("--foe-hp-wrap-bg", colors.hpWrapBg);
+  panel.style.setProperty("--foe-divider", colors.divider);
+  panel.style.setProperty("--foe-buff-bg", colors.buffBg);
+  applyCardHypeStatColors(panel, "foe", colors);
+  el.gameShell.style.setProperty("--foe-accent", colors.accent);
+  el.gameShell.style.setProperty("--foe-accent-dark", colors.dark);
+  el.gameShell.style.setProperty("--battle-foe-text", colors.plateText);
 }
 
 function getSnapshot(): GameSnapshot {
@@ -763,8 +843,19 @@ function resolveHeroColorTheme(save: SaveData): HeroColorTheme {
   return DEFAULT_HERO_COLOR_THEME;
 }
 
+function applyCardHypeStatColors(
+  panel: HTMLElement,
+  varPrefix: "hero" | "foe",
+  colors: ColorThemeSurfaces
+): void {
+  panel.style.setProperty(
+    `--${varPrefix}-hype-text`,
+    `color-mix(in srgb, ${colors.accent} 55%, ${colors.dark})`
+  );
+}
+
 function applyHeroColorTheme(theme: HeroColorTheme): void {
-  const colors = getHeroColorThemeDefinition(theme);
+  const colors = colorThemeSurfaces(getColorTheme(theme), currentColorMode);
   heroColorTheme = theme;
   el.playerPanel.style.setProperty("--hero", colors.accent);
   el.playerPanel.style.setProperty("--hero-dark", colors.dark);
@@ -773,8 +864,10 @@ function applyHeroColorTheme(theme: HeroColorTheme): void {
   el.playerPanel.style.setProperty("--hero-plate-text", colors.plateText);
   el.playerPanel.style.setProperty("--hero-hp-wrap-bg", colors.hpWrapBg);
   el.playerPanel.style.setProperty("--hero-divider", colors.divider);
+  applyCardHypeStatColors(el.playerPanel, "hero", colors);
   el.gameShell.style.setProperty("--hero", colors.accent);
   el.gameShell.style.setProperty("--hero-dark", colors.dark);
+  el.gameShell.style.setProperty("--battle-hero-text", colors.plateText);
   el.xpFill.style.background = colors.accent;
 }
 
@@ -1734,17 +1827,19 @@ function startWave(): void {
 function updateRecordsOnGameOver(): void {
   const save = loadSave();
   const completedWave = Math.max(0, wave - 1);
-  save.bestWave = Math.max(save.bestWave, completedWave);
-  save.runsPlayed += 1;
+  const bestWave = Math.max(save.bestWave, completedWave);
+  const runsPlayed = save.runsPlayed + 1;
 
   localStorage.setItem(
     STORAGE_KEY,
-    JSON.stringify({
-      bestWave: save.bestWave,
-      runsPlayed: save.runsPlayed,
-      playerEmoji: player.emoji,
-      heroName: player.name,
-    })
+    JSON.stringify(
+      withSaveMeta({
+        bestWave,
+        runsPlayed,
+        playerEmoji: player.emoji,
+        heroName: player.name,
+      })
+    )
   );
 
   const waveText = completedWave === 1 ? "1 wave" : `${completedWave} waves`;
@@ -1753,17 +1848,19 @@ function updateRecordsOnGameOver(): void {
 
 function updateRecordsOnVictory(): void {
   const save = loadSave();
-  save.bestWave = Math.max(save.bestWave, getCampaignLength());
-  save.runsPlayed += 1;
+  const bestWave = Math.max(save.bestWave, getCampaignLength());
+  const runsPlayed = save.runsPlayed + 1;
 
   localStorage.setItem(
     STORAGE_KEY,
-    JSON.stringify({
-      bestWave: save.bestWave,
-      runsPlayed: save.runsPlayed,
-      playerEmoji: player.emoji,
-      heroName: player.name,
-    })
+    JSON.stringify(
+      withSaveMeta({
+        bestWave,
+        runsPlayed,
+        playerEmoji: player.emoji,
+        heroName: player.name,
+      })
+    )
   );
 
   el.gameOverSummary.textContent = `All ${CAMPAIGN_WAVES} waves cleared. Critterwave legend.`;
@@ -2285,10 +2382,7 @@ async function resetStats(): Promise<void> {
   }
   localStorage.setItem(
     STORAGE_KEY,
-    JSON.stringify({
-      bestWave: 0,
-      runsPlayed: 0,
-    })
+    JSON.stringify(withSaveMeta({ bestWave: 0, runsPlayed: 0 }))
   );
   renderRecords();
   foe = null;
@@ -2333,6 +2427,10 @@ function bindActions(): void {
 
   el.resetStatsBtn.addEventListener("click", () => {
     void resetStats();
+  });
+
+  el.themeToggle.addEventListener("click", () => {
+    toggleColorMode();
   });
 
   el.heroNameInput.addEventListener("input", () => {
@@ -2404,6 +2502,7 @@ function finishBoot(): void {
 }
 
 function init(): void {
+  initColorMode();
   el.attackTeachPopup.textContent = attackTeachText(CAMPAIGN_WAVES);
   bindConfirmDialog();
   bindActions();
