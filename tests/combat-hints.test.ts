@@ -7,6 +7,7 @@ import {
   isLowHpForHint,
   isFullHpForHint,
   LOW_HP_HINT_RATIO,
+  attackTeachText,
   deferDanceHintAfterRun,
   dismissDanceHintThisFoe,
   dismissDanceTeachCopy,
@@ -25,10 +26,13 @@ import {
   tryCelebrateFirstWaveVictoryHeal,
   recordRunForHints,
   shouldShowAttackHint,
+  shouldShowAttackTeachCopy,
   shouldShowDanceHint,
   shouldShowDanceTeachCopy,
   shouldShowHealHint,
+  shouldShowHealTeachCopy,
   shouldShowRunHint,
+  shouldShowRunTeachCopy,
   shouldArmDanceHintForNewFoe,
   type CombatHintsState,
   type NewFoeDanceHintContext,
@@ -361,6 +365,34 @@ describe("combat hints — dance arming edge cases", () => {
       shouldShowDanceTeachCopy(dismissDanceTeachCopy(armed), true, "combat", true)
     ).toBe(false);
     expect(shouldShowDanceTeachCopy(armed, false, "combat", true)).toBe(false);
+  });
+
+  it("shows attack teach copy while the attack hint is active", () => {
+    const flags = fresh();
+    expect(shouldShowAttackTeachCopy(flags, true, "combat", true)).toBe(true);
+    expect(
+      shouldShowAttackTeachCopy(recordAttackForHints(flags), true, "combat", true)
+    ).toBe(false);
+  });
+
+  it("shows heal teach copy while the heal hint is active", () => {
+    const flags = afterAttack();
+    expect(shouldShowHealTeachCopy(flags, true, "combat", true)).toBe(true);
+    expect(
+      shouldShowHealTeachCopy(recordHealForHints(flags), true, "combat", true)
+    ).toBe(false);
+  });
+
+  it("shows run teach copy while the run hint is active", () => {
+    const flags = recordDanceForHints(newFoeAfterKill(afterAttack()));
+    expect(shouldShowRunTeachCopy(flags, true, "combat", true)).toBe(true);
+    expect(
+      shouldShowRunTeachCopy(recordRunForHints(flags), true, "combat", true)
+    ).toBe(false);
+  });
+
+  it("formats attack teach copy from campaign length", () => {
+    expect(attackTeachText(100)).toBe("Attack — clear 100 waves of evil critters!");
   });
 });
 

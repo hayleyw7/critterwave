@@ -95,6 +95,7 @@ import {
   createCombatHintsState,
   combatHintsAfterMidRunRestore,
   combatHintsForSnapshot,
+  attackTeachText,
   deferDanceHintAfterRun,
   maybeArmDanceHintForWave,
   onNextFoeForHints,
@@ -109,10 +110,13 @@ import {
   hypeMaxPresentation,
   recordRunForHints,
   shouldShowAttackHint,
+  shouldShowAttackTeachCopy,
   shouldShowDanceHint,
   shouldShowDanceTeachCopy,
   shouldShowHealHint,
+  shouldShowHealTeachCopy,
   shouldShowRunHint,
+  shouldShowRunTeachCopy,
   type CombatHintsState,
 } from "./lib/combat-hints.js";
 import {
@@ -401,10 +405,13 @@ const el = {
   danceBtn:
     document.getElementById("cmd-dance") ??
     document.querySelector<HTMLButtonElement>('[data-action="dance"]')!,
-  danceTeachPopup: document.getElementById("cmd-dance-teach")!,
   attackBtn:
     document.getElementById("cmd-attack") ??
     document.querySelector<HTMLButtonElement>('[data-action="attack"]')!,
+  attackTeachPopup: document.getElementById("cmd-attack-teach")!,
+  healTeachPopup: document.getElementById("cmd-heal-teach")!,
+  danceTeachPopup: document.getElementById("cmd-dance-teach")!,
+  runTeachPopup: document.getElementById("cmd-run-teach")!,
   runBtn:
     document.getElementById("cmd-run") ??
     document.querySelector<HTMLButtonElement>('[data-action="run"]')!,
@@ -1156,17 +1163,54 @@ function syncCombatHintClasses(): void {
   el.healBtn.dataset.combatHint = showHeal ? "on" : "off";
   el.danceBtn.dataset.combatHint = showDance ? "on" : "off";
   el.runBtn.dataset.combatHint = showRun ? "on" : "off";
-  syncDanceTeachPopup(showDance);
+  syncCombatTeachPopups(showAttack, showHeal, showDance, showRun);
 }
 
-function syncDanceTeachPopup(showDance: boolean): void {
-  const show = shouldShowDanceTeachCopy(combatHints, showDance, phase, foe !== null);
-  el.danceTeachPopup.classList.toggle("hidden", !show);
+function syncCmdTeachPopup(
+  popup: HTMLElement,
+  btn: HTMLElement,
+  popupId: string,
+  show: boolean
+): void {
+  popup.classList.toggle("hidden", !show);
   if (show) {
-    el.danceBtn.setAttribute("aria-describedby", "cmd-dance-teach");
+    btn.setAttribute("aria-describedby", popupId);
   } else {
-    el.danceBtn.removeAttribute("aria-describedby");
+    btn.removeAttribute("aria-describedby");
   }
+}
+
+function syncCombatTeachPopups(
+  showAttack: boolean,
+  showHeal: boolean,
+  showDance: boolean,
+  showRun: boolean
+): void {
+  const hasFoe = foe !== null;
+  syncCmdTeachPopup(
+    el.attackTeachPopup,
+    el.attackBtn,
+    "cmd-attack-teach",
+    shouldShowAttackTeachCopy(combatHints, showAttack, phase, hasFoe)
+  );
+  syncCmdTeachPopup(
+    el.healTeachPopup,
+    el.healBtn,
+    "cmd-heal-teach",
+    shouldShowHealTeachCopy(combatHints, showHeal, phase, hasFoe)
+  );
+  syncCmdTeachPopup(
+    el.danceTeachPopup,
+    el.danceBtn,
+    "cmd-dance-teach",
+    shouldShowDanceTeachCopy(combatHints, showDance, phase, hasFoe)
+  );
+  syncCmdTeachPopup(
+    el.runTeachPopup,
+    el.runBtn,
+    "cmd-run-teach",
+    shouldShowRunTeachCopy(combatHints, showRun, phase, hasFoe)
+  );
 }
 
 function briefClass(element: HTMLElement, className: string, ms: number): void {
@@ -2366,6 +2410,7 @@ function finishBoot(): void {
 }
 
 function init(): void {
+  el.attackTeachPopup.textContent = attackTeachText(CAMPAIGN_WAVES);
   bindConfirmDialog();
   bindActions();
   renderRecords();

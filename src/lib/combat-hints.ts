@@ -1,4 +1,4 @@
-import { effectiveAttack, HYPE_MAX } from "./game-logic.js";
+import { CAMPAIGN_WAVE_COUNT, effectiveAttack, HYPE_MAX } from "./game-logic.js";
 
 /** Show heal hint at or below this fraction of max HP (60% feels “hurt” on mobile). */
 export const LOW_HP_HINT_RATIO = 0.6;
@@ -6,8 +6,18 @@ export const LOW_HP_HINT_RATIO = 0.6;
 /** Arm dance hint on new foes from this wave if the player still has 0 hype. */
 export const DANCE_HINT_FALLBACK_WAVE = 12;
 
-export const DANCE_TEACH_BATTLE_TEXT =
-  "Dance builds HYPE — each point adds +1 ATK.";
+export const DANCE_TEACH_TEXT =
+  "Dance builds HYPE — +1 ATK per point, for you &/or the foe.";
+export const HEAL_TEACH_TEXT = "Restore HP — foe will hit back.";
+export const RUN_TEACH_TEXT =
+  "Run away — heal a little, face the next foe, & lose all HYPE.";
+
+/** @deprecated Use DANCE_TEACH_TEXT */
+export const DANCE_TEACH_BATTLE_TEXT = DANCE_TEACH_TEXT;
+
+export function attackTeachText(campaignWaves = CAMPAIGN_WAVE_COUNT): string {
+  return `Attack — clear ${campaignWaves} waves of evil critters!`;
+}
 
 export type CombatHintsState = {
   /** Legacy: set when the player has danced this run. */
@@ -36,6 +46,9 @@ export type CombatHintsState = {
   showDanceHintThisFoe: boolean;
   /** Battle-log copy for the dance tutorial — shown once per run. */
   dismissedDanceTeachCopy: boolean;
+  dismissedAttackTeachCopy: boolean;
+  dismissedHealTeachCopy: boolean;
+  dismissedRunTeachCopy: boolean;
 };
 
 export type NewFoeDanceHintContext = {
@@ -68,6 +81,9 @@ export type LegacyCombatHintsState = {
   pendingDanceHintAfterVictory?: boolean;
   showDanceHintThisFoe?: boolean;
   dismissedDanceTeachCopy?: boolean;
+  dismissedAttackTeachCopy?: boolean;
+  dismissedHealTeachCopy?: boolean;
+  dismissedRunTeachCopy?: boolean;
 };
 
 export function createCombatHintsState(
@@ -94,6 +110,9 @@ export function createCombatHintsState(
     pendingDanceHintAfterVictory: legacy.pendingDanceHintAfterVictory ?? false,
     showDanceHintThisFoe: legacy.showDanceHintThisFoe ?? false,
     dismissedDanceTeachCopy: legacy.dismissedDanceTeachCopy ?? false,
+    dismissedAttackTeachCopy: legacy.dismissedAttackTeachCopy ?? false,
+    dismissedHealTeachCopy: legacy.dismissedHealTeachCopy ?? false,
+    dismissedRunTeachCopy: legacy.dismissedRunTeachCopy ?? false,
   };
 }
 
@@ -245,12 +264,63 @@ export function shouldShowDanceTeachCopy(
   phase: CombatHintPhase,
   hasFoe: boolean
 ): boolean {
-  return (
-    !flags.dismissedDanceTeachCopy &&
-    showDanceHint &&
-    phase === "combat" &&
+  return shouldShowCmdTeachCopy(
+    flags.dismissedDanceTeachCopy,
+    showDanceHint,
+    phase,
     hasFoe
   );
+}
+
+export function shouldShowAttackTeachCopy(
+  flags: CombatHintsState,
+  showAttackHint: boolean,
+  phase: CombatHintPhase,
+  hasFoe: boolean
+): boolean {
+  return shouldShowCmdTeachCopy(
+    flags.dismissedAttackTeachCopy,
+    showAttackHint,
+    phase,
+    hasFoe
+  );
+}
+
+export function shouldShowHealTeachCopy(
+  flags: CombatHintsState,
+  showHealHint: boolean,
+  phase: CombatHintPhase,
+  hasFoe: boolean
+): boolean {
+  return shouldShowCmdTeachCopy(
+    flags.dismissedHealTeachCopy,
+    showHealHint,
+    phase,
+    hasFoe
+  );
+}
+
+export function shouldShowRunTeachCopy(
+  flags: CombatHintsState,
+  showRunHint: boolean,
+  phase: CombatHintPhase,
+  hasFoe: boolean
+): boolean {
+  return shouldShowCmdTeachCopy(
+    flags.dismissedRunTeachCopy,
+    showRunHint,
+    phase,
+    hasFoe
+  );
+}
+
+function shouldShowCmdTeachCopy(
+  dismissed: boolean,
+  hintActive: boolean,
+  phase: CombatHintPhase,
+  hasFoe: boolean
+): boolean {
+  return !dismissed && hintActive && phase === "combat" && hasFoe;
 }
 
 export function dismissDanceHintThisFoe(flags: CombatHintsState): CombatHintsState {
@@ -286,7 +356,12 @@ export function recordAttackForHints(flags: CombatHintsState): CombatHintsState 
   if (flags.dismissedAttackHint && !flags.showDanceHintThisFoe) {
     return flags;
   }
-  return { ...flags, dismissedAttackHint: true, showDanceHintThisFoe: false };
+  return {
+    ...flags,
+    dismissedAttackHint: true,
+    dismissedAttackTeachCopy: true,
+    showDanceHintThisFoe: false,
+  };
 }
 
 export function dismissHealHint(flags: CombatHintsState): CombatHintsState {
@@ -306,6 +381,7 @@ export function recordHealForHints(
   return {
     ...flags,
     dismissedHealHint: true,
+    dismissedHealTeachCopy: true,
     showDanceHintThisFoe: false,
   };
 }
@@ -392,7 +468,12 @@ export function recordRunForHints(flags: CombatHintsState): CombatHintsState {
   if (flags.dismissedRunHint) {
     return dismissDanceHintThisFoe(flags);
   }
-  return { ...flags, dismissedRunHint: true, showDanceHintThisFoe: false };
+  return {
+    ...flags,
+    dismissedRunHint: true,
+    dismissedRunTeachCopy: true,
+    showDanceHintThisFoe: false,
+  };
 }
 
 /** Running skips dance on the immediate next foe — arm it for after the next kill heal. */

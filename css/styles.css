@@ -1588,7 +1588,7 @@ body.is-booting .game-shell {
   text-shadow: 0 0 8px rgba(253, 224, 71, 0.85);
 }
 
-.command-menu .cmd-dance {
+.command-menu .cmd {
   overflow: visible;
 }
 
@@ -1600,7 +1600,7 @@ body.is-booting .game-shell {
   z-index: 30;
   box-sizing: border-box;
   width: max-content;
-  max-width: min(15rem, 72vw);
+  max-width: min(15rem, calc(100vw - var(--space-3) * 2));
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-ui);
   font-size: 0.92rem;
@@ -1620,6 +1620,19 @@ body.is-booting .game-shell {
   animation: cmd-teach-popup-in 0.25s ease-out;
 }
 
+.cmd-teach-popup--align-start {
+  left: 0;
+  transform: none;
+  text-align: left;
+}
+
+.cmd-teach-popup--align-end {
+  left: auto;
+  right: 0;
+  transform: none;
+  text-align: right;
+}
+
 .cmd-teach-popup.hidden {
   display: none;
 }
@@ -1634,15 +1647,24 @@ body.is-booting .game-shell {
   border-top-color: #fde047;
 }
 
+.cmd-teach-popup--align-start::after {
+  left: var(--space-4);
+  transform: none;
+}
+
+.cmd-teach-popup--align-end::after {
+  left: auto;
+  right: var(--space-4);
+  transform: none;
+}
+
 @keyframes cmd-teach-popup-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(6px);
   }
 
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
   }
 }
 

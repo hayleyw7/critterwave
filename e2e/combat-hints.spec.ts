@@ -6,9 +6,14 @@ test.describe("combat hints — button glow", () => {
   test("attack glows on fresh run then stops after first attack", async ({ page }) => {
     await startFreshRun(page);
     await expect(page.locator("#cmd-attack")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-attack-teach")).toBeVisible();
+    await expect(page.locator("#cmd-attack-teach")).toContainText(
+      /Attack — clear 100 waves of evil critters!/i
+    );
     await page.getByRole("button", { name: "Attack" }).click();
     await expect(page.locator("#battle-text")).toContainText(/You hit/i, { timeout: 10_000 });
     await expect(page.locator("#cmd-attack")).toHaveAttribute("data-combat-hint", "off");
+    await expect(page.locator("#cmd-attack-teach")).toBeHidden();
   });
 
   test("heal glows at low hp but not dance on same fight", async ({ page }) => {
@@ -20,6 +25,10 @@ test.describe("combat hints — button glow", () => {
     await page.reload();
 
     await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-heal-teach")).toBeVisible();
+    await expect(page.locator("#cmd-heal-teach")).toContainText(
+      /Restore HP — foe will hit back\./i
+    );
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
   });
 
@@ -36,6 +45,10 @@ test.describe("combat hints — button glow", () => {
     await page.reload();
 
     await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-run-teach")).toBeVisible();
+    await expect(page.locator("#cmd-run-teach")).toContainText(
+      /Run away — heal a little, face the next foe, & lose all HYPE\./i
+    );
     await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "off");
 
     await patchSaveSnapshot(page, { player: { hp: 20, maxHp: 20 } });
@@ -129,10 +142,10 @@ test.describe("combat hints — button glow", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
     await expect(page.locator("#cmd-dance-teach")).toBeVisible();
     await expect(page.locator("#cmd-dance-teach")).toContainText(
-      /Dance builds HYPE — each point adds \+1 ATK\./i
+      /Dance builds HYPE — \+1 ATK per point, for you &\/or the foe\./i
     );
     await expect(page.locator("#battle-text")).not.toContainText(
-      /Dance builds HYPE — each point adds \+1 ATK\./i
+      /Dance builds HYPE — \+1 ATK per point, for you &\/or the foe\./i
     );
   });
 });
@@ -167,10 +180,10 @@ test.describe("combat hints — dance after heal", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
     await expect(page.locator("#cmd-dance-teach")).toBeVisible();
     await expect(page.locator("#cmd-dance-teach")).toContainText(
-      /Dance builds HYPE — each point adds \+1 ATK\./i
+      /Dance builds HYPE — \+1 ATK per point, for you &\/or the foe\./i
     );
     await expect(page.locator("#battle-text")).not.toContainText(
-      /Dance builds HYPE — each point adds \+1 ATK\./i
+      /Dance builds HYPE — \+1 ATK per point, for you &\/or the foe\./i
     );
   });
 
