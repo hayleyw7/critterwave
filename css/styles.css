@@ -711,10 +711,9 @@ body.is-booting .game-shell {
   border: 2px solid var(--cmd-border);
   background: var(--cmd-bg);
   color: var(--text);
-  display: grid;
-  place-items: center;
-  font-size: 0;
-  line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: border-color 0.1s, background 0.1s;
 }
 
@@ -728,15 +727,19 @@ body.is-booting .game-shell {
   background: var(--setup-select-bg);
 }
 
-.emoji-pick-glyph {
-  display: block;
+.emoji-pick-glyph,
+.emoji-sprite {
   font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  font-size: 1.75rem;
   line-height: 1;
-  text-align: center;
-  text-box-trim: trim-both;
-  text-box-edge: cap alphabetic;
-  transform: translateY(-0.06em);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-pick-glyph {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1.75rem;
 }
 
 .emoji-pick-label {
@@ -1367,7 +1370,7 @@ html[data-theme="light"] .foe-hype-fill {
   position: relative;
   z-index: 2;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   align-self: center;
   width: 100%;
@@ -1375,7 +1378,9 @@ html[data-theme="light"] .foe-hype-fill {
 
 .emoji-stack {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .hit-mark {
@@ -1522,13 +1527,9 @@ html[data-theme="light"] .foe-hype-fill {
   --sprite-box: calc(var(--sprite-size) * 1.1);
   position: relative;
   z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: var(--sprite-box);
   height: var(--sprite-box);
   font-size: var(--sprite-size);
-  line-height: 1;
   filter: drop-shadow(3px 4px 0 var(--sprite-shadow));
   user-select: none;
 }
@@ -2649,7 +2650,6 @@ html[data-theme="light"] .foe-hype-fill {
     grid-row: 2;
     justify-self: center;
     align-self: center;
-    padding-top: var(--space-3);
   }
 
   .vs-badge {
@@ -2664,7 +2664,6 @@ html[data-theme="light"] .foe-hype-fill {
     grid-row: 2;
     justify-self: center;
     align-self: center;
-    padding-top: var(--space-3);
   }
 
   .emoji-sprite {
