@@ -44,6 +44,16 @@ test.describe("Critterwave — happy paths", () => {
     });
   });
 
+  test("first dance gives player hype only", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "Dance" }).click();
+    await expect(page.locator("#battle-text")).toContainText(/You get.*\+1 HYPE/i, {
+      timeout: 10_000,
+    });
+    await expect(page.locator("#player-buff")).toHaveText("HYPE 1/5");
+    await expect(page.locator("#foe-buff")).toHaveText("HYPE 0/5");
+  });
+
   test("run away keeps wave and shows next foe", async ({ page }) => {
     await startFreshRun(page);
     const waveBefore = await page.locator("#wave-banner").textContent();
@@ -65,6 +75,17 @@ test.describe("Critterwave — happy paths", () => {
     await expect(page.locator(".records-bar #stat-best-wave")).toBeVisible();
     await expect(page.locator(".hud-stats #stat-best-wave")).toHaveCount(0);
     await expect(page.getByText("High Score", { exact: true })).toBeVisible();
+  });
+
+  test("compact one-line footer on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await startFreshRun(page);
+    await expect(page.getByText("Best", { exact: true })).toBeVisible();
+    await expect(page.getByText("Runs", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "New Run" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Clear Data" })).toBeVisible();
+    await expect(page.locator(".records-stat-label--long").first()).toBeHidden();
+    await expect(page.locator(".records-stat-label--short").first()).toBeVisible();
   });
 
   test("new run returns to hero setup", async ({ page }) => {
@@ -90,6 +111,25 @@ test.describe("Critterwave — happy paths", () => {
       page.getByRole("heading", { name: "Which critter are you?" })
     ).toBeVisible();
     await expect(page.locator('.emoji-pick[data-emoji="😈"]')).toHaveCount(1);
+  });
+
+  test("theme toggle switches palette and persists", async ({ page }) => {
+    await startFreshRun(page);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+
+    await page.getByRole("button", { name: "Switch to light mode" }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator("#battle-text")).toHaveCSS("color", "rgb(26, 15, 46)");
+
+    const saveAfterToggle = await page.evaluate((key) => {
+      const raw = localStorage.getItem(key);
+      return raw ? (JSON.parse(raw) as { colorMode?: string }) : null;
+    }, STORAGE_KEY);
+    expect(saveAfterToggle?.colorMode).toBe("light");
+
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.getByRole("button", { name: "Switch to dark mode" })).toBeVisible();
   });
 });
 
@@ -179,9 +219,6 @@ test.describe("Critterwave — sad paths", () => {
     await expect(page.getByLabel("Combat actions")).toBeVisible();
     await expect(page.locator("#battle-text")).toContainText(/restored/i);
     await expect(page.locator("#wave-banner")).toHaveText(waveBefore ?? "");
-    await expect(page.locator("#wave-banner")).toHaveClass(/hud-restore-blink/);
-    await page.waitForTimeout(1500);
-    await expect(page.locator("#wave-banner")).not.toHaveClass(/hud-restore-blink/);
   });
 
   test("restore keeps max hype styling without teach flash", async ({ page }) => {

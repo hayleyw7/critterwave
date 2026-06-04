@@ -482,23 +482,13 @@ export function applyHypeGain(
   return clampHype(current + amount, max);
 }
 
-/** Heal grants +1 HYPE; a counter strips −1. Skip transient gain at 0 when countered. */
-export function hypeAfterHealAndCounter(
+/** HYPE after taking counter damage on heal (or any hit). */
+export function hypeAfterCounterHit(
   hypeBefore: number,
-  healGrantsHype: boolean,
-  counterOccurred: boolean
+  counterOccurred: boolean,
+  damageDealt = 1
 ): number {
-  if (!healGrantsHype) {
-    return hypeBefore;
-  }
-  if (hypeBefore === 0 && counterOccurred) {
-    return 0;
-  }
-  let level = applyHypeGain(hypeBefore, 1);
-  if (counterOccurred) {
-    level = Math.max(0, level - 1);
-  }
-  return level;
+  return counterOccurred ? hypeAfterTakingHit(hypeBefore, damageDealt) : hypeBefore;
 }
 
 export function hypeHeadroom(current: number, max = HYPE_MAX): number {

@@ -81,6 +81,68 @@ export const COLOR_THEME_IDS: readonly ColorThemeId[] = COLOR_THEMES.map(
 
 export const DEFAULT_COLOR_THEME: ColorThemeId = "green";
 
+export type ColorThemeDefinition = (typeof COLOR_THEMES)[number];
+
+export type ColorThemeSurfaces = {
+  accent: string;
+  dark: string;
+  panelBg: string;
+  plateBg: string;
+  plateText: string;
+  hpWrapBg: string;
+  divider: string;
+  buffBg: string;
+};
+
+function parseHexColor(hex: string): { r: number; g: number; b: number } | null {
+  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!match) {
+    return null;
+  }
+  return {
+    r: Number.parseInt(match[1]!, 16),
+    g: Number.parseInt(match[2]!, 16),
+    b: Number.parseInt(match[3]!, 16),
+  };
+}
+
+export function accentTint(accent: string, alpha: number): string {
+  const rgb = parseHexColor(accent);
+  if (!rgb) {
+    return accent;
+  }
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+}
+
+export function colorThemeSurfaces(
+  theme: ColorThemeDefinition,
+  mode: "dark" | "light"
+): ColorThemeSurfaces {
+  if (mode === "dark") {
+    return {
+      accent: theme.accent,
+      dark: theme.dark,
+      panelBg: theme.panelBg,
+      plateBg: theme.plateBg,
+      plateText: theme.plateText,
+      hpWrapBg: theme.hpWrapBg,
+      divider: theme.divider,
+      buffBg: theme.buffBg,
+    };
+  }
+
+  return {
+    accent: theme.accent,
+    dark: theme.dark,
+    panelBg: `color-mix(in srgb, ${theme.accent} 14%, var(--panel))`,
+    plateBg: `color-mix(in srgb, ${theme.accent} 50%, #ffffff)`,
+    plateText: theme.dark,
+    hpWrapBg: `color-mix(in srgb, ${theme.accent} 26%, #ffffff)`,
+    divider: accentTint(theme.accent, 0.5),
+    buffBg: accentTint(theme.accent, 0.38),
+  };
+}
+
 export function isColorThemeId(value: string): value is ColorThemeId {
   return COLOR_THEMES.some((theme) => theme.id === value);
 }

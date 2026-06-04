@@ -14,23 +14,40 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 - **100 waves** to win; **117** hand-picked alliterative foes (critters and fantasy creatures)
 - **Levels 1–10** — classic RPG pacing: stay Lv 1 for waves 1–10, level up at **11, 21, 31…**; HP, ATK, and max heal grow with you
 - Foe **LV** varies around yours — easier critters fight below your level, tougher ones above (same rules from wave 1)
-- Pick any roster emoji as your hero
-- **Heal** (1–5 HP at Lv 1, grows with level) on your turn — foe may counterattack; **+1 HYPE** when you heal
-- **Dance** for random foe reactions — hype for you, hype for them, both, or neither (max **5 HYPE** each; +1 ATK per level)
+- Pick any roster emoji as your hero, name them, and choose a **card color**
+- **Light and dark themes** — footer toggle (persists in this browser); tuned contrast for HUD, battle log, damage pops, and footer stats
+- **Heal** (1–5 HP at Lv 1, grows with level) on your turn — foe may counterattack; does not build HYPE
+- **Dance** for random foe reactions — HYPE for you and/or the foe when the line grants it, or neither (max **5 HYPE** each; **+1 ATK per HYPE**)
+- Taking damage drops **1 HYPE** (yours or theirs when they get hit)
 - **Full HP restore after each wave victory** — sparkle + floating heal number when you had missing HP
 - Shuffled foe order each run
 - **Scores persist** in this browser (high score, runs played)
-- **Combat hints** — action buttons glow on early fights to teach Attack, Heal, Dance, and Run
-- **Mid-run save** — refresh and your fight continues (with a “restored” message; wave counter flashes briefly)
+- **Combat hints** on early fights — see [Combat hints](#combat-hints) below
+- **Mid-run save** — refresh and your fight continues (with a “restored” message)
+- Retro **CRT scanlines** — subtle in both light and dark mode
 
 ## Controls
 
 | Action | Button | Notes |
 |--------|--------|--------|
-| Attack | ⚔️ | |
-| Heal | 💚 | 1–max HP (random); +1 HYPE when you heal; max heal grows with your level |
-| Dance | 🕺 | Random reactions; +1 HYPE (max 5) for you, them, or both |
-| Run | 🏃 | Skip to the next wave — **not on wave 100** |
+| Attack | ⚔️ | Foe may counterattack; counter damage drops 1 HYPE |
+| Heal | 💚 | 1–max HP (random); foe may counterattack; max heal grows with your level |
+| Dance | 🕺 | Random reactions; HYPE for you and/or foe when granted; +1 ATK per HYPE |
+| Run | 🏃 | Flee this foe — heal a little, same wave, next foe, and lose all HYPE; **not on wave 100** |
+
+## Combat hints
+
+Hints teach the four actions during your first run (each dismisses after you use that action once).
+
+| When | What you see |
+|------|----------------|
+| **Setup** | Subtitle under “Which critter are you?” — *Attack — clear 100 waves of evil critters!* |
+| **First fight** | **Attack** gets a pulsing yellow **outline** until your first strike (no popup) |
+| **Low HP** (~60% or below) | **Heal** outline + tooltip: *Restore HP — foe will hit back.* |
+| **After a wasted heal** (or wave 12+ at full HP with 0 hype) | **Dance** outline + tooltip: *Dance builds HYPE — +1 ATK per point, for you and/or the foe.* |
+| **Lethal HP** (foe’s hit would KO you) | **Run** outline + tooltip: *Run away — heal a little, face the next foe, and lose all HYPE.* |
+
+Highlighted buttons use an **outline pulse only** — button colors stay the same. Hint state is saved with your run.
 
 ## Footer
 
@@ -38,6 +55,7 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 |---------|----------------|
 | **High Score** | Highest wave you’ve reached this browser (updates on game over or full win). |
 | **Runs Played** | How many runs you’ve finished (game over or victory). |
+| **Light / Dark** | Switches palette (including foe card accents); persists in this browser. |
 | **New Run** | New hero and fresh run. High score and runs played are kept. |
 | **Clear Data** | Deletes your critter and all saved history on this browser. |
 
@@ -47,8 +65,8 @@ Stored under `critterwave-v1` in the browser (migrates from older `goblinwave-*`
 
 - **High score** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
 - **Runs played** — how many runs you’ve finished (game over or full win)
-- **Hero** — emoji and name from your last run
-- **Active run** — HP, your hype & foe hype, current foe, wave, turn, and shuffled foe order (until game over or victory)
+- **Hero** — emoji, name, and card color from your last run
+- **Active run** — HP, your hype and foe hype, current foe, wave, turn, combat-hint progress, and shuffled foe order (until game over or victory)
 
 ## Project layout
 
@@ -57,7 +75,7 @@ index.html          # entry page
 site.webmanifest
 src/                # TypeScript source
   game.ts           # main game
-  lib/              # rules, alliteration, hero picker order
+  lib/              # rules, combat hints, color themes, save validation
   data/             # foe roster
   content/          # dance lines
   ui/               # victory celebration
@@ -86,9 +104,9 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Tests
 
 ```bash
-npm test              # unit tests (Vitest): alliteration, roster, dance, game logic
+npm test              # unit tests (Vitest) — game logic, combat hints, save validation, …
 npm run test:watch    # unit tests in watch mode
-npm run test:e2e      # browser tests (downloads Chromium if needed, then runs)
+npm run test:e2e      # browser tests (Playwright) — combat hints, happy/sad paths, security
 ```
 
 `npm run test:e2e` runs `playwright install chromium` automatically first. To install browsers manually: `npx playwright install chromium`.

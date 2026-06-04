@@ -20,15 +20,23 @@ describe("teach flash presentation", () => {
     expect(styles).not.toContain("@keyframes hype-teach-text-pulse");
   });
 
-  it("defines wave restore blink for combat reload", () => {
-    expect(styles).toContain(".hud-wave-line.hud-restore-blink");
-    expect(styles).toContain("@keyframes hud-restore-blink");
+  it("uses compact one-line footer labels on narrow or short viewports", () => {
+    expect(styles).toMatch(
+      /@media \(max-width: 480px\), \(max-height: 667px\) \{[\s\S]*?\.records-stat-label--long \{[\s\S]*?display: none;/
+    );
+    expect(styles).toMatch(
+      /@media \(max-width: 480px\), \(max-height: 667px\) \{[\s\S]*?\.records-stat-label--short \{[\s\S]*?display: inline;/
+    );
+    expect(styles).toMatch(
+      /@media \(max-width: 480px\), \(max-height: 667px\) \{[\s\S]*?\.records-bar \{[\s\S]*?flex-wrap: nowrap;/
+    );
   });
 
-  it("defines hp teach pulse for player and foe bars", () => {
-    expect(styles).toContain(".hp-bar.hp-first-heal-flash .player-hp");
-    expect(styles).toContain(".hp-bar.hp-first-attack-flash .foe-hp");
-    expect(styles).toContain(".hp-bar.hp-first-wave-heal-flash .player-hp");
+  it("defines hp teach pulse on the bar track (not the fill)", () => {
+    expect(styles).toContain(".hp-bar.hp-first-heal-flash");
+    expect(styles).toContain(".hp-bar.hp-first-attack-flash");
+    expect(styles).toContain(".hp-bar.hp-first-wave-heal-flash");
     expect(styles).toContain("@keyframes hp-teach-pulse");
+    expect(styles).not.toMatch(/\.hp-bar\.hp-first-heal-flash \.player-hp[\s\S]*?animation: hp-teach-pulse/);
   });
 });

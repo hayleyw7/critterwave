@@ -54,6 +54,7 @@ describe("parseSaveMeta", () => {
     expect(parseSaveMeta(null, { allowedHeroEmojis: HERO_EMOJIS })).toEqual({
       bestWave: 0,
       runsPlayed: 0,
+      colorMode: "dark",
       setupActive: false,
     });
   });
@@ -112,6 +113,18 @@ describe("parseSaveMeta", () => {
     );
     expect(meta.heroName).toBeUndefined();
     expect(meta.heroLabel).toBeUndefined();
+  });
+
+  it("parses color mode from save", () => {
+    expect(
+      parseSaveMeta({ colorMode: "light" }, { allowedHeroEmojis: HERO_EMOJIS }).colorMode
+    ).toBe("light");
+    expect(
+      parseSaveMeta({ colorMode: "dark" }, { allowedHeroEmojis: HERO_EMOJIS }).colorMode
+    ).toBe("dark");
+    expect(
+      parseSaveMeta({ colorMode: "neon" }, { allowedHeroEmojis: HERO_EMOJIS }).colorMode
+    ).toBe("dark");
   });
 });
 

@@ -3,6 +3,7 @@ import {
   COLOR_THEME_IDS,
   COLOR_THEMES,
   DEFAULT_COLOR_THEME,
+  colorThemeSurfaces,
   getColorTheme,
   isColorThemeId,
 } from "../src/lib/color-themes.js";
@@ -36,6 +37,18 @@ describe("color themes", () => {
 
   it("falls back to the first theme for unknown ids at runtime", () => {
     expect(getColorTheme("green" as "coral").id).toBe("green");
+  });
+
+  it("tints accent surfaces for light mode while keeping plates vivid", () => {
+    const theme = getColorTheme("green");
+    const dark = colorThemeSurfaces(theme, "dark");
+    const light = colorThemeSurfaces(theme, "light");
+    expect(light.accent).toBe(theme.accent);
+    expect(light.plateText).toBe(theme.dark);
+    expect(light.plateBg).toContain("color-mix");
+    expect(light.panelBg).toContain("color-mix");
+    expect(light.plateBg).not.toBe(dark.plateBg);
+    expect(light.panelBg).not.toBe(dark.panelBg);
   });
 
   it("keeps fuchsia distinct from rose", () => {

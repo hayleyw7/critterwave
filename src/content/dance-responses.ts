@@ -147,6 +147,14 @@ export function getFoeHypeGain(response: DanceResponse): number {
   return 0;
 }
 
+/** Foe cheers but does not join — safe pool for the guaranteed first-dance tutorial. */
+export const PLAYER_ONLY_DANCE_RESPONSES: DanceResponse[] = DANCE_RESPONSES.filter(
+  (response) =>
+    getPlayerHypeGain(response) === 1 &&
+    getFoeHypeGain(response) === 0 &&
+    response.foeJoins !== true
+);
+
 export type DanceHypeTailOptions = {
   playerCapped?: boolean;
   foeCapped?: boolean;
@@ -202,10 +210,12 @@ export function formatDanceHypeTail(
 }
 
 let lastDanceResponseIndex = -1;
+let lastFirstDanceResponseIndex = -1;
 let lastDanceOpenerIndex = -1;
 
 export function resetDancePicker(): void {
   lastDanceResponseIndex = -1;
+  lastFirstDanceResponseIndex = -1;
   lastDanceOpenerIndex = -1;
 }
 
@@ -234,6 +244,17 @@ export function pickRandomDanceResponse(
   );
   lastDanceResponseIndex = index;
   return DANCE_RESPONSES[index]!;
+}
+
+/** First dance each run — always +1 player HYPE, never foe HYPE or join. */
+export function pickFirstDanceResponse(random = Math.random): DanceResponse {
+  const index = pickIndexAvoidingRepeat(
+    PLAYER_ONLY_DANCE_RESPONSES.length,
+    lastFirstDanceResponseIndex,
+    random
+  );
+  lastFirstDanceResponseIndex = index;
+  return PLAYER_ONLY_DANCE_RESPONSES[index]!;
 }
 
 export function pickRandomDanceOpener(random = Math.random): string {

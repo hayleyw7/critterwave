@@ -27,7 +27,7 @@ import {
   hypeAttackBonus,
   HYPE_ATTACK_PER_LEVEL,
   hypeHeadroom,
-  hypeAfterHealAndCounter,
+  hypeAfterCounterHit,
   HYPE_MAX,
   isLevelBandFinale,
   LEVEL_COUNT,
@@ -487,12 +487,14 @@ describe("combat math", () => {
     expect(formatHypeLabel(7)).toBe("HYPE 5/5");
   });
 
-  it("heal hype skips transient gain when counter zeros from 0", () => {
-    expect(hypeAfterHealAndCounter(0, true, true)).toBe(0);
-    expect(hypeAfterHealAndCounter(0, true, false)).toBe(1);
-    expect(hypeAfterHealAndCounter(3, true, true)).toBe(3);
-    expect(hypeAfterHealAndCounter(4, true, true)).toBe(4);
-    expect(hypeAfterHealAndCounter(2, false, true)).toBe(2);
+  it("counter hits strip hype without heal granting hype", () => {
+    expect(hypeAfterCounterHit(0, true)).toBe(0);
+    expect(hypeAfterCounterHit(0, false)).toBe(0);
+    expect(hypeAfterCounterHit(3, true)).toBe(2);
+    expect(hypeAfterCounterHit(4, true)).toBe(3);
+    expect(hypeAfterCounterHit(2, true, 0)).toBe(2);
+    expect(hypeAfterCounterHit(3, true, 4)).toBe(2);
+    expect(hypeAfterCounterHit(5, true, 2)).toBe(4);
   });
 });
 

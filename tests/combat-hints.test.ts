@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hypeAfterHealAndCounter } from "../src/lib/game-logic.js";
+import { hypeAfterCounterHit } from "../src/lib/game-logic.js";
 import {
   combatHintsAfterMidRunRestore,
   combatHintsForSnapshot,
@@ -7,10 +7,12 @@ import {
   isLowHpForHint,
   isFullHpForHint,
   LOW_HP_HINT_RATIO,
+  attackTeachText,
+  DANCE_TEACH_TEXT,
   deferDanceHintAfterRun,
   dismissDanceHintThisFoe,
+  dismissDanceTeachCopy,
   dismissHealHint,
-  dismissHealHintIfWasLow,
   DANCE_HINT_FALLBACK_WAVE,
   maybeArmDanceHintForWave,
   onNextFoeForHints,
@@ -24,10 +26,15 @@ import {
   tryCelebrateFirstPlayerHype,
   tryCelebrateFirstWaveVictoryHeal,
   recordRunForHints,
+  RUN_TEACH_TEXT,
+  HEAL_TEACH_TEXT,
   shouldShowAttackHint,
   shouldShowDanceHint,
+  shouldShowDanceTeachCopy,
   shouldShowHealHint,
+  shouldShowHealTeachCopy,
   shouldShowRunHint,
+  shouldShowRunTeachCopy,
   shouldArmDanceHintForNewFoe,
   type CombatHintsState,
   type NewFoeDanceHintContext,
@@ -82,8 +89,7 @@ function hintSnapshot(
   const foeAtk = opts.foeAtk ?? 3;
   const foeHype = opts.foeHype ?? 0;
   return {
-    attack: shouldShowAttackHint(flags, combat, hasFoe),
-    heal: shouldShowHealHint(flags, hp, maxHp, combat, hasFoe),
+    heal: shouldShowHealHint(flags, hp, maxHp, combat, hasFoe, foeAtk, foeHype),
     dance: shouldShowDanceHint(flags, hp, maxHp, combat, hasFoe, hype, foeAtk, foeHype),
     run: shouldShowRunHint(flags, hp, foeAtk, foeHype, combat, hasFoe),
   };
@@ -107,12 +113,19 @@ describe("combat hints — thresholds", () => {
 });
 
 describe("combat hints — per-run dismissals", () => {
-  it("attack hint shows until first attack, then never again", () => {
+  it("attack outline shows until first attack, then never again", () => {
     expect(shouldShowAttackHint(fresh(), combat, true)).toBe(true);
     expect(shouldShowAttackHint(fresh(), combat, false)).toBe(false);
+    expect(shouldShowAttackHint(fresh(), "setup", true)).toBe(false);
 
     const once = recordAttackForHints(fresh());
     expect(shouldShowAttackHint(once, combat, true)).toBe(false);
+    expect(recordAttackForHints(once)).toBe(once);
+  });
+
+  it("recordAttackForHints dismisses attack gate for dance hints", () => {
+    const once = recordAttackForHints(fresh());
+    expect(once.dismissedAttackHint).toBe(true);
     expect(recordAttackForHints(once)).toBe(once);
   });
 
@@ -130,28 +143,34 @@ describe("combat hints — per-run dismissals", () => {
     expect(shouldShowDanceHint(afterHeal, 20, 20, combat, true, 0, 3, 0)).toBe(false);
   });
 
-  it("dismissHealHint only clears heal glow without arming dance", () => {
+  it("dismissHealHint permanently dismisses after heal is used", () => {
     const after = dismissHealHint(fresh());
     expect(shouldShowHealHint(after, 8, 20, combat, true)).toBe(false);
     expect(after.pendingDanceHintAfterHeal).toBe(false);
   });
 
-  it("dismissHealHintIfWasLow clears heal glow after low-hp wave recovery", () => {
-    const low = dismissHealHintIfWasLow(fresh(), 10, 20);
-    expect(shouldShowHealHint(low, 8, 20, combat, true)).toBe(false);
-    expect(dismissHealHintIfWasLow(low, 10, 20)).toBe(low);
-
-    const full = dismissHealHintIfWasLow(fresh(), 18, 20);
-    expect(shouldShowHealHint(full, 8, 20, combat, true)).toBe(true);
+  it("heal hint returns when low again after topping up from a kill", () => {
+    const topped = newFoeAfterKill(recordAttackForHints(fresh()), {
+      hp: 20,
+      maxHp: 20,
+    });
+    expect(shouldShowHealHint(topped, 20, 20, combat, true)).toBe(false);
+    expect(shouldShowHealHint(topped, 10, 20, combat, true)).toBe(true);
   });
 
-  it("dance hint stops for this foe after dance until next kill", () => {
+  it("heal hint hides while run is lethal even at low hp", () => {
+    expect(shouldShowHealHint(fresh(), 10, 20, combat, true)).toBe(true);
+    expect(shouldShowHealHint(fresh(), 3, 20, combat, true, 5, 0)).toBe(false);
+    expect(shouldShowRunHint(fresh(), 3, 5, 0, combat, true)).toBe(true);
+  });
+
+  it("dance hint stops for this foe after dance and stays off for the run", () => {
     const armed = newFoeAfterKill(recordAttackForHints(fresh()));
     const danced = recordDanceForHints(armed);
     expect(shouldShowDanceHint(danced, 20, 20, combat, true, 0, 3, 0)).toBe(false);
 
     const next = newFoeAfterKill(danced);
-    expect(shouldShowDanceHint(next, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+    expect(shouldShowDanceHint(next, 20, 20, combat, true, 0, 3, 0)).toBe(false);
     expect(shouldShowDanceHint(next, 20, 20, combat, true, 1, 3, 0)).toBe(false);
   });
 
@@ -336,12 +355,57 @@ describe("combat hints — dance arming edge cases", () => {
     expect(dismissDanceHintThisFoe(cleared)).toBe(cleared);
   });
 
-  it("recordDanceForHints does not permanently dismiss future dance hints", () => {
+  it("recordDanceForHints permanently dismisses future dance hints and teach popup", () => {
     const danced = recordDanceForHints(newFoeAfterKill(afterAttack()));
-    expect(danced.dismissedDanceHint).toBe(false);
+    expect(danced.dismissedDanceHint).toBe(true);
+    expect(danced.dismissedDanceTeachCopy).toBe(true);
     expect(danced.showDanceHintThisFoe).toBe(false);
     const next = newFoeAfterKill(danced);
-    expect(next.showDanceHintThisFoe).toBe(true);
+    expect(next.showDanceHintThisFoe).toBe(false);
+  });
+
+  it("shows dance teach copy once while the dance hint is active", () => {
+    const armed = newFoeAfterKill(afterAttack());
+    expect(
+      shouldShowDanceTeachCopy(armed, true, "combat", true)
+    ).toBe(true);
+    expect(
+      shouldShowDanceTeachCopy(dismissDanceTeachCopy(armed), true, "combat", true)
+    ).toBe(false);
+    expect(shouldShowDanceTeachCopy(armed, false, "combat", true)).toBe(false);
+  });
+
+  it("shows heal teach copy while the heal hint is active", () => {
+    const flags = afterAttack();
+    expect(shouldShowHealTeachCopy(flags, true, "combat", true)).toBe(true);
+    expect(
+      shouldShowHealTeachCopy(recordHealForHints(flags), true, "combat", true)
+    ).toBe(false);
+  });
+
+  it("shows run teach copy while the run hint is active", () => {
+    const flags = recordDanceForHints(newFoeAfterKill(afterAttack()));
+    expect(shouldShowRunTeachCopy(flags, true, "combat", true)).toBe(true);
+    expect(
+      shouldShowRunTeachCopy(recordRunForHints(flags), true, "combat", true)
+    ).toBe(false);
+  });
+
+  it("formats attack teach copy from campaign length", () => {
+    expect(attackTeachText(100)).toBe("Attack — clear 100 waves of evil critters!");
+  });
+
+  it("uses plain and in teach copy strings", () => {
+    expect(DANCE_TEACH_TEXT).toBe(
+      "Dance builds HYPE — +1 ATK per point, for you and/or the foe."
+    );
+    expect(RUN_TEACH_TEXT).toBe(
+      "Run away — heal a little, face the next foe, and lose all HYPE."
+    );
+    expect(HEAL_TEACH_TEXT).toBe("Restore HP — foe will hit back.");
+    for (const text of [DANCE_TEACH_TEXT, RUN_TEACH_TEXT, HEAL_TEACH_TEXT]) {
+      expect(text).not.toMatch(/&/);
+    }
   });
 });
 
@@ -396,22 +460,21 @@ describe("combat hints — teach flashes", () => {
     expect(playerSecond.flashFirstHype).toBe(true);
   });
 
-  it("heal turn that loses hype to a counter does not flash at 0", () => {
+  it("counter at 0 hype does not trigger first-hype flash", () => {
     let flags = fresh();
-    // +1 HYPE from heal, then -1 from getting hit — render sees 0.
     flags = tryCelebrateFirstPlayerHype(flags, 0).flags;
     expect(tryCelebrateFirstPlayerHype(flags, 0).flashFirstHype).toBe(false);
     expect(flags.celebratedFirstPlayerHype).toBe(false);
   });
 
-  it("heal turn with counter at 0 hype never reaches 1 in displayed state", () => {
-    expect(hypeAfterHealAndCounter(0, true, true)).toBe(0);
+  it("counter at 0 hype never reaches 1 for first-hype flash", () => {
+    expect(hypeAfterCounterHit(0, true)).toBe(0);
     expect(
-      tryCelebrateFirstPlayerHype(fresh(), hypeAfterHealAndCounter(0, true, true)).flashFirstHype
+      tryCelebrateFirstPlayerHype(fresh(), hypeAfterCounterHit(0, true)).flashFirstHype
     ).toBe(false);
   });
 
-  it("heal turn that keeps hype flashes once on render", () => {
+  it("first player hype flash fires once at hype 1", () => {
     const healed = tryCelebrateFirstPlayerHype(fresh(), 1);
     expect(healed.flashFirstHype).toBe(true);
     expect(tryCelebrateFirstPlayerHype(healed.flags, 1).flashFirstHype).toBe(false);
@@ -439,7 +502,6 @@ describe("combat hints — full first-run tutorial flow", () => {
     let flags = fresh();
 
     expect(hintSnapshot(flags)).toEqual({
-      attack: true,
       heal: false,
       dance: false,
       run: false,
@@ -448,7 +510,6 @@ describe("combat hints — full first-run tutorial flow", () => {
     flags = recordAttackForHints(flags);
     flags = recordPlayerDamageForHints(flags).flags;
     expect(hintSnapshot(flags, { hp: 10 })).toEqual({
-      attack: false,
       heal: true,
       dance: false,
       run: false,
@@ -456,7 +517,6 @@ describe("combat hints — full first-run tutorial flow", () => {
 
     flags = recordHealForHints(flags);
     expect(hintSnapshot(flags, { hp: 18 })).toEqual({
-      attack: false,
       heal: false,
       dance: false,
       run: false,
@@ -464,7 +524,6 @@ describe("combat hints — full first-run tutorial flow", () => {
 
     flags = newFoeAfterKill(flags, { hp: 20, maxHp: 20 });
     expect(hintSnapshot(flags, { hp: 20 })).toEqual({
-      attack: false,
       heal: false,
       dance: true,
       run: false,
@@ -472,14 +531,12 @@ describe("combat hints — full first-run tutorial flow", () => {
 
     flags = recordDanceForHints(flags);
     expect(hintSnapshot(flags, { hp: 3, foeAtk: 5 })).toEqual({
-      attack: false,
       heal: false,
       dance: false,
       run: true,
     });
 
     expect(hintSnapshot(flags, { hp: 20, hype: 0 })).toEqual({
-      attack: false,
       heal: false,
       dance: false,
       run: false,
@@ -487,15 +544,13 @@ describe("combat hints — full first-run tutorial flow", () => {
 
     flags = newFoeAfterKill(flags, { hp: 20, maxHp: 20 });
     expect(hintSnapshot(flags, { hp: 20, hype: 0 })).toEqual({
-      attack: false,
       heal: false,
-      dance: true,
+      dance: false,
       run: false,
     });
 
     flags = tryCelebrateFirstPlayerHype(flags, 1).flags;
     expect(hintSnapshot(flags, { hp: 20, hype: 1 })).toEqual({
-      attack: false,
       heal: false,
       dance: false,
       run: false,
@@ -503,7 +558,6 @@ describe("combat hints — full first-run tutorial flow", () => {
 
     flags = recordRunForHints(flags);
     expect(hintSnapshot(flags, { hp: 1, foeAtk: 9 })).toEqual({
-      attack: false,
       heal: false,
       dance: false,
       run: false,

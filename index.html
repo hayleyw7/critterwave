@@ -36,10 +36,12 @@
       content="Choose your critter. Dance for foes. Survive 100 waves."
     />
     <meta name="twitter:image" content="images/og-image.png" />
+    <meta name="theme-color" content="#0a0612" />
     <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
     <link rel="manifest" href="site.webmanifest" />
+    <script src="assets/theme-boot.js"></script>
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body class="is-booting">
@@ -62,6 +64,7 @@
           <h2 class="setup-title mobile-stack">
             <span class="mobile-stack-part">Which critter</span> <span class="mobile-stack-part">are you?</span>
           </h2>
+          <p class="setup-subtitle" id="setup-subtitle"></p>
           <div class="emoji-picker" id="hero-picker" role="listbox" aria-label="Which critter are you?"></div>
         </div>
         <div class="setup-footer">
@@ -268,10 +271,33 @@
           </div>
 
           <nav class="command-menu" id="actions" aria-label="Combat actions">
-            <button type="button" data-action="attack" id="cmd-attack" class="cmd cmd-attack">Attack</button>
-            <button type="button" data-action="heal" id="cmd-heal" class="cmd cmd-heal">Heal</button>
-            <button type="button" data-action="dance" id="cmd-dance" class="cmd cmd-dance">Dance</button>
-            <button type="button" data-action="run" id="cmd-run" class="cmd cmd-run">Run</button>
+            <button type="button" data-action="attack" id="cmd-attack" class="cmd cmd-attack">
+              Attack
+            </button>
+            <button type="button" data-action="heal" id="cmd-heal" class="cmd cmd-heal">
+              Heal
+              <span
+                class="cmd-teach-popup cmd-teach-popup--align-end hidden"
+                id="cmd-heal-teach"
+                role="tooltip"
+              >Restore HP — foe will hit back.</span>
+            </button>
+            <button type="button" data-action="dance" id="cmd-dance" class="cmd cmd-dance">
+              Dance
+              <span
+                class="cmd-teach-popup cmd-teach-popup--align-start hidden"
+                id="cmd-dance-teach"
+                role="tooltip"
+              >Dance builds HYPE — +1 ATK per point, for you and/or the foe.</span>
+            </button>
+            <button type="button" data-action="run" id="cmd-run" class="cmd cmd-run">
+              Run
+              <span
+                class="cmd-teach-popup cmd-teach-popup--align-end hidden"
+                id="cmd-run-teach"
+                role="tooltip"
+              >Run away — heal a little, face the next foe, and lose all HYPE.</span>
+            </button>
           </nav>
         </div>
 
@@ -296,16 +322,28 @@
 
       <footer class="records-bar" aria-label="Lifetime stats and game options">
         <div class="records-stats">
-          <span class="records-stat">
-            <span>High Score</span>
+          <span class="records-stat" aria-label="High Score">
+            <span class="records-stat-label records-stat-label--long">High Score</span>
+            <span class="records-stat-label records-stat-label--short" aria-hidden="true">Best</span>
             <strong id="stat-best-wave">0</strong>
           </span>
-          <span class="records-stat">
-            <span>Runs Played</span>
+          <span class="records-stat" aria-label="Runs Played">
+            <span class="records-stat-label records-stat-label--long">Runs Played</span>
+            <span class="records-stat-label records-stat-label--short" aria-hidden="true">Runs</span>
             <strong id="stat-runs">0</strong>
           </span>
         </div>
         <div class="meta-actions">
+          <button
+            type="button"
+            class="meta-btn theme-toggle"
+            id="theme-toggle"
+            aria-pressed="false"
+            aria-label="Switch to light mode"
+          >
+            <span class="theme-toggle-icon" aria-hidden="true">☀</span>
+            <span class="theme-toggle-label">Light</span>
+          </button>
           <button type="button" class="meta-btn" id="quit-btn">New Run</button>
           <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
             Clear Data
