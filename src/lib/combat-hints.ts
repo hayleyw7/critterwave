@@ -7,10 +7,10 @@ export const LOW_HP_HINT_RATIO = 0.6;
 export const DANCE_HINT_FALLBACK_WAVE = 12;
 
 export const DANCE_TEACH_TEXT =
-  "Dance builds HYPE — +1 ATK per point, for you &/or the foe.";
+  "Dance builds HYPE — +1 ATK per point, for you and/or the foe.";
 export const HEAL_TEACH_TEXT = "Restore HP — foe will hit back.";
 export const RUN_TEACH_TEXT =
-  "Run away — heal a little, face the next foe, & lose all HYPE.";
+  "Run away — heal a little, face the next foe, and lose all HYPE.";
 
 /** @deprecated Use DANCE_TEACH_TEXT */
 export const DANCE_TEACH_BATTLE_TEXT = DANCE_TEACH_TEXT;
@@ -272,20 +272,6 @@ export function shouldShowDanceTeachCopy(
   );
 }
 
-export function shouldShowAttackTeachCopy(
-  flags: CombatHintsState,
-  showAttackHint: boolean,
-  phase: CombatHintPhase,
-  hasFoe: boolean
-): boolean {
-  return shouldShowCmdTeachCopy(
-    flags.dismissedAttackTeachCopy,
-    showAttackHint,
-    phase,
-    hasFoe
-  );
-}
-
 export function shouldShowHealTeachCopy(
   flags: CombatHintsState,
   showHealHint: boolean,
@@ -359,7 +345,6 @@ export function recordAttackForHints(flags: CombatHintsState): CombatHintsState 
   return {
     ...flags,
     dismissedAttackHint: true,
-    dismissedAttackTeachCopy: true,
     showDanceHintThisFoe: false,
   };
 }

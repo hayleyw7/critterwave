@@ -64,6 +64,7 @@
           <h2 class="setup-title mobile-stack">
             <span class="mobile-stack-part">Which critter</span> <span class="mobile-stack-part">are you?</span>
           </h2>
+          <p class="setup-subtitle" id="setup-subtitle"></p>
           <div class="emoji-picker" id="hero-picker" role="listbox" aria-label="Which critter are you?"></div>
         </div>
         <div class="setup-footer">
@@ -272,11 +273,6 @@
           <nav class="command-menu" id="actions" aria-label="Combat actions">
             <button type="button" data-action="attack" id="cmd-attack" class="cmd cmd-attack">
               Attack
-              <span
-                class="cmd-teach-popup cmd-teach-popup--align-start hidden"
-                id="cmd-attack-teach"
-                role="tooltip"
-              ></span>
             </button>
             <button type="button" data-action="heal" id="cmd-heal" class="cmd cmd-heal">
               Heal
@@ -292,7 +288,7 @@
                 class="cmd-teach-popup cmd-teach-popup--align-start hidden"
                 id="cmd-dance-teach"
                 role="tooltip"
-              >Dance builds HYPE — +1 ATK per point, for you &/or the foe.</span>
+              >Dance builds HYPE — +1 ATK per point, for you and/or the foe.</span>
             </button>
             <button type="button" data-action="run" id="cmd-run" class="cmd cmd-run">
               Run
@@ -300,7 +296,7 @@
                 class="cmd-teach-popup cmd-teach-popup--align-end hidden"
                 id="cmd-run-teach"
                 role="tooltip"
-              >Run away — heal a little, face the next foe, & lose all HYPE.</span>
+              >Run away — heal a little, face the next foe, and lose all HYPE.</span>
             </button>
           </nav>
         </div>

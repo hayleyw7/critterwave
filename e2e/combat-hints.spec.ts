@@ -3,17 +3,24 @@ import { patchSaveSnapshot } from "./helpers-save.js";
 import { clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers.js";
 
 test.describe("combat hints — button glow", () => {
-  test("attack glows on fresh run then stops after first attack", async ({ page }) => {
-    await startFreshRun(page);
-    await expect(page.locator("#cmd-attack")).toHaveAttribute("data-combat-hint", "on");
-    await expect(page.locator("#cmd-attack-teach")).toBeVisible();
-    await expect(page.locator("#cmd-attack-teach")).toContainText(
+  test("setup shows attack goal under critter heading, not as combat hint", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Which critter are you?" })
+    ).toBeVisible();
+    await expect(page.locator("#setup-subtitle")).toContainText(
       /Attack — clear 100 waves of evil critters!/i
     );
+
+    await startFreshRun(page);
+    await expect(page.locator("#cmd-attack")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-attack")).toHaveClass(/cmd-hint-flash/);
     await page.getByRole("button", { name: "Attack" }).click();
     await expect(page.locator("#battle-text")).toContainText(/You hit/i, { timeout: 10_000 });
     await expect(page.locator("#cmd-attack")).toHaveAttribute("data-combat-hint", "off");
-    await expect(page.locator("#cmd-attack-teach")).toBeHidden();
+    await expect(page.locator("#cmd-attack")).not.toHaveClass(/cmd-hint-flash/);
   });
 
   test("heal glows at low hp but not dance on same fight", async ({ page }) => {
@@ -54,7 +61,7 @@ test.describe("combat hints — button glow", () => {
     await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "on");
     await expect(page.locator("#cmd-run-teach")).toBeVisible();
     await expect(page.locator("#cmd-run-teach")).toContainText(
-      /Run away — heal a little, face the next foe, & lose all HYPE\./i
+      /Run away — heal a little, face the next foe, and lose all HYPE\./i
     );
     await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "off");
 
@@ -156,10 +163,10 @@ test.describe("combat hints — button glow", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
     await expect(page.locator("#cmd-dance-teach")).toBeVisible();
     await expect(page.locator("#cmd-dance-teach")).toContainText(
-      /Dance builds HYPE — \+1 ATK per point, for you &\/or the foe\./i
+      /Dance builds HYPE — \+1 ATK per point, for you and\/or the foe\./i
     );
     await expect(page.locator("#battle-text")).not.toContainText(
-      /Dance builds HYPE — \+1 ATK per point, for you &\/or the foe\./i
+      /Dance builds HYPE — \+1 ATK per point, for you and\/or the foe\./i
     );
   });
 });
@@ -194,10 +201,10 @@ test.describe("combat hints — dance after heal", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
     await expect(page.locator("#cmd-dance-teach")).toBeVisible();
     await expect(page.locator("#cmd-dance-teach")).toContainText(
-      /Dance builds HYPE — \+1 ATK per point, for you &\/or the foe\./i
+      /Dance builds HYPE — \+1 ATK per point, for you and\/or the foe\./i
     );
     await expect(page.locator("#battle-text")).not.toContainText(
-      /Dance builds HYPE — \+1 ATK per point, for you &\/or the foe\./i
+      /Dance builds HYPE — \+1 ATK per point, for you and\/or the foe\./i
     );
   });
 

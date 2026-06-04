@@ -488,11 +488,20 @@ body.is-booting .game-shell {
 .setup-title {
   width: 100%;
   box-sizing: border-box;
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-1);
   font-family: var(--font-ui);
   font-size: 1.75rem;
   color: var(--heading-accent);
   letter-spacing: 0.06em;
+}
+
+.setup-subtitle {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  line-height: 1.35;
 }
 
 .setup-footer {
@@ -1873,19 +1882,8 @@ html[data-theme="light"] .foe-hype-fill {
   position: relative;
   z-index: 2;
   border-color: var(--hint-flash-border) !important;
-  background: var(--hint-flash-bg) !important;
-  color: var(--hint-flash-text) !important;
-  text-shadow: none;
   transition: none;
   animation: cmd-hint-pulse 0.75s ease-in-out infinite;
-}
-
-.command-menu .cmd-heal.cmd-hint-flash {
-  color: var(--hint-flash-heal-text) !important;
-}
-
-.command-menu .cmd-dance.cmd-hint-flash {
-  color: var(--hint-flash-dance-text) !important;
 }
 
 .command-menu .cmd {
@@ -1969,14 +1967,10 @@ html[data-theme="light"] .foe-hype-fill {
 @keyframes cmd-hint-pulse {
   0%,
   100% {
-    box-shadow:
-      inset 0 0 0 2px var(--hint-flash-border),
-      0 0 var(--hint-flash-glow-radius) var(--hint-flash-glow);
+    box-shadow: inset 0 0 0 2px var(--hint-flash-border);
   }
   50% {
-    box-shadow:
-      inset 0 0 0 3px var(--focus-ring),
-      0 0 var(--hint-flash-glow-radius-peak) var(--hint-flash-glow-peak);
+    box-shadow: inset 0 0 0 3px var(--focus-ring);
   }
 }
 
@@ -2284,7 +2278,6 @@ html[data-theme="light"] .foe-hype-fill {
   .command-menu .cmd.cmd-hint-flash {
     animation: none;
     border-color: var(--hint-flash-border) !important;
-    background: var(--hint-flash-bg) !important;
     box-shadow: inset 0 0 0 2px var(--hint-flash-border);
   }
 

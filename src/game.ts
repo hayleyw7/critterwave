@@ -113,7 +113,6 @@ import {
   hypeMaxPresentation,
   recordRunForHints,
   shouldShowAttackHint,
-  shouldShowAttackTeachCopy,
   shouldShowDanceHint,
   shouldShowDanceTeachCopy,
   shouldShowHealHint,
@@ -409,7 +408,6 @@ const el = {
   attackBtn:
     document.getElementById("cmd-attack") ??
     document.querySelector<HTMLButtonElement>('[data-action="attack"]')!,
-  attackTeachPopup: document.getElementById("cmd-attack-teach")!,
   healTeachPopup: document.getElementById("cmd-heal-teach")!,
   danceTeachPopup: document.getElementById("cmd-dance-teach")!,
   runTeachPopup: document.getElementById("cmd-run-teach")!,
@@ -433,6 +431,7 @@ const el = {
   confirmOk: document.getElementById("confirm-ok")!,
   confirmCancel: document.getElementById("confirm-cancel")!,
   setupOverlay: document.getElementById("character-setup")!,
+  setupSubtitle: document.getElementById("setup-subtitle")!,
   heroPicker: document.getElementById("hero-picker")!,
   heroNameInput: document.getElementById("hero-name-input") as HTMLInputElement,
   heroColorSwatches: document.getElementById("hero-color-swatches")!,
@@ -1258,7 +1257,7 @@ function syncCombatHintClasses(): void {
   el.healBtn.dataset.combatHint = showHeal ? "on" : "off";
   el.danceBtn.dataset.combatHint = showDance ? "on" : "off";
   el.runBtn.dataset.combatHint = showRun ? "on" : "off";
-  syncCombatTeachPopups(showAttack, showHeal, showDance, showRun);
+  syncCombatTeachPopups(showHeal, showDance, showRun);
 }
 
 function syncCmdTeachPopup(
@@ -1276,18 +1275,11 @@ function syncCmdTeachPopup(
 }
 
 function syncCombatTeachPopups(
-  showAttack: boolean,
   showHeal: boolean,
   showDance: boolean,
   showRun: boolean
 ): void {
   const hasFoe = foe !== null;
-  syncCmdTeachPopup(
-    el.attackTeachPopup,
-    el.attackBtn,
-    "cmd-attack-teach",
-    shouldShowAttackTeachCopy(combatHints, showAttack, phase, hasFoe)
-  );
   syncCmdTeachPopup(
     el.healTeachPopup,
     el.healBtn,
@@ -2269,12 +2261,17 @@ function buildHeroPicker(): void {
   el.heroPicker.appendChild(grid);
 }
 
+function updateSetupSubtitle(): void {
+  el.setupSubtitle.textContent = attackTeachText(CAMPAIGN_WAVES);
+}
+
 function showSetup(): void {
   const save = loadSave();
   closeHeroColorPopup();
   pendingHeroEmoji = resolvePickerHeroEmoji(save.playerEmoji ?? player.emoji);
   pendingHeroLabel = getHeroLabelForEmoji(pendingHeroEmoji);
   setupHintForced = false;
+  updateSetupSubtitle();
   buildHeroPicker();
   el.heroNameInput.value = save.heroName ?? "";
   pendingHeroColorTheme = resolveHeroColorTheme(save);
@@ -2477,7 +2474,7 @@ function finishBoot(): void {
 
 function init(): void {
   initColorMode();
-  el.attackTeachPopup.textContent = attackTeachText(CAMPAIGN_WAVES);
+  updateSetupSubtitle();
   bindConfirmDialog();
   bindActions();
   renderRecords();
