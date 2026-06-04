@@ -288,6 +288,17 @@ test.describe("combat hints — dance after heal", () => {
 });
 
 test.describe("combat hints — save persistence", () => {
+  test("heal teach popup survives reload", async ({ page }) => {
+    await startFreshRun(page);
+    await patchSaveSnapshot(page, {
+      player: { hp: 10, maxHp: 20 },
+      combatHints: { dismissedAttackHint: true },
+    });
+    await page.reload();
+    await expect(page.locator("#cmd-heal-teach")).toBeVisible();
+    await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "on");
+  });
+
   test("hint dismissals survive reload", async ({ page }) => {
     await startFreshRun(page);
     await page.getByRole("button", { name: "Attack" }).click();

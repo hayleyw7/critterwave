@@ -53,7 +53,9 @@ import {
 import { appendBattleHypeTail, setBattleLines } from "./lib/battle-log-dom.js";
 import {
   isDebugHost,
+  parsePendingConfirm,
   parseSaveMeta,
+  type PendingConfirmKind,
   sanitizeGamePhase,
   sanitizeHypeLevel,
   sanitizeIdList,
@@ -191,6 +193,8 @@ type SaveData = {
   heroColorTheme?: HeroColorTheme;
   /** True while the hero setup overlay should stay up (survives refresh). */
   setupActive?: boolean;
+  /** Footer confirm dialog open — restored after refresh until dismissed. */
+  pendingConfirm?: PendingConfirmKind;
 };
 
 type GameSnapshot = {
@@ -414,6 +418,7 @@ const el = {
   runBtn:
     document.getElementById("cmd-run") ??
     document.querySelector<HTMLButtonElement>('[data-action="run"]')!,
+  recordsBar: document.querySelector(".records-bar") as HTMLElement,
   gameOver: document.getElementById("game-over")!,
   victoryEmojiLayer: document.getElementById("victory-emoji-layer")!,
   gameOverTag: document.getElementById("game-over-tag")!,
@@ -426,6 +431,7 @@ const el = {
   themeToggleIcon: document.querySelector("#theme-toggle .theme-toggle-icon")!,
   themeToggleLabel: document.querySelector("#theme-toggle .theme-toggle-label")!,
   confirmOverlay: document.getElementById("confirm-overlay")!,
+  confirmPanel: document.getElementById("confirm-panel")!,
   confirmTitle: document.getElementById("confirm-title")!,
   confirmMessage: document.getElementById("confirm-message")!,
   confirmOk: document.getElementById("confirm-ok")!,
@@ -453,27 +459,105 @@ type ConfirmOptions = {
   danger?: boolean;
 };
 
+const PENDING_CONFIRM_OPTIONS: Record<PendingConfirmKind, ConfirmOptions> = {
+  newRun: {
+    title: "Start a new run?",
+    message:
+      "Your high score and run count stay. This run can't be continued.",
+    confirmLabel: "New Run",
+  },
+  clearData: {
+    title: "Delete everything?",
+    message:
+      "Permanently delete your critter and all-time play history. This can't be undone.",
+    confirmLabel: "Clear Data",
+    danger: true,
+  },
+};
+
 let confirmResolve: ((confirmed: boolean) => void) | null = null;
 
-function showConfirm(options: ConfirmOptions): Promise<boolean> {
+function applyConfirmOptions(options: ConfirmOptions): void {
+  el.confirmTitle.textContent = options.title;
+  el.confirmMessage.textContent = options.message;
+  el.confirmOk.textContent = options.confirmLabel ?? "Yes";
+  el.confirmCancel.textContent = options.cancelLabel ?? "Cancel";
+  el.confirmOverlay.classList.toggle("confirm-danger", options.danger ?? false);
+  el.confirmOverlay.classList.remove("hidden");
+}
+
+function persistPendingConfirm(kind: PendingConfirmKind | null): void {
+  const fields = readPersistedFields();
+  if (kind) {
+    fields.pendingConfirm = kind;
+  } else {
+    delete fields.pendingConfirm;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(withSaveMeta(fields)));
+}
+
+function presentConfirm(
+  kind: PendingConfirmKind,
+  onConfirm: () => void
+): Promise<boolean> {
   return new Promise((resolve) => {
-    el.confirmTitle.textContent = options.title;
-    el.confirmMessage.textContent = options.message;
-    el.confirmOk.textContent = options.confirmLabel ?? "Yes";
-    el.confirmCancel.textContent = options.cancelLabel ?? "Cancel";
-    el.confirmOverlay.classList.toggle("confirm-danger", options.danger ?? false);
-    el.confirmOverlay.classList.remove("hidden");
-    confirmResolve = resolve;
+    applyConfirmOptions(PENDING_CONFIRM_OPTIONS[kind]);
+    persistPendingConfirm(kind);
+    confirmResolve = (confirmed) => {
+      persistPendingConfirm(null);
+      el.confirmOverlay.classList.add("hidden");
+      el.confirmOverlay.classList.remove("confirm-danger");
+      confirmResolve = null;
+      if (confirmed) {
+        onConfirm();
+      }
+      resolve(confirmed);
+    };
     el.confirmCancel.focus();
   });
 }
 
 function closeConfirm(confirmed: boolean): void {
-  el.confirmOverlay.classList.add("hidden");
-  el.confirmOverlay.classList.remove("confirm-danger");
   const resolve = confirmResolve;
-  confirmResolve = null;
-  resolve?.(confirmed);
+  if (!resolve) {
+    return;
+  }
+  resolve(confirmed);
+}
+
+function restorePendingConfirmIfNeeded(): void {
+  const kind = loadSave().pendingConfirm;
+  if (!kind) {
+    return;
+  }
+  void presentConfirm(kind, () => {
+    if (kind === "newRun") {
+      applyNewRun();
+    } else {
+      applyClearData();
+    }
+  });
+}
+
+function isConfirmBackdropTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Node)) {
+    return false;
+  }
+  return !el.confirmPanel.contains(target);
+}
+
+function dismissConfirmFromBackdrop(event: Event): void {
+  if (el.confirmOverlay.classList.contains("hidden")) {
+    return;
+  }
+  if (!isConfirmBackdropTarget(event.target)) {
+    return;
+  }
+  if (event instanceof PointerEvent && event.button !== 0) {
+    return;
+  }
+  event.preventDefault();
+  closeConfirm(false);
 }
 
 function bindConfirmDialog(): void {
@@ -485,14 +569,13 @@ function bindConfirmDialog(): void {
     closeConfirm(false);
   });
 
-  el.confirmOverlay.addEventListener("click", (event) => {
-    if (event.target === el.confirmOverlay) {
-      closeConfirm(false);
-    }
-  });
+  el.confirmOverlay.addEventListener("click", dismissConfirmFromBackdrop);
+  el.confirmOverlay.addEventListener("pointerup", dismissConfirmFromBackdrop);
 
   document.addEventListener("keydown", (event) => {
-    if (el.confirmOverlay.classList.contains("hidden")) return;
+    if (el.confirmOverlay.classList.contains("hidden")) {
+      return;
+    }
     if (event.key === "Escape") {
       event.preventDefault();
       closeConfirm(false);
@@ -585,6 +668,10 @@ function readPersistedFields(): Record<string, unknown> {
     }
     if (parsed.snapshot && typeof parsed.snapshot === "object") {
       fields.snapshot = parsed.snapshot;
+    }
+    const pendingConfirm = parsePendingConfirm(parsed.pendingConfirm);
+    if (pendingConfirm) {
+      fields.pendingConfirm = pendingConfirm;
     }
     return fields;
   } catch {
@@ -679,18 +766,54 @@ function persistSetupDraft(): void {
 }
 
 function persist(snapshot?: GameSnapshot): void {
+  const preserved = readPersistedFields();
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify(
       withSaveMeta({
+        ...preserved,
         playerEmoji: player.emoji,
         heroName: player.name,
         heroColorTheme,
-        setupActive: false,
+        setupActive: !el.setupOverlay.classList.contains("hidden"),
         snapshot: snapshot ?? getSnapshot(),
       })
     )
   );
+}
+
+function isConfirmDialogOpen(): boolean {
+  return !el.confirmOverlay.classList.contains("hidden");
+}
+
+function shouldFlushSnapshotOnPageExit(): boolean {
+  if (isConfirmDialogOpen()) {
+    return true;
+  }
+  if (!el.setupOverlay.classList.contains("hidden")) {
+    return false;
+  }
+  if (phase === "gameover" || phase === "victory") {
+    return true;
+  }
+  return phase === "combat" && foe !== null;
+}
+
+/** Keep mid-run state (including teach popups) when the player refreshes or leaves. */
+function flushSnapshotOnPageExit(): void {
+  if (!shouldFlushSnapshotOnPageExit()) {
+    return;
+  }
+  persist();
+}
+
+function bindPageExitPersist(): void {
+  window.addEventListener("pagehide", flushSnapshotOnPageExit);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      flushSnapshotOnPageExit();
+    }
+  });
 }
 
 function foeColorConflictsWithHero(theme: FoeColorTheme): boolean {
@@ -1255,6 +1378,101 @@ function syncCombatHintClasses(): void {
   syncCombatTeachPopups(showHeal, showDance, showRun);
 }
 
+function clearFooterTeachPopupPosition(popup: HTMLElement): void {
+  popup.style.left = "";
+  popup.style.top = "";
+  popup.style.right = "";
+  popup.style.bottom = "";
+  popup.style.transform = "";
+  popup.style.maxWidth = "";
+  popup.style.removeProperty("--teach-arrow-offset");
+  popup.style.removeProperty("--teach-arrow-offset-end");
+}
+
+function teachPopupGapPx(): number {
+  const raw = getComputedStyle(el.gameShell).getPropertyValue("--space-2").trim();
+  if (raw.endsWith("rem")) {
+    const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    return parseFloat(raw) * rootPx;
+  }
+  return parseFloat(raw) || 0;
+}
+
+function teachPopupArrowPx(): number {
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue("--cmd-teach-arrow-size")
+    .trim();
+  return parseFloat(raw) || 7;
+}
+
+const MOBILE_TEACH_LAYOUT_MQ = window.matchMedia("(max-width: 768px)");
+
+function teachPopupMaxWidthForLayout(): string | null {
+  if (!MOBILE_TEACH_LAYOUT_MQ.matches) {
+    return null;
+  }
+  return `${window.innerWidth * 0.8}px`;
+}
+
+function positionFooterTeachPopup(popup: HTMLElement, btn: HTMLElement): void {
+  const shell = el.gameShell.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  const gap = teachPopupGapPx();
+  const arrow = teachPopupArrowPx();
+  const margin = 8;
+
+  popup.style.position = "fixed";
+  popup.style.inset = "auto";
+  popup.style.right = "auto";
+  popup.style.bottom = "auto";
+  popup.style.transform = "none";
+  popup.style.margin = "0";
+
+  const layoutMaxWidth = teachPopupMaxWidthForLayout();
+  if (layoutMaxWidth) {
+    popup.style.maxWidth = layoutMaxWidth;
+  } else {
+    popup.style.maxWidth = "";
+  }
+
+  const width = popup.offsetWidth;
+  let left: number;
+  if (popup.classList.contains("cmd-teach-popup--align-end")) {
+    left = btnRect.right - width;
+  } else {
+    left = btnRect.left;
+  }
+  left = Math.max(shell.left + margin, Math.min(left, shell.right - width - margin));
+
+  /* Heal mirror: popup body starts --space-2 below the button; arrow fills that gap upward. */
+  popup.style.left = `${left}px`;
+  popup.style.top = `${btnRect.bottom + gap}px`;
+
+  void popup.offsetHeight;
+  const popupRect = popup.getBoundingClientRect();
+  const arrowTipY = popupRect.top - arrow;
+  const nudge = btnRect.bottom - arrowTipY;
+  if (Math.abs(nudge) > 0.5) {
+    popup.style.top = `${popupRect.top + nudge}px`;
+  }
+
+  const placed = popup.getBoundingClientRect();
+  const btnCenterX = btnRect.left + btnRect.width / 2;
+  if (popup.classList.contains("cmd-teach-popup--align-end")) {
+    popup.style.setProperty(
+      "--teach-arrow-offset-end",
+      `${Math.max(0, placed.right - btnCenterX)}px`
+    );
+    popup.style.removeProperty("--teach-arrow-offset");
+  } else {
+    popup.style.setProperty(
+      "--teach-arrow-offset",
+      `${Math.max(0, btnCenterX - placed.left)}px`
+    );
+    popup.style.removeProperty("--teach-arrow-offset-end");
+  }
+}
+
 function syncCmdTeachPopup(
   popup: HTMLElement,
   btn: HTMLElement,
@@ -1264,9 +1482,38 @@ function syncCmdTeachPopup(
   popup.classList.toggle("hidden", !show);
   if (show) {
     btn.setAttribute("aria-describedby", popupId);
+    if (popup.classList.contains("cmd-teach-popup--dock-footer")) {
+      requestAnimationFrame(() => {
+        positionFooterTeachPopup(popup, btn);
+        requestAnimationFrame(() => positionFooterTeachPopup(popup, btn));
+      });
+    }
   } else {
     btn.removeAttribute("aria-describedby");
+    if (popup.classList.contains("cmd-teach-popup--dock-footer")) {
+      clearFooterTeachPopupPosition(popup);
+    }
   }
+}
+
+function syncVisibleFooterTeachPopups(): void {
+  if (!el.danceTeachPopup.classList.contains("hidden")) {
+    positionFooterTeachPopup(el.danceTeachPopup, el.danceBtn);
+  }
+  if (!el.runTeachPopup.classList.contains("hidden")) {
+    positionFooterTeachPopup(el.runTeachPopup, el.runBtn);
+  }
+}
+
+let footerTeachPopupResizeBound = false;
+
+function bindFooterTeachPopupResize(): void {
+  if (footerTeachPopupResizeBound) {
+    return;
+  }
+  footerTeachPopupResizeBound = true;
+  window.addEventListener("resize", syncVisibleFooterTeachPopups);
+  el.gameShell.addEventListener("scroll", syncVisibleFooterTeachPopups);
 }
 
 function syncCombatTeachPopups(
@@ -1693,6 +1940,7 @@ async function transitionToNextWave(
       viaKill: true,
     });
     foeHypeLevel = 0;
+    persist();
 
     if (playerLevel > levelBefore) {
       render();
@@ -1717,6 +1965,7 @@ async function transitionToNextWave(
       viaKill: false,
     });
     foeHypeLevel = 0;
+    persist();
   }
 
   if (fleeWithExitAnim) {
@@ -2338,16 +2587,7 @@ function resetGame(): void {
   startWave();
 }
 
-async function startNewGame(): Promise<void> {
-  const confirmed = await showConfirm({
-    title: "Start a new run?",
-    message:
-      "Your high score and run count stay. This run can't be continued.",
-    confirmLabel: "New Run",
-  });
-  if (!confirmed) {
-    return;
-  }
+function applyNewRun(): void {
   persistStatsOnly();
   foe = null;
   phase = "combat";
@@ -2356,17 +2596,7 @@ async function startNewGame(): Promise<void> {
   showSetup();
 }
 
-async function resetStats(): Promise<void> {
-  const confirmed = await showConfirm({
-    title: "Delete everything?",
-    message:
-      "Permanently delete your critter and all-time play history. This can't be undone.",
-    confirmLabel: "Clear Data",
-    danger: true,
-  });
-  if (!confirmed) {
-    return;
-  }
+function applyClearData(): void {
   localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify(withSaveMeta({ bestWave: 0, runsPlayed: 0 }))
@@ -2377,6 +2607,14 @@ async function resetStats(): Promise<void> {
   stopVictoryCelebration(el.victoryEmojiLayer);
   el.gameOver.classList.add("hidden");
   showSetup();
+}
+
+async function startNewGame(): Promise<void> {
+  await presentConfirm("newRun", applyNewRun);
+}
+
+async function resetStats(): Promise<void> {
+  await presentConfirm("clearData", applyClearData);
 }
 
 function bindActions(): void {
@@ -2494,12 +2732,15 @@ function init(): void {
   updateSetupSubtitle();
   bindConfirmDialog();
   bindActions();
+  bindPageExitPersist();
+  bindFooterTeachPopupResize();
   renderRecords();
 
   const save = loadSave();
   if (save.setupActive) {
     showSetup();
     finishBoot();
+    restorePendingConfirmIfNeeded();
     maybeRunDebugWin();
     return;
   }
@@ -2507,6 +2748,7 @@ function init(): void {
   if (!save.playerEmoji) {
     showSetup();
     finishBoot();
+    restorePendingConfirmIfNeeded();
     maybeRunDebugWin();
     return;
   }
@@ -2518,6 +2760,7 @@ function init(): void {
   applyHeroColorTheme(resolveHeroColorTheme(save));
   beginGame();
   finishBoot();
+  restorePendingConfirmIfNeeded();
   maybeRunDebugWin();
 }
 

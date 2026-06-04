@@ -97,6 +97,57 @@ test.describe("Critterwave — happy paths", () => {
     ).toBeVisible();
   });
 
+  test("new run confirm survives reload", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "New Run" }).click();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Start a new run?" })).toBeVisible();
+    await page.reload();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Start a new run?" })).toBeVisible();
+    await page.locator("#confirm-cancel").click();
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
+    await expect(page.getByLabel("Combat actions")).toBeVisible();
+  });
+
+  test("new run confirm dismisses on escape and backdrop tap", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "New Run" }).click();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
+    await expect(page.getByLabel("Combat actions")).toBeVisible();
+
+    await page.getByRole("button", { name: "New Run" }).click();
+    await page.locator("#confirm-overlay").click({
+      position: { x: 8, y: 8 },
+      force: true,
+    });
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
+  });
+
+  test("clear data confirm dismisses on backdrop tap (mobile)", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "Clear Data" }).click();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await page.locator("#confirm-overlay").click({
+      position: { x: 12, y: 12 },
+    });
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
+    await expect(page.getByLabel("Combat actions")).toBeVisible();
+  });
+
+  test("clear data confirm survives reload", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "Clear Data" }).click();
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/confirm-danger/);
+    await expect(page.getByRole("heading", { name: "Delete everything?" })).toBeVisible();
+    await page.reload();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Delete everything?" })).toBeVisible();
+  });
+
   test("hides devil emoji in hero picker on mobile only", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await clearSave(page);

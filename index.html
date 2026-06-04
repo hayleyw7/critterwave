@@ -284,19 +284,9 @@
             </button>
             <button type="button" data-action="dance" id="cmd-dance" class="cmd cmd-dance">
               Dance
-              <span
-                class="cmd-teach-popup cmd-teach-popup--align-start hidden"
-                id="cmd-dance-teach"
-                role="tooltip"
-              >Dance may add HYPE — makes hits stronger, for you and/or the foe.</span>
             </button>
             <button type="button" data-action="run" id="cmd-run" class="cmd cmd-run">
               Run
-              <span
-                class="cmd-teach-popup cmd-teach-popup--align-end hidden"
-                id="cmd-run-teach"
-                role="tooltip"
-              >Run away — heal a little, face the next foe, and lose all HYPE.</span>
             </button>
           </nav>
         </div>
@@ -318,6 +308,19 @@
           </div>
         </div>
         </main>
+      </div>
+
+      <div class="teach-popup-dock" id="teach-popup-dock" aria-hidden="true">
+        <span
+          class="cmd-teach-popup cmd-teach-popup--align-start cmd-teach-popup--dock-footer hidden"
+          id="cmd-dance-teach"
+          role="tooltip"
+        >Dance may add HYPE — makes hits stronger, for you and/or the foe.</span>
+        <span
+          class="cmd-teach-popup cmd-teach-popup--align-end cmd-teach-popup--dock-footer hidden"
+          id="cmd-run-teach"
+          role="tooltip"
+        >Run away — heal a little, face the next foe, and lose all HYPE.</span>
       </div>
 
       <footer class="records-bar" aria-label="Lifetime stats and game options">

@@ -58,6 +58,7 @@
   --title-shadow-glow: rgba(253, 224, 71, 0.2);
   --cmd-attack-text: #fecaca;
   --cmd-heal-text: #bbf7d0;
+  --cmd-teach-arrow-size: 7px;
   --cmd-dance-text: #e9d5ff;
   --cmd-run-text: #bfdbfe;
   --confirm-danger-text: #fecaca;
@@ -404,6 +405,8 @@ body.is-booting .game-shell {
   padding: 1rem;
   background: var(--overlay-scrim);
   backdrop-filter: blur(3px);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .confirm-overlay.hidden {
@@ -1791,6 +1794,8 @@ html[data-theme="light"] .damage-pop.heal-pop {
   background: var(--dialog);
   color: var(--text);
   overflow: visible;
+  position: relative;
+  z-index: 2;
 }
 
 .dialog-box {
@@ -1918,14 +1923,12 @@ html[data-theme="light"] .damage-pop.heal-pop {
 }
 
 .cmd-teach-popup {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + var(--space-2));
-  transform: translateX(-50%);
   z-index: 30;
   box-sizing: border-box;
   width: max-content;
+  min-width: 0;
   max-width: min(15rem, calc(100vw - var(--space-3) * 2));
+  overflow: visible;
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-ui);
   font-size: 0.92rem;
@@ -1943,13 +1946,20 @@ html[data-theme="light"] .damage-pop.heal-pop {
   animation: cmd-teach-popup-in 0.25s ease-out;
 }
 
-.cmd-teach-popup--align-start {
+/* Heal: above the button (dance/run use --dock-footer + JS). */
+.cmd-teach-popup:not(.cmd-teach-popup--dock-footer) {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+}
+
+.cmd-teach-popup--align-start:not(.cmd-teach-popup--dock-footer) {
   left: 0;
+  right: auto;
   transform: none;
   text-align: left;
 }
 
-.cmd-teach-popup--align-end {
+.cmd-teach-popup--align-end:not(.cmd-teach-popup--dock-footer) {
   left: auto;
   right: 0;
   transform: none;
@@ -1966,7 +1976,7 @@ html[data-theme="light"] .damage-pop.heal-pop {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 7px solid transparent;
+  border: var(--cmd-teach-arrow-size) solid transparent;
   border-top-color: var(--teach-popup-border);
 }
 
@@ -1979,6 +1989,49 @@ html[data-theme="light"] .damage-pop.heal-pop {
   left: auto;
   right: var(--space-4);
   transform: none;
+}
+
+.teach-popup-dock {
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Dance/run: positioned in JS (fixed). Never use % bottom — that tracks the viewport. */
+.cmd-teach-popup.cmd-teach-popup--dock-footer {
+  position: fixed;
+  z-index: 100;
+  inset: auto;
+  margin: 0;
+  transform: none;
+}
+
+/* Arrow points up at the dance/run button (same as when the tip sat on the button). */
+.cmd-teach-popup--dock-footer::after {
+  top: auto;
+  bottom: 100%;
+  left: var(--teach-arrow-offset, 50%);
+  transform: translateX(-50%);
+  border-width: var(--cmd-teach-arrow-size);
+  border-top-color: transparent;
+  border-bottom-color: var(--teach-popup-border);
+}
+
+.cmd-teach-popup--dock-footer.cmd-teach-popup--align-start::after {
+  left: var(--teach-arrow-offset, var(--space-4));
+  transform: translateX(0);
+}
+
+.cmd-teach-popup--dock-footer.cmd-teach-popup--align-end::after {
+  left: auto;
+  right: var(--teach-arrow-offset-end, var(--space-4));
+  transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+  .cmd-teach-popup {
+    max-width: 80vw;
+  }
 }
 
 @keyframes cmd-teach-popup-in {
@@ -2071,6 +2124,8 @@ html[data-theme="light"] .damage-pop.heal-pop {
   padding: var(--space-2) 0 0;
   flex-shrink: 0;
   border-top: 1px solid var(--records-divider);
+  position: relative;
+  z-index: 1;
 }
 
 .records-stats {

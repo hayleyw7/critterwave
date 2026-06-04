@@ -27,6 +27,12 @@ export function parseSaveRecord(raw: unknown): Record<string, unknown> | null {
   return raw as Record<string, unknown>;
 }
 
+export type PendingConfirmKind = "newRun" | "clearData";
+
+export function parsePendingConfirm(value: unknown): PendingConfirmKind | undefined {
+  return value === "newRun" || value === "clearData" ? value : undefined;
+}
+
 export type ParsedSaveMeta = {
   bestWave: number;
   runsPlayed: number;
@@ -36,6 +42,7 @@ export type ParsedSaveMeta = {
   heroLabel?: string;
   heroColorTheme?: ColorThemeId;
   setupActive: boolean;
+  pendingConfirm?: PendingConfirmKind;
 };
 
 export function parseSaveMeta(
@@ -76,6 +83,7 @@ export function parseSaveMeta(
     heroLabel,
     heroColorTheme,
     setupActive: p.setupActive === true,
+    pendingConfirm: parsePendingConfirm(p.pendingConfirm),
   };
 }
 

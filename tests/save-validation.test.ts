@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clampInt,
   isDebugHost,
+  parsePendingConfirm,
   parseSaveMeta,
   parseSaveRecord,
   sanitizeGamePhase,
@@ -104,6 +105,16 @@ describe("parseSaveMeta", () => {
       { allowedHeroEmojis: HERO_EMOJIS }
     );
     expect(meta.heroColorTheme).toBeUndefined();
+  });
+
+  it("parses pending confirm dialog kind", () => {
+    expect(parsePendingConfirm("newRun")).toBe("newRun");
+    expect(parsePendingConfirm("clearData")).toBe("clearData");
+    expect(parsePendingConfirm("delete")).toBeUndefined();
+    expect(
+      parseSaveMeta({ pendingConfirm: "clearData" }, { allowedHeroEmojis: HERO_EMOJIS })
+        .pendingConfirm
+    ).toBe("clearData");
   });
 
   it("normalizes blank hero names to undefined", () => {
