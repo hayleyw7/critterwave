@@ -217,6 +217,62 @@ html[data-theme="dark"] {
   color-scheme: dark;
 }
 
+/* Smooth light ↔ dark toggle (View Transition + property lerp on key surfaces) */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.45s;
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 2;
+  }
+
+  html.color-mode-changing :where(
+    body,
+    .crt-overlay,
+    .game-shell,
+    .setup-panel,
+    .playfield,
+    .battle-stage,
+    .stage-floor,
+    .hud,
+    .action-panel,
+    .dialog-box,
+    .confirm-overlay,
+    .confirm-panel,
+    .game-over,
+    .game-over-panel,
+    .meta-btn,
+    .cmd,
+    #player-panel,
+    .enemy-status,
+    .hp-wrap,
+    .hp-bar,
+    .hype-bar,
+    .records-bar,
+    .title,
+    .tagline,
+    #battle-text
+  ) {
+    transition:
+      background-color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      border-color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      box-shadow 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      text-shadow 0.45s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  html.color-mode-changing :where(.emoji-sprite) {
+    transition: filter 0.45s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+}
+
 html[data-theme="light"] .title {
   text-shadow:
     2px 2px 0 var(--title-shadow-color),

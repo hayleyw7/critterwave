@@ -83,7 +83,12 @@ import {
   type ColorThemeId,
   type ColorThemeSurfaces,
 } from "./lib/color-themes.js";
-import { applyColorMode, parseColorMode, type ColorMode } from "./lib/color-mode.js";
+import {
+  applyColorMode,
+  parseColorMode,
+  runColorModeTransition,
+  type ColorMode,
+} from "./lib/color-mode.js";
 import {
   beginAwaitingFoeResponse,
   blockCombatForScreenEnd,
@@ -639,10 +644,12 @@ function updateThemeToggleUi(): void {
 
 function toggleColorMode(): void {
   currentColorMode = currentColorMode === "dark" ? "light" : "dark";
-  applyColorMode(currentColorMode);
-  updateThemeToggleUi();
-  applyHeroColorTheme(heroColorTheme);
-  applyFoeColorTheme(foeColorTheme);
+  runColorModeTransition(() => {
+    applyColorMode(currentColorMode);
+    updateThemeToggleUi();
+    applyHeroColorTheme(heroColorTheme);
+    applyFoeColorTheme(foeColorTheme);
+  });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(withSaveMeta(readPersistedFields())));
 }
 

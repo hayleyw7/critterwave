@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import {
   applyColorMode,
   parseColorMode,
+  prefersReducedMotion,
+  runColorModeTransition,
   themeColorForMode,
 } from "../src/lib/color-mode.js";
 
@@ -37,5 +39,44 @@ describe("applyColorMode", () => {
     applyColorMode("dark");
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(meta.getAttribute("content")).toBe(themeColorForMode("dark"));
+  });
+});
+
+describe("runColorModeTransition", () => {
+  it("runs update immediately when View Transition is unavailable", () => {
+    let ran = false;
+    runColorModeTransition(() => {
+      ran = true;
+    });
+    expect(ran).toBe(true);
+    expect(document.documentElement.classList.contains("color-mode-changing")).toBe(
+      false
+    );
+  });
+
+  it("uses startViewTransition when supported", async () => {
+    const original = document.startViewTransition;
+    document.startViewTransition = (callback: () => void) => {
+      callback();
+      return { finished: Promise.resolve() } as ViewTransition;
+    };
+
+    let ran = false;
+    runColorModeTransition(() => {
+      ran = true;
+    });
+    expect(ran).toBe(true);
+    await Promise.resolve();
+    expect(document.documentElement.classList.contains("color-mode-changing")).toBe(
+      false
+    );
+
+    document.startViewTransition = original;
+  });
+});
+
+describe("prefersReducedMotion", () => {
+  it("reflects matchMedia", () => {
+    expect(typeof prefersReducedMotion()).toBe("boolean");
   });
 });
