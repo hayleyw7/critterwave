@@ -1919,9 +1919,8 @@ async function transitionToNextWave(
     deferredFoeIds = advanced.deferred;
     const playerLevel = syncPlayerForCurrentWave({
       grantMaxHpIncrease: true,
-      healToMax: true,
     });
-    applyWaveVictoryHealPop(hpBeforeHeal);
+    applyWaveVictoryHeal();
     const waveHealFlash = tryCelebrateFirstWaveVictoryHeal(
       combatHints,
       completedWave,
