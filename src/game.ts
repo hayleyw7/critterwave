@@ -2027,7 +2027,7 @@ function onHeal(): void {
 
   skipPlayerHypeTeachThisRender = true;
 
-  const { rolled, gained, hpBefore } = rollAndApplyPlayerHeal();
+  const { rolled, gained } = rollAndApplyPlayerHeal();
   const firstMeaningfulHeal =
     !combatHints.dismissedHealHint && gained > 0;
   combatHints = recordHealForHints(combatHints, { armDance: gained > 0 });
@@ -2037,14 +2037,8 @@ function onHeal(): void {
   }
   showPlayerHealRoll(rolled);
 
-  const healGrantsHype = hpBefore < player.maxHp;
-
   applyCombatGateState(beginAwaitingFoeResponse(combatGateState()));
   const counterHit = applyFoeCounterAttack();
-
-  if (healGrantsHype && counterHit === null) {
-    gainPlayerHype(1);
-  }
   syncCombatHintClasses();
   if (counterHit === null) {
     render();

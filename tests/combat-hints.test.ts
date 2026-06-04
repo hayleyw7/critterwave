@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hypeAfterHealAndCounter } from "../src/lib/game-logic.js";
+import { hypeAfterCounterHit } from "../src/lib/game-logic.js";
 import {
   combatHintsAfterMidRunRestore,
   combatHintsForSnapshot,
@@ -449,16 +449,15 @@ describe("combat hints — teach flashes", () => {
 
   it("heal turn that loses hype to a counter does not flash at 0", () => {
     let flags = fresh();
-    // +1 HYPE from heal, then -1 from getting hit — render sees 0.
     flags = tryCelebrateFirstPlayerHype(flags, 0).flags;
     expect(tryCelebrateFirstPlayerHype(flags, 0).flashFirstHype).toBe(false);
     expect(flags.celebratedFirstPlayerHype).toBe(false);
   });
 
   it("heal turn with counter at 0 hype never reaches 1 in displayed state", () => {
-    expect(hypeAfterHealAndCounter(0, true, true)).toBe(0);
+    expect(hypeAfterCounterHit(0, true)).toBe(0);
     expect(
-      tryCelebrateFirstPlayerHype(fresh(), hypeAfterHealAndCounter(0, true, true)).flashFirstHype
+      tryCelebrateFirstPlayerHype(fresh(), hypeAfterCounterHit(0, true)).flashFirstHype
     ).toBe(false);
   });
 
