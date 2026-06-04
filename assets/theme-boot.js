@@ -24,4 +24,11 @@
   if (meta) {
     meta.setAttribute("content", mode === "light" ? "#f8f0ff" : "#0a0612");
   }
+  var manifest = document.querySelector('link[rel="manifest"]');
+  if (manifest) {
+    manifest.setAttribute(
+      "href",
+      mode === "light" ? "site-light.webmanifest" : "site.webmanifest"
+    );
+  }
 })();

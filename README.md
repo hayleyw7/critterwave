@@ -73,6 +73,7 @@ Stored under `critterwave-v1` in the browser (migrates from older `goblinwave-*`
 ```
 index.html          # entry page
 site.webmanifest
+site-light.webmanifest
 src/                # TypeScript source
   game.ts           # main game
   lib/              # rules, combat hints, color themes, save validation

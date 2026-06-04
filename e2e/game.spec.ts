@@ -191,6 +191,10 @@ test.describe("Critterwave — happy paths", () => {
 
     await page.getByRole("button", { name: "Switch to light mode" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+      "href",
+      /site-light\.webmanifest$/
+    );
     await expect(page.locator("#battle-text")).toHaveCSS("color", "rgb(26, 15, 46)");
 
     const saveAfterToggle = await page.evaluate((key) => {
@@ -201,6 +205,10 @@ test.describe("Critterwave — happy paths", () => {
 
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+      "href",
+      /site-light\.webmanifest$/
+    );
     await expect(page.getByRole("button", { name: "Switch to dark mode" })).toBeVisible();
   });
 });

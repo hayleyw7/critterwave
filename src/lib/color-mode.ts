@@ -15,6 +15,23 @@ export function themeColorForMode(mode: ColorMode): string {
   return THEME_COLORS[mode];
 }
 
+const MANIFEST_HREF: Record<ColorMode, string> = {
+  dark: "site.webmanifest",
+  light: "site-light.webmanifest",
+};
+
+/** Keeps installed-app chrome in sync with light/dark (paired static manifests). */
+export function syncPwaManifest(mode: ColorMode): void {
+  const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+  if (!link) {
+    return;
+  }
+  const href = MANIFEST_HREF[mode];
+  if (link.getAttribute("href") !== href) {
+    link.setAttribute("href", href);
+  }
+}
+
 export function prefersReducedMotion(): boolean {
   return (
     typeof matchMedia !== "undefined" &&
@@ -29,6 +46,7 @@ export function applyColorMode(mode: ColorMode): void {
   if (meta) {
     meta.setAttribute("content", themeColorForMode(mode));
   }
+  syncPwaManifest(mode);
 }
 
 /** Cross-fades the page when toggling light/dark (skipped if reduced motion). */
