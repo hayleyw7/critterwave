@@ -2183,12 +2183,6 @@ html[data-theme="light"] .damage-pop.heal-pop {
   line-height: 1;
 }
 
-html[data-theme="light"] .meta-btn.theme-toggle {
-  border-color: #4c1d95;
-  background: #aea0d4;
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--meta-btn-border) 55%, var(--bg-deep));
-}
-
 .theme-toggle-icon {
   display: inline-flex;
   align-items: center;
@@ -2205,10 +2199,6 @@ html[data-theme="light"] .meta-btn.theme-toggle {
   color: var(--text);
   background: var(--meta-btn-hover-bg);
   border-color: var(--highlight);
-}
-
-html[data-theme="light"] .meta-btn:hover {
-  border-color: #4c1d95;
 }
 
 .meta-btn-danger:hover {
