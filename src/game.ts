@@ -679,23 +679,18 @@ function persistSetupDraft(): void {
 }
 
 function persist(snapshot?: GameSnapshot): void {
-  const activeSnapshot =
-    phase === "gameover" || phase === "victory" ? undefined : (snapshot ?? getSnapshot());
-  const payload = activeSnapshot
-    ? withSaveMeta({
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(
+      withSaveMeta({
         playerEmoji: player.emoji,
         heroName: player.name,
         heroColorTheme,
         setupActive: false,
-        snapshot: activeSnapshot,
+        snapshot: snapshot ?? getSnapshot(),
       })
-    : withSaveMeta({
-        playerEmoji: player.emoji,
-        heroName: player.name,
-        heroColorTheme,
-        setupActive: false,
-      });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    )
+  );
 }
 
 function foeColorConflictsWithHero(theme: FoeColorTheme): boolean {
@@ -1800,6 +1795,12 @@ function startWave(): void {
   persist();
 }
 
+function gameOverSummaryText(currentWave: number): string {
+  const completedWave = Math.max(0, currentWave - 1);
+  const waveText = completedWave === 1 ? "1 wave" : `${completedWave} waves`;
+  return `You reached ${waveText}.`;
+}
+
 function updateRecordsOnGameOver(): void {
   const save = loadSave();
   const completedWave = Math.max(0, wave - 1);
@@ -1814,12 +1815,14 @@ function updateRecordsOnGameOver(): void {
         runsPlayed,
         playerEmoji: player.emoji,
         heroName: player.name,
+        heroColorTheme,
+        setupActive: false,
+        snapshot: getSnapshot(),
       })
     )
   );
 
-  const waveText = completedWave === 1 ? "1 wave" : `${completedWave} waves`;
-  el.gameOverSummary.textContent = `You reached ${waveText}.`;
+  el.gameOverSummary.textContent = gameOverSummaryText(wave);
 }
 
 function updateRecordsOnVictory(): void {
@@ -1835,6 +1838,9 @@ function updateRecordsOnVictory(): void {
         runsPlayed,
         playerEmoji: player.emoji,
         heroName: player.name,
+        heroColorTheme,
+        setupActive: false,
+        snapshot: getSnapshot(),
       })
     )
   );
@@ -2459,7 +2465,18 @@ function beginGame(): void {
   }
 
   if (snapshot?.phase === "gameover" || snapshot?.phase === "victory") {
-    resetGame();
+    applySnapshot(snapshot);
+    applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
+    clearLog();
+    if (snapshot.phase === "victory") {
+      logLine(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`, "win");
+      startVictoryCelebration(el.victoryEmojiLayer);
+      el.gameOverSummary.textContent = `All ${CAMPAIGN_WAVES} waves cleared. Critterwave legend.`;
+    } else {
+      logLine("You lose! Game over.", "lose");
+      el.gameOverSummary.textContent = gameOverSummaryText(snapshot.wave);
+    }
+    render();
     return;
   }
 

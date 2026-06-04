@@ -64,6 +64,9 @@
   --confirm-danger-shadow: #500;
   --meta-danger-hover-text: #fecaca;
   --meta-danger-hover-bg: rgba(251, 113, 133, 0.28);
+  --meta-btn-bg: var(--cmd-bg);
+  --meta-btn-border: var(--cmd-border);
+  --meta-btn-hover-bg: var(--cmd-hover);
   --teach-popup-text: #fef9c3;
   --teach-popup-border: #fde047;
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 44%, var(--cmd-bg));
@@ -120,7 +123,7 @@ html[data-theme="light"] {
   --enemy: #facc15;
   --enemy-dark: #854d0e;
   --hp-bg: #c9b8e8;
-  --danger: #e11d48;
+  --danger: #be123c;
   --highlight: #fde047;
   --gold: var(--panel-edge);
   --dialog: #e0d4f8;
@@ -162,7 +165,10 @@ html[data-theme="light"] {
   --confirm-danger-text: #fecaca;
   --confirm-danger-shadow: #be123c;
   --meta-danger-hover-text: var(--danger);
-  --meta-danger-hover-bg: rgba(225, 29, 72, 0.18);
+  --meta-danger-hover-bg: rgba(190, 18, 60, 0.18);
+  --meta-btn-bg: #b8a0d8;
+  --meta-btn-border: #5a3d8a;
+  --meta-btn-hover-bg: #a78bdb;
   --teach-popup-text: var(--text);
   --teach-popup-border: #fde047;
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 36%, var(--cmd-bg));
@@ -186,7 +192,12 @@ html[data-theme="light"] {
   --records-divider: rgba(124, 92, 191, 0.4);
   --starfield-ellipse: #c4b0e8;
   --damage-shadow: #fff;
-  --heal-pop-text: var(--hero);
+  --damage-pop-text: var(--danger);
+  --heal-pop-text: #14532d;
+  --game-over-accent: var(--danger);
+  --restart-border: var(--enemy-dark);
+  --restart-text: var(--enemy-dark);
+  --restart-bg: color-mix(in srgb, var(--enemy-dark) 14%, var(--panel));
   --crt-line: rgba(26, 15, 46, 0.025);
   --stage-floor-top: #ebe3f8;
   --stage-floor-mid: #ddd0f5;
@@ -197,7 +208,7 @@ html[data-theme="light"] {
   --meter-track-bg: var(--panel);
   --hype-track-bg: transparent;
   --hype-track-border: var(--panel-edge);
-  --vs-badge-text: #be123c;
+  --vs-badge-text: var(--danger);
   --vs-badge-shadow: var(--bg-deep);
 }
 
@@ -411,6 +422,10 @@ body.is-booting .game-shell {
 .confirm-overlay.confirm-danger .confirm-panel {
   border-color: var(--danger);
   box-shadow: 0 0 28px rgba(251, 113, 133, 0.35);
+}
+
+html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
+  box-shadow: 0 0 28px color-mix(in srgb, var(--danger) 35%, transparent);
 }
 
 .confirm-title {
@@ -1718,7 +1733,7 @@ html[data-theme="light"] .foe-hype-fill {
   position: absolute;
   font-family: var(--font-ui);
   font-size: 1.5rem;
-  color: var(--danger);
+  color: var(--damage-pop-text, var(--danger));
   background: transparent;
   border: none;
   padding: 0;
@@ -1726,7 +1741,7 @@ html[data-theme="light"] .foe-hype-fill {
   box-shadow: none;
   text-shadow:
     2px 2px 0 var(--damage-shadow),
-    0 0 8px var(--danger);
+    0 0 8px var(--damage-pop-text, var(--danger));
   animation: damage-float 0.9s ease-out forwards;
   white-space: nowrap;
 }
@@ -1736,6 +1751,18 @@ html[data-theme="light"] .foe-hype-fill {
   text-shadow:
     2px 2px 0 var(--damage-shadow),
     0 0 8px rgba(74, 222, 128, 0.9);
+}
+
+html[data-theme="light"] .damage-pop {
+  text-shadow:
+    2px 2px 0 var(--damage-shadow),
+    0 0 8px color-mix(in srgb, var(--damage-pop-text) 55%, transparent);
+}
+
+html[data-theme="light"] .damage-pop.heal-pop {
+  text-shadow:
+    2px 2px 0 var(--damage-shadow),
+    0 0 8px color-mix(in srgb, var(--heal-pop-text) 65%, transparent);
 }
 
 .damage-pop.hype-pop {
@@ -2088,8 +2115,8 @@ html[data-theme="light"] .foe-hype-fill {
   padding: var(--space-1) var(--space-3);
   cursor: pointer;
   color: var(--text);
-  background: var(--cmd-bg);
-  border: 2px solid var(--cmd-border);
+  background: var(--meta-btn-bg);
+  border: 2px solid var(--meta-btn-border);
   transition: color 0.1s, background 0.1s, border-color 0.1s;
 }
 
@@ -2099,6 +2126,12 @@ html[data-theme="light"] .foe-hype-fill {
   justify-content: center;
   gap: 0.35rem;
   line-height: 1;
+}
+
+html[data-theme="light"] .meta-btn.theme-toggle {
+  border-color: #4c1d95;
+  background: #aea0d4;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--meta-btn-border) 55%, var(--bg-deep));
 }
 
 .theme-toggle-icon {
@@ -2115,8 +2148,12 @@ html[data-theme="light"] .foe-hype-fill {
 
 .meta-btn:hover {
   color: var(--text);
-  background: var(--cmd-hover);
+  background: var(--meta-btn-hover-bg);
   border-color: var(--highlight);
+}
+
+html[data-theme="light"] .meta-btn:hover {
+  border-color: #4c1d95;
 }
 
 .meta-btn-danger:hover {
@@ -2171,10 +2208,14 @@ html[data-theme="light"] .foe-hype-fill {
   align-items: center;
   text-align: center;
   padding: 1.25rem;
-  border: 4px solid var(--danger);
+  border: 4px solid var(--game-over-accent, var(--danger));
   background: var(--panel);
   box-shadow: 0 0 30px rgba(251, 113, 133, 0.3);
   max-width: 90%;
+}
+
+html[data-theme="light"] .game-over:not(.game-victory) .game-over-panel {
+  box-shadow: 0 0 30px color-mix(in srgb, var(--game-over-accent) 30%, transparent);
 }
 
 .game-over-panel .cmd-restart {
@@ -2237,9 +2278,27 @@ html[data-theme="light"] .foe-hype-fill {
   margin: 0 0 0.75rem;
   font-family: var(--font-ui);
   font-size: 1.75rem;
-  color: var(--danger);
+  color: var(--game-over-accent, var(--danger));
   text-shadow: 2px 2px 0 var(--confirm-danger-shadow);
   animation: game-over-blink 1s step-end infinite;
+}
+
+html[data-theme="light"] .game-over:not(.game-victory) .game-over-tag {
+  text-shadow: 2px 2px 0 var(--bg-deep);
+}
+
+html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart {
+  border-color: var(--restart-border);
+  color: var(--restart-text);
+  background: var(--restart-bg);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--restart-border) 45%, var(--bg-deep));
+}
+
+html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart:hover:not(:disabled) {
+  border-color: var(--restart-border);
+  color: var(--restart-text);
+  background: color-mix(in srgb, var(--enemy-dark) 22%, var(--panel));
+  filter: none;
 }
 
 @keyframes game-over-blink {

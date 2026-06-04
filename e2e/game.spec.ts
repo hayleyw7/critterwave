@@ -113,6 +113,27 @@ test.describe("Critterwave — happy paths", () => {
     await expect(page.locator('.emoji-pick[data-emoji="😈"]')).toHaveCount(1);
   });
 
+  test("game over screen persists across reload", async ({ page }) => {
+    await startFreshRun(page);
+    await page.evaluate((key) => {
+      const raw = localStorage.getItem(key);
+      if (!raw) throw new Error("missing save");
+      const data = JSON.parse(raw) as { snapshot?: { phase?: string; player?: { hp?: number } } };
+      if (!data.snapshot) throw new Error("missing snapshot");
+      data.snapshot.phase = "gameover";
+      if (data.snapshot.player) {
+        data.snapshot.player.hp = 0;
+      }
+      localStorage.setItem(key, JSON.stringify(data));
+    }, STORAGE_KEY);
+
+    await page.reload();
+    await expect(page.locator("#game-over")).toBeVisible();
+    await expect(page.locator("#game-over-tag")).toHaveText("GAME OVER");
+    await expect(page.locator("#game-over-summary")).toContainText(/reached/i);
+    await expect(page.locator("#actions")).toHaveClass(/hidden/);
+  });
+
   test("theme toggle switches palette and persists", async ({ page }) => {
     await startFreshRun(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
