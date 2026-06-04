@@ -823,10 +823,6 @@ body.is-booting .game-shell {
   line-height: 1.2;
 }
 
-.hud-wave-line.hud-restore-blink {
-  animation: hud-restore-blink 0.45s ease-out 3;
-}
-
 .hud-xp-block {
   display: flex;
   align-items: center;
@@ -2330,12 +2326,6 @@ html[data-theme="light"] .foe-hype-fill {
       0 0 8px 2px rgba(253, 224, 71, 0.75);
   }
 
-  .hud-wave-line.hud-restore-blink {
-    animation: none;
-    color: var(--highlight);
-    text-shadow: 0 0 10px rgba(253, 224, 71, 0.75);
-  }
-
   .setup-name-input.setup-name-teach-flash {
     animation: none;
     border-color: var(--setup-select-border);
@@ -2345,34 +2335,6 @@ html[data-theme="light"] .foe-hype-fill {
 
 .hidden {
   display: none !important;
-}
-
-.wave-pop {
-  animation: wave-pop 0.5s ease-out;
-}
-
-@keyframes hud-restore-blink {
-  0%,
-  100% {
-    color: var(--text);
-    filter: brightness(1);
-    text-shadow: none;
-  }
-  50% {
-    color: var(--highlight);
-    filter: brightness(1.15);
-    text-shadow: 0 0 12px rgba(253, 224, 71, 0.65);
-  }
-}
-
-@keyframes wave-pop {
-  0% {
-    transform: scale(1.4);
-    color: var(--highlight);
-  }
-  100% {
-    transform: scale(1);
-  }
 }
 
 @keyframes hero-lunge {

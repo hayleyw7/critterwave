@@ -20,11 +20,6 @@ describe("teach flash presentation", () => {
     expect(styles).not.toContain("@keyframes hype-teach-text-pulse");
   });
 
-  it("defines wave restore blink for combat reload", () => {
-    expect(styles).toContain(".hud-wave-line.hud-restore-blink");
-    expect(styles).toContain("@keyframes hud-restore-blink");
-  });
-
   it("uses compact one-line footer labels on narrow or short viewports", () => {
     expect(styles).toMatch(
       /@media \(max-width: 480px\), \(max-height: 667px\) \{[\s\S]*?\.records-stat-label--long \{[\s\S]*?display: none;/

@@ -219,9 +219,6 @@ test.describe("Critterwave — sad paths", () => {
     await expect(page.getByLabel("Combat actions")).toBeVisible();
     await expect(page.locator("#battle-text")).toContainText(/restored/i);
     await expect(page.locator("#wave-banner")).toHaveText(waveBefore ?? "");
-    await expect(page.locator("#wave-banner")).toHaveClass(/hud-restore-blink/);
-    await page.waitForTimeout(1500);
-    await expect(page.locator("#wave-banner")).not.toHaveClass(/hud-restore-blink/);
   });
 
   test("restore keeps max hype styling without teach flash", async ({ page }) => {
