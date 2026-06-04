@@ -134,12 +134,12 @@ export function colorThemeSurfaces(
   return {
     accent: theme.accent,
     dark: theme.dark,
-    panelBg: `color-mix(in srgb, ${theme.accent} 10%, #ffffff)`,
-    plateBg: `color-mix(in srgb, ${theme.accent} 48%, #ffffff)`,
+    panelBg: `color-mix(in srgb, ${theme.accent} 14%, var(--panel))`,
+    plateBg: `color-mix(in srgb, ${theme.accent} 50%, #ffffff)`,
     plateText: theme.dark,
-    hpWrapBg: `color-mix(in srgb, ${theme.accent} 22%, #ffffff)`,
-    divider: accentTint(theme.accent, 0.45),
-    buffBg: accentTint(theme.accent, 0.35),
+    hpWrapBg: `color-mix(in srgb, ${theme.accent} 26%, #ffffff)`,
+    divider: accentTint(theme.accent, 0.5),
+    buffBg: accentTint(theme.accent, 0.38),
   };
 }
 

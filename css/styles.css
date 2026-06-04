@@ -21,6 +21,7 @@
   --hp-bg: #1e1033;
   --danger: #fb7185;
   --highlight: #fde047;
+  --gold: var(--highlight);
   --dialog: #120a1f;
   --cmd-bg: #2a1848;
   --cmd-hover: #4a3080;
@@ -36,14 +37,23 @@
   --battle-text: var(--text);
   --battle-hero-text: var(--hero);
   --battle-foe-text: var(--foe-accent, var(--enemy));
-  --records-label: #9580b8;
-  --records-value: var(--highlight);
-  --heading-accent: var(--highlight);
+  --records-label: var(--text-dim);
+  --records-value: var(--gold);
+  --heading-accent: var(--gold);
   --confirm-ok-text: var(--hero);
   --confirm-danger-title-text: var(--danger);
   --confirm-danger-ok-text: var(--confirm-danger-text);
-  --setup-start-text: var(--highlight);
-  --setup-start-border: var(--highlight);
+  --setup-start-text: var(--gold);
+  --setup-start-border: var(--gold);
+  --setup-select-border: var(--highlight);
+  --setup-select-ring: var(--highlight);
+  --setup-select-bg: rgba(253, 224, 71, 0.12);
+  --setup-select-bg-hover: rgba(253, 224, 71, 0.22);
+  --setup-select-bg-ready: rgba(253, 224, 71, 0.18);
+  --setup-select-glow: rgba(253, 224, 71, 0.35);
+  --setup-hint-error: var(--highlight);
+  --setup-control-border: var(--cmd-border);
+  --setup-control-border-focus: var(--panel-light);
   --title-shadow-color: #6b4423;
   --title-shadow-glow: rgba(253, 224, 71, 0.2);
   --cmd-attack-text: #fecaca;
@@ -56,14 +66,18 @@
   --meta-danger-hover-bg: rgba(251, 113, 133, 0.28);
   --teach-popup-text: #fef9c3;
   --teach-popup-border: #fde047;
-  --teach-popup-bg: var(--cmd-bg);
+  --teach-popup-bg: color-mix(in srgb, var(--highlight) 44%, var(--cmd-bg));
   --teach-popup-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 12px rgba(253, 224, 71, 0.35);
   --hint-flash-border: #fde047;
-  --hint-flash-bg: rgba(253, 224, 71, 0.42);
+  --hint-flash-bg: color-mix(in srgb, var(--highlight) 60%, var(--cmd-bg));
+  --hint-flash-glow: rgba(253, 224, 71, 0.55);
+  --hint-flash-glow-peak: rgba(253, 224, 71, 0.95);
+  --hint-flash-glow-radius: 10px;
+  --hint-flash-glow-radius-peak: 24px;
   --hint-flash-text: #fecaca;
   --hint-flash-heal-text: #fef9c3;
   --hint-flash-dance-text: #fdf4ff;
-  --hype-maxed-text: #fde047;
+  --hype-maxed-text: var(--gold);
   --hype-maxed-glow: 0 0 8px rgba(253, 224, 71, 0.85);
   --focus-ring: #fff;
   --hp-inset-shadow: #0a0612;
@@ -83,8 +97,8 @@
   --meter-track-bg: rgba(255, 255, 255, 0.08);
   --hype-track-bg: var(--meter-track-bg);
   --hype-track-border: transparent;
-  --vs-badge-text: #fda4af;
-  --vs-badge-shadow: #0a0612;
+  --vs-badge-text: var(--danger);
+  --vs-badge-shadow: var(--bg-deep);
   --space-1: 0.25rem;
   --space-2: 0.4rem;
   --space-3: 0.55rem;
@@ -106,71 +120,85 @@ html[data-theme="light"] {
   --enemy: #facc15;
   --enemy-dark: #854d0e;
   --hp-bg: #c9b8e8;
-  --danger: #fb7185;
+  --danger: #e11d48;
   --highlight: #fde047;
+  --gold: var(--panel-edge);
   --dialog: #e0d4f8;
   --cmd-bg: #d4c4f0;
   --cmd-hover: #c4b0e8;
   --cmd-border: #a78bdb;
-  --scrollbar-track: #ddd0f5;
+  --scrollbar-track: #ebe3f8;
   --scrollbar-thumb: #8b6fc4;
   --scrollbar-thumb-hover: #7c5cbf;
   --scrollbar-border: #c4a8f0;
   --overlay-scrim: rgba(248, 240, 255, 0.92);
   --overlay-scrim-gameover: rgba(235, 227, 248, 0.9);
   --overlay-scrim-victory: rgba(235, 227, 248, 0.72);
-  --battle-text: #1a0f2e;
+  --battle-text: var(--text);
   --battle-hero-text: var(--hero-dark);
   --battle-foe-text: var(--foe-accent-dark, var(--enemy-dark));
-  --records-label: #5a3d8a;
-  --records-value: #713f12;
-  --heading-accent: #1a0f2e;
+  --records-label: var(--text-dim);
+  --records-value: var(--panel-edge);
+  --heading-accent: #5a3d8a;
   --confirm-ok-text: #14532d;
-  --confirm-danger-title-text: #881337;
-  --confirm-danger-ok-text: #991b1b;
+  --confirm-danger-title-text: var(--danger);
+  --confirm-danger-ok-text: var(--danger);
   --setup-start-text: #5a3d8a;
-  --setup-start-border: #5a3d8a;
-  --title-shadow-color: #c4b0e8;
+  --setup-start-border: var(--panel-edge);
+  --setup-select-border: var(--panel-edge);
+  --setup-select-ring: var(--panel-light);
+  --setup-select-bg: color-mix(in srgb, var(--panel-edge) 14%, var(--cmd-bg));
+  --setup-select-bg-hover: color-mix(in srgb, var(--panel-edge) 24%, var(--cmd-hover));
+  --setup-select-bg-ready: color-mix(in srgb, var(--panel-edge) 20%, var(--cmd-bg));
+  --setup-hint-error: var(--danger);
+  --setup-control-border: var(--cmd-border);
+  --setup-control-border-focus: var(--panel-edge);
+  --title-shadow-color: var(--panel-light);
   --title-shadow-glow: none;
-  --cmd-attack-text: #991b1b;
+  --cmd-attack-text: #881337;
   --cmd-heal-text: #14532d;
-  --cmd-dance-text: #6b21a8;
-  --cmd-run-text: #1e40af;
+  --cmd-dance-text: #5a3d8a;
+  --cmd-run-text: #5a3d8a;
   --confirm-danger-text: #fecaca;
-  --confirm-danger-shadow: #881337;
-  --meta-danger-hover-text: #991b1b;
-  --meta-danger-hover-bg: rgba(251, 113, 133, 0.35);
-  --teach-popup-text: #1a0f2e;
-  --teach-popup-border: #ca8a04;
-  --teach-popup-bg: #fffbeb;
-  --teach-popup-shadow: 0 4px 16px rgba(90, 61, 138, 0.22);
-  --hint-flash-border: #ca8a04;
-  --hint-flash-bg: rgba(254, 243, 199, 0.95);
-  --hint-flash-text: #1a0f2e;
-  --hint-flash-heal-text: #1a0f2e;
-  --hint-flash-dance-text: #1a0f2e;
-  --hype-maxed-text: #854d0e;
-  --hype-maxed-glow: none;
+  --confirm-danger-shadow: #be123c;
+  --meta-danger-hover-text: var(--danger);
+  --meta-danger-hover-bg: rgba(225, 29, 72, 0.18);
+  --teach-popup-text: var(--text);
+  --teach-popup-border: #fde047;
+  --teach-popup-bg: color-mix(in srgb, var(--highlight) 36%, var(--cmd-bg));
+  --teach-popup-shadow: 0 4px 16px rgba(90, 61, 138, 0.18), 0 0 12px rgba(253, 224, 71, 0.35);
+  --hint-flash-border: #fde047;
+  --hint-flash-bg: color-mix(in srgb, var(--highlight) 44%, var(--cmd-bg));
+  --hint-flash-glow: rgba(253, 224, 71, 0.22);
+  --hint-flash-glow-peak: rgba(253, 224, 71, 0.4);
+  --hint-flash-glow-radius: 6px;
+  --hint-flash-glow-radius-peak: 12px;
+  --hint-flash-text: var(--text);
+  --hint-flash-heal-text: var(--text);
+  --hint-flash-dance-text: var(--text);
+  --setup-select-glow: rgba(253, 224, 71, 0.45);
+  --hype-maxed-text: var(--panel-edge);
+  --hype-maxed-glow: 0 0 8px rgba(253, 224, 71, 0.75);
   --focus-ring: #fde047;
-  --hp-inset-shadow: #5a3d8a;
-  --hp-bar-depth: inset 0 1px 2px color-mix(in srgb, #7c5cbf 22%, transparent);
+  --hp-inset-shadow: var(--panel-edge);
+  --hp-bar-depth: inset 0 1px 2px color-mix(in srgb, var(--panel-edge) 22%, transparent);
   --sprite-shadow: rgba(0, 0, 0, 0.45);
-  --records-divider: rgba(124, 92, 191, 0.45);
+  --records-divider: rgba(124, 92, 191, 0.4);
   --starfield-ellipse: #c4b0e8;
-  --damage-shadow: #2d1b4e;
-  --heal-pop-text: #4ade80;
-  --crt-line: rgba(90, 61, 138, 0.08);
-  --stage-floor-top: #ddd0f5;
-  --stage-floor-mid: #c4b0e8;
-  --stage-floor-bottom: #b49ae8;
-  --stage-floor-shadow-mid: #ebe3f8;
-  --stage-floor-shadow-deep: #f8f0ff;
-  --stage-vignette-color: rgba(90, 61, 138, 0.18);
-  --meter-track-bg: rgba(90, 61, 138, 0.12);
-  --hype-track-bg: #ffffff;
-  --hype-track-border: #7c5cbf;
-  --vs-badge-text: #881337;
-  --vs-badge-shadow: #ffffff;
+  --damage-shadow: #fff;
+  --heal-pop-text: var(--hero);
+  --crt-line: rgba(26, 15, 46, 0.025);
+  --stage-floor-top: #ebe3f8;
+  --stage-floor-mid: #ddd0f5;
+  --stage-floor-bottom: #c4b0e8;
+  --stage-floor-shadow-mid: #b49ae8;
+  --stage-floor-shadow-deep: #9f7fd8;
+  --stage-vignette-color: rgba(90, 61, 138, 0.2);
+  --meter-track-bg: rgba(90, 61, 138, 0.14);
+  --hype-track-bg: color-mix(in srgb, var(--panel) 55%, #ffffff);
+  --hype-track-border: var(--panel-edge);
+  --vs-badge-text: #be123c;
+  --vs-badge-shadow: var(--bg-deep);
 }
 
 html[data-theme="dark"] {
@@ -257,12 +285,12 @@ body::before {
 
 html[data-theme="light"] body::before {
   background:
-    radial-gradient(1px 1px at 10% 20%, #7c5cbf55 0%, transparent 100%),
-    radial-gradient(1px 1px at 80% 10%, #7c5cbf44 0%, transparent 100%),
-    radial-gradient(1px 1px at 40% 60%, #7c5cbf33 0%, transparent 100%),
-    radial-gradient(1px 1px at 70% 80%, #7c5cbf33 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 20%, #8b6fc466 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 10%, #7c5cbf55 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 60%, #9f7fd844 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 80%, #b49ae833 0%, transparent 100%),
     radial-gradient(ellipse 120% 80% at 50% 100%, var(--starfield-ellipse) 0%, var(--bg-deep) 55%);
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .crt-overlay {
@@ -278,6 +306,10 @@ html[data-theme="light"] body::before {
     var(--crt-line) 4px
   );
   opacity: 0.35;
+}
+
+html[data-theme="light"] .crt-overlay {
+  opacity: 0.12;
 }
 
 body.is-booting .game-shell {
@@ -512,15 +544,16 @@ body.is-booting .game-shell {
   width: var(--setup-control-height);
   height: var(--setup-control-height);
   padding: 0.2rem;
-  border: 2px solid var(--scrollbar-border);
+  border: 2px solid var(--setup-control-border);
   background: var(--cmd-bg);
   cursor: pointer;
   display: grid;
   place-items: center;
 }
 
-.setup-color-toggle:hover {
-  border-color: var(--scrollbar-thumb-hover);
+.setup-color-toggle:hover,
+.setup-color-toggle:focus-visible {
+  border-color: var(--setup-control-border-focus);
   background: var(--cmd-hover);
 }
 
@@ -566,14 +599,14 @@ body.is-booting .game-shell {
 }
 
 .setup-color-swatch:hover {
-  border-color: var(--highlight);
+  border-color: var(--setup-select-border);
   transform: scale(1.06);
 }
 
 .setup-color-swatch.selected {
-  border-color: var(--focus-ring);
+  border-color: var(--setup-select-border);
   box-shadow:
-    0 0 0 2px var(--highlight),
+    0 0 0 2px var(--setup-select-ring),
     0 0 10px var(--swatch-color);
   transform: scale(1.08);
 }
@@ -590,12 +623,12 @@ body.is-booting .game-shell {
 }
 
 .setup-hint-error {
-  color: var(--highlight);
+  color: var(--setup-hint-error);
 }
 
 .setup-name-input--highlight {
-  border-color: var(--highlight);
-  box-shadow: 0 0 0 2px rgba(253, 224, 71, 0.35);
+  border-color: var(--setup-select-border);
+  box-shadow: 0 0 0 2px var(--setup-select-glow);
 }
 
 .setup-name-input.setup-name-teach-flash {
@@ -609,10 +642,10 @@ body.is-booting .game-shell {
     box-shadow: none;
   }
   50% {
-    border-color: var(--hint-flash-border);
+    border-color: var(--setup-select-border);
     box-shadow:
-      0 0 0 2px rgba(253, 224, 71, 0.85),
-      0 0 12px rgba(253, 224, 71, 0.55);
+      0 0 0 2px var(--setup-select-glow),
+      0 0 12px var(--setup-select-glow);
   }
 }
 
@@ -655,7 +688,7 @@ body.is-booting .game-shell {
   letter-spacing: 0.04em;
   color: var(--text);
   background: var(--cmd-bg);
-  border: 2px solid var(--cmd-border);
+  border: 2px solid var(--setup-control-border);
   outline: none;
 }
 
@@ -665,8 +698,8 @@ body.is-booting .game-shell {
 }
 
 .setup-name-input:focus {
-  border-color: var(--panel-light);
-  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.35);
+  border-color: var(--setup-control-border-focus);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--setup-control-border-focus) 35%, transparent);
 }
 
 .emoji-pick {
@@ -691,8 +724,8 @@ body.is-booting .game-shell {
 }
 
 .emoji-pick.selected {
-  border-color: var(--highlight);
-  background: rgba(253, 224, 71, 0.12);
+  border-color: var(--setup-select-border);
+  background: var(--setup-select-bg);
 }
 
 .emoji-pick-glyph {
@@ -720,18 +753,17 @@ body.is-booting .game-shell {
   padding: 0 1.1rem;
   border: 2px solid var(--setup-start-border);
   color: var(--setup-start-text);
-  background: rgba(253, 224, 71, 0.12);
-  box-shadow: 0 2px 0 var(--hp-inset-shadow);
+  background: var(--setup-select-bg);
 }
 
 .setup-main-row .cmd-start:hover:not(:disabled) {
-  background: rgba(253, 224, 71, 0.22);
+  background: var(--setup-select-bg-hover);
   border-color: var(--setup-start-border);
   filter: brightness(1.05);
 }
 
 .setup-main-row .cmd-start.cmd-start-ready {
-  background: rgba(253, 224, 71, 0.18);
+  background: var(--setup-select-bg-ready);
 }
 
 .game-shell.setup-active {
@@ -1096,25 +1128,21 @@ body.is-booting .game-shell {
 }
 
 html[data-theme="light"] .enemy-status {
-  --foe-panel-bg: color-mix(in srgb, var(--foe-accent) 10%, #ffffff);
-  --foe-hp-wrap-bg: color-mix(in srgb, var(--foe-accent) 22%, #ffffff);
-  --foe-plate-bg: color-mix(in srgb, var(--foe-accent) 48%, #ffffff);
+  --foe-panel-bg: color-mix(in srgb, var(--foe-accent) 14%, var(--panel));
+  --foe-hp-wrap-bg: color-mix(in srgb, var(--foe-accent) 26%, #ffffff);
+  --foe-plate-bg: color-mix(in srgb, var(--foe-accent) 50%, #ffffff);
   --foe-plate-text: var(--foe-accent-dark);
 }
 
-html[data-theme="light"] .status-panel > * + * {
-  border-top-color: transparent;
-}
-
 html[data-theme="light"] .hero-status .hp-bar {
-  background: color-mix(in srgb, var(--hero) 10%, #ffffff);
+  background: color-mix(in srgb, var(--hero) 14%, #ffffff);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--hero-dark) 45%, var(--hero)),
     inset 0 1px 2px color-mix(in srgb, var(--hero-dark) 12%, transparent);
 }
 
 html[data-theme="light"] .enemy-status .hp-bar {
-  background: color-mix(in srgb, var(--foe-accent) 10%, #ffffff);
+  background: color-mix(in srgb, var(--foe-accent) 14%, #ffffff);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--foe-accent-dark) 45%, var(--foe-accent)),
     inset 0 1px 2px color-mix(in srgb, var(--foe-accent-dark) 12%, transparent);
@@ -1125,8 +1153,8 @@ html[data-theme="light"] .player-hp {
     90deg,
     color-mix(in srgb, var(--hero-dark) 55%, var(--hero)),
     color-mix(in srgb, var(--hero-dark) 55%, var(--hero)) 4px,
-    color-mix(in srgb, var(--hero) 50%, #ffffff) 4px,
-    color-mix(in srgb, var(--hero) 50%, #ffffff) 8px
+    color-mix(in srgb, var(--hero) 62%, #ffffff) 4px,
+    color-mix(in srgb, var(--hero) 62%, #ffffff) 8px
   );
 }
 
@@ -1135,8 +1163,8 @@ html[data-theme="light"] .foe-hp {
     90deg,
     color-mix(in srgb, var(--foe-accent-dark) 55%, var(--foe-accent)),
     color-mix(in srgb, var(--foe-accent-dark) 55%, var(--foe-accent)) 4px,
-    color-mix(in srgb, var(--foe-accent) 50%, #ffffff) 4px,
-    color-mix(in srgb, var(--foe-accent) 50%, #ffffff) 8px
+    color-mix(in srgb, var(--foe-accent) 62%, #ffffff) 4px,
+    color-mix(in srgb, var(--foe-accent) 62%, #ffffff) 8px
   );
 }
 
@@ -1286,11 +1314,11 @@ html[data-theme="light"] .hp-fill::after {
 }
 
 html[data-theme="light"] .player-hype-fill {
-  background: var(--hero-dark);
+  background: var(--hero);
 }
 
 html[data-theme="light"] .foe-hype-fill {
-  background: var(--foe-accent-dark);
+  background: var(--foe-accent);
 }
 
 .hero-status.hype-full {
@@ -1946,12 +1974,12 @@ html[data-theme="light"] .foe-hype-fill {
   100% {
     box-shadow:
       inset 0 0 0 2px var(--hint-flash-border),
-      0 0 10px rgba(253, 224, 71, 0.55);
+      0 0 var(--hint-flash-glow-radius) var(--hint-flash-glow);
   }
   50% {
     box-shadow:
       inset 0 0 0 3px var(--focus-ring),
-      0 0 24px rgba(253, 224, 71, 0.95);
+      0 0 var(--hint-flash-glow-radius-peak) var(--hint-flash-glow-peak);
   }
 }
 
@@ -2310,8 +2338,8 @@ html[data-theme="light"] .foe-hype-fill {
 
   .setup-name-input.setup-name-teach-flash {
     animation: none;
-    border-color: var(--hint-flash-border);
-    box-shadow: 0 0 0 2px rgba(253, 224, 71, 0.85);
+    border-color: var(--setup-select-border);
+    box-shadow: 0 0 0 2px var(--setup-select-glow);
   }
 }
 

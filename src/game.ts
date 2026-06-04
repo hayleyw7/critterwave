@@ -756,7 +756,10 @@ function applyFoeColorTheme(theme: FoeColorTheme): void {
   applyCardHypeStatColors(panel, "foe", colors);
   el.gameShell.style.setProperty("--foe-accent", colors.accent);
   el.gameShell.style.setProperty("--foe-accent-dark", colors.dark);
-  el.gameShell.style.setProperty("--battle-foe-text", colors.plateText);
+  el.gameShell.style.setProperty(
+    "--battle-foe-text",
+    currentColorMode === "dark" ? colors.accent : colors.plateText
+  );
 }
 
 function getSnapshot(): GameSnapshot {
@@ -867,7 +870,10 @@ function applyHeroColorTheme(theme: HeroColorTheme): void {
   applyCardHypeStatColors(el.playerPanel, "hero", colors);
   el.gameShell.style.setProperty("--hero", colors.accent);
   el.gameShell.style.setProperty("--hero-dark", colors.dark);
-  el.gameShell.style.setProperty("--battle-hero-text", colors.plateText);
+  el.gameShell.style.setProperty(
+    "--battle-hero-text",
+    currentColorMode === "dark" ? colors.accent : colors.plateText
+  );
   el.xpFill.style.background = colors.accent;
 }
 
