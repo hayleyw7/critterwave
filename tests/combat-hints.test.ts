@@ -8,6 +8,7 @@ import {
   isFullHpForHint,
   LOW_HP_HINT_RATIO,
   attackTeachText,
+  DANCE_TEACH_TEXT,
   deferDanceHintAfterRun,
   dismissDanceHintThisFoe,
   dismissDanceTeachCopy,
@@ -25,6 +26,8 @@ import {
   tryCelebrateFirstPlayerHype,
   tryCelebrateFirstWaveVictoryHeal,
   recordRunForHints,
+  RUN_TEACH_TEXT,
+  HEAL_TEACH_TEXT,
   shouldShowAttackHint,
   shouldShowDanceHint,
   shouldShowDanceTeachCopy,
@@ -113,6 +116,7 @@ describe("combat hints — per-run dismissals", () => {
   it("attack outline shows until first attack, then never again", () => {
     expect(shouldShowAttackHint(fresh(), combat, true)).toBe(true);
     expect(shouldShowAttackHint(fresh(), combat, false)).toBe(false);
+    expect(shouldShowAttackHint(fresh(), "setup", true)).toBe(false);
 
     const once = recordAttackForHints(fresh());
     expect(shouldShowAttackHint(once, combat, true)).toBe(false);
@@ -389,6 +393,19 @@ describe("combat hints — dance arming edge cases", () => {
 
   it("formats attack teach copy from campaign length", () => {
     expect(attackTeachText(100)).toBe("Attack — clear 100 waves of evil critters!");
+  });
+
+  it("uses plain and in teach copy strings", () => {
+    expect(DANCE_TEACH_TEXT).toBe(
+      "Dance builds HYPE — +1 ATK per point, for you and/or the foe."
+    );
+    expect(RUN_TEACH_TEXT).toBe(
+      "Run away — heal a little, face the next foe, and lose all HYPE."
+    );
+    expect(HEAL_TEACH_TEXT).toBe("Restore HP — foe will hit back.");
+    for (const text of [DANCE_TEACH_TEXT, RUN_TEACH_TEXT, HEAL_TEACH_TEXT]) {
+      expect(text).not.toMatch(/&/);
+    }
   });
 });
 

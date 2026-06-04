@@ -3,7 +3,7 @@ import { patchSaveSnapshot } from "./helpers-save.js";
 import { clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers.js";
 
 test.describe("combat hints — button glow", () => {
-  test("setup shows attack goal under critter heading, not as combat hint", async ({ page }) => {
+  test("setup shows attack goal; attack outline until first strike", async ({ page }) => {
     await page.goto("/");
     await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
     await page.reload();
