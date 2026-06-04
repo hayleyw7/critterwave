@@ -138,7 +138,7 @@ html[data-theme="light"] {
   --battle-hero-text: var(--hero-dark);
   --battle-foe-text: var(--foe-accent-dark, var(--enemy-dark));
   --records-label: var(--text-dim);
-  --records-value: var(--panel-edge);
+  --records-value: var(--enemy-dark);
   --heading-accent: #5a3d8a;
   --confirm-ok-text: #14532d;
   --confirm-danger-title-text: var(--danger);
@@ -194,8 +194,8 @@ html[data-theme="light"] {
   --stage-floor-shadow-mid: #b49ae8;
   --stage-floor-shadow-deep: #9f7fd8;
   --stage-vignette-color: rgba(90, 61, 138, 0.2);
-  --meter-track-bg: rgba(90, 61, 138, 0.14);
-  --hype-track-bg: color-mix(in srgb, var(--panel) 55%, #ffffff);
+  --meter-track-bg: var(--panel);
+  --hype-track-bg: transparent;
   --hype-track-border: var(--panel-edge);
   --vs-badge-text: #be123c;
   --vs-badge-shadow: var(--bg-deep);
@@ -1131,14 +1131,14 @@ html[data-theme="light"] .enemy-status {
 }
 
 html[data-theme="light"] .hero-status .hp-bar {
-  background: color-mix(in srgb, var(--hero) 14%, #ffffff);
+  background: var(--hero-hp-wrap-bg);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--hero-dark) 45%, var(--hero)),
     inset 0 1px 2px color-mix(in srgb, var(--hero-dark) 12%, transparent);
 }
 
 html[data-theme="light"] .enemy-status .hp-bar {
-  background: color-mix(in srgb, var(--foe-accent) 14%, #ffffff);
+  background: var(--foe-hp-wrap-bg);
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--foe-accent-dark) 45%, var(--foe-accent)),
     inset 0 1px 2px color-mix(in srgb, var(--foe-accent-dark) 12%, transparent);
@@ -1165,12 +1165,12 @@ html[data-theme="light"] .foe-hp {
 }
 
 html[data-theme="light"] .hero-status .hype-bar {
-  background: color-mix(in srgb, var(--hero) 8%, #ffffff);
+  background: color-mix(in srgb, var(--hero) 14%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hero-dark) 45%, var(--hero));
 }
 
 html[data-theme="light"] .enemy-status .hype-bar {
-  background: color-mix(in srgb, var(--foe-accent) 8%, #ffffff);
+  background: color-mix(in srgb, var(--foe-accent) 14%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foe-accent-dark) 45%, var(--foe-accent));
 }
 
