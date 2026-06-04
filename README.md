@@ -44,7 +44,7 @@ Hints teach the four actions during your first run (each dismisses after you use
 | **Setup** | Subtitle under “Which critter are you?” — *Attack — clear 100 waves of evil critters!* |
 | **First fight** | **Attack** gets a pulsing yellow **outline** until your first strike (no popup) |
 | **Low HP** (~60% or below) | **Heal** outline + tooltip: *Restore HP — foe will hit back.* |
-| **After a wasted heal** (or wave 12+ at full HP with 0 hype) | **Dance** outline + tooltip: *Dance may add HYPE — +1 ATK each, for you and/or the foe.* |
+| **After a wasted heal** (or wave 12+ at full HP with 0 hype) | **Dance** outline + tooltip: *Dance may add HYPE — makes hits stronger, for you and/or the foe.* |
 | **Lethal HP** (foe’s hit would KO you) | **Run** outline + tooltip: *Run away — heal a little, face the next foe, and lose all HYPE.* |
 
 Highlighted buttons use an **outline pulse only** — button colors stay the same. Hint state is saved with your run.

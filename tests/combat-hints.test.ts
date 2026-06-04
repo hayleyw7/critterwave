@@ -397,7 +397,7 @@ describe("combat hints — dance arming edge cases", () => {
 
   it("uses plain and in teach copy strings", () => {
     expect(DANCE_TEACH_TEXT).toBe(
-      "Dance may add HYPE — +1 ATK each, for you and/or the foe."
+      "Dance may add HYPE — makes hits stronger, for you and/or the foe."
     );
     expect(RUN_TEACH_TEXT).toBe(
       "Run away — heal a little, face the next foe, and lose all HYPE."
