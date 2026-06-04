@@ -573,6 +573,18 @@ describe("combat hints — persistence and migration", () => {
     expect(restored).toEqual(flags);
   });
 
+  it("keeps armed dance hint flags through mid-run restore", () => {
+    const armed = newFoeAfterKill(recordAttackForHints(fresh()));
+    const snap = combatHintsForSnapshot(armed);
+    const restored = combatHintsAfterMidRunRestore(
+      createCombatHintsState(snap),
+      0,
+      0
+    );
+    expect(restored.showDanceHintThisFoe).toBe(true);
+    expect(shouldShowDanceHint(restored, 20, 20, combat, true, 0, 3, 0)).toBe(true);
+  });
+
   it("skips hype teach flags on mid-run restore when hype was already earned", () => {
     const restored = combatHintsAfterMidRunRestore(fresh(), 2, 1);
     expect(restored.celebratedFirstPlayerHype).toBe(true);

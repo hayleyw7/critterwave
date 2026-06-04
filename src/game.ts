@@ -793,7 +793,17 @@ function isConfirmDialogOpen(): boolean {
   return !el.confirmOverlay.classList.contains("hidden");
 }
 
+/** Set by e2e save patches so pagehide does not overwrite localStorage before reload. */
+const SKIP_EXIT_FLUSH_KEY = "critterwave-skip-exit-flush";
+
 function shouldFlushSnapshotOnPageExit(): boolean {
+  try {
+    if (sessionStorage.getItem(SKIP_EXIT_FLUSH_KEY) === "1") {
+      return false;
+    }
+  } catch {
+    /* sessionStorage unavailable */
+  }
   if (isConfirmDialogOpen()) {
     return true;
   }
@@ -2734,6 +2744,11 @@ function finishBoot(): void {
 }
 
 function init(): void {
+  try {
+    sessionStorage.removeItem(SKIP_EXIT_FLUSH_KEY);
+  } catch {
+    /* sessionStorage unavailable */
+  }
   initColorMode();
   updateSetupSubtitle();
   bindConfirmDialog();

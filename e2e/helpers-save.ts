@@ -1,5 +1,7 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { STORAGE_KEY } from "./helpers.js";
+
+const SKIP_EXIT_FLUSH_KEY = "critterwave-skip-exit-flush";
 
 type SnapshotPatch = {
   player?: { hp?: number; maxHp?: number };
@@ -17,7 +19,8 @@ export async function patchSaveSnapshot(
   patch: SnapshotPatch
 ): Promise<void> {
   await page.evaluate(
-    ({ key, patch: p }) => {
+    ({ key, patch: p, skipKey }) => {
+      sessionStorage.setItem(skipKey, "1");
       const raw = localStorage.getItem(key);
       if (!raw) throw new Error("missing save");
       const data = JSON.parse(raw) as { snapshot?: Record<string, unknown> };
@@ -41,8 +44,15 @@ export async function patchSaveSnapshot(
       if (p.deferredFoeIds) data.snapshot.deferredFoeIds = p.deferredFoeIds;
       localStorage.setItem(key, JSON.stringify(data));
     },
-    { key: STORAGE_KEY, patch }
+    { key: STORAGE_KEY, patch, skipKey: SKIP_EXIT_FLUSH_KEY }
   );
+}
+
+/** Reload after patchSaveSnapshot without pagehide clobbering the patched save. */
+export async function reloadAfterSavePatch(page: Page): Promise<void> {
+  await page.reload();
+  await expect(page.getByLabel("Combat actions")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Attack" })).toBeEnabled();
 }
 
 export async function readSaveSnapshot(page: Page): Promise<Record<string, unknown>> {

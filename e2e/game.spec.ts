@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { patchSaveSnapshot } from "./helpers-save.js";
+import { patchSaveSnapshot, reloadAfterSavePatch } from "./helpers-save.js";
 import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers.js";
 
 test.describe("Critterwave — happy paths", () => {
@@ -300,7 +300,7 @@ test.describe("Critterwave — sad paths", () => {
       foeHypeLevel: 5,
       combatHints: { dismissedAttackHint: true },
     });
-    await page.reload();
+    await reloadAfterSavePatch(page);
     await expect(page.locator("#battle-text")).toContainText(/restored/i);
     await expect(page.locator("#player-hype-wrap")).toHaveClass(/hype-maxed/);
     await expect(page.locator("#foe-hype-wrap")).toHaveClass(/hype-maxed/);
@@ -314,7 +314,7 @@ test.describe("Critterwave — sad paths", () => {
       player: { hp: 1, maxHp: 20 },
       foe: { attack: 20 },
     });
-    await page.reload();
+    await reloadAfterSavePatch(page);
     await page.getByRole("button", { name: "Attack" }).click();
     await expect(page.getByRole("button", { name: "Try Again?" })).toBeVisible({
       timeout: 15_000,
