@@ -96,8 +96,6 @@ import {
   combatHintsAfterMidRunRestore,
   combatHintsForSnapshot,
   deferDanceHintAfterRun,
-  dismissHealHint,
-  dismissHealHintIfWasLow,
   maybeArmDanceHintForWave,
   onNextFoeForHints,
   onVictoryForHints,
@@ -112,6 +110,7 @@ import {
   recordRunForHints,
   shouldShowAttackHint,
   shouldShowDanceHint,
+  shouldShowDanceTeachCopy,
   shouldShowHealHint,
   shouldShowRunHint,
   type CombatHintsState,
@@ -402,6 +401,7 @@ const el = {
   danceBtn:
     document.getElementById("cmd-dance") ??
     document.querySelector<HTMLButtonElement>('[data-action="dance"]')!,
+  danceTeachPopup: document.getElementById("cmd-dance-teach")!,
   attackBtn:
     document.getElementById("cmd-attack") ??
     document.querySelector<HTMLButtonElement>('[data-action="attack"]')!,
@@ -1124,7 +1124,9 @@ function syncCombatHintClasses(): void {
     player.hp,
     player.maxHp,
     phase,
-    hasFoe
+    hasFoe,
+    foe?.attack ?? 0,
+    foeHypeLevel
   );
   const showRun =
     foe !== null &&
@@ -1154,6 +1156,17 @@ function syncCombatHintClasses(): void {
   el.healBtn.dataset.combatHint = showHeal ? "on" : "off";
   el.danceBtn.dataset.combatHint = showDance ? "on" : "off";
   el.runBtn.dataset.combatHint = showRun ? "on" : "off";
+  syncDanceTeachPopup(showDance);
+}
+
+function syncDanceTeachPopup(showDance: boolean): void {
+  const show = shouldShowDanceTeachCopy(combatHints, showDance, phase, foe !== null);
+  el.danceTeachPopup.classList.toggle("hidden", !show);
+  if (show) {
+    el.danceBtn.setAttribute("aria-describedby", "cmd-dance-teach");
+  } else {
+    el.danceBtn.removeAttribute("aria-describedby");
+  }
 }
 
 function briefClass(element: HTMLElement, className: string, ms: number): void {
@@ -1492,9 +1505,9 @@ function playNextFoeReveal(
   secondary: { text: string; kind: "foe" }
 ): void {
   applyFoeColorTheme(foeColorTheme);
+  logBattleLines(primary, secondary);
   render();
   playFoeEntrance();
-  logBattleLines(primary, secondary);
 }
 
 async function transitionToNextWave(
@@ -1559,11 +1572,6 @@ async function transitionToNextWave(
     );
     combatHints = waveHealFlash.flags;
     flashWaveVictoryHealHp = waveHealFlash.flashHp;
-    combatHints = dismissHealHintIfWasLow(
-      combatHints,
-      hpBeforeHeal,
-      maxHpBeforeHeal
-    );
     combatHints = onVictoryForHints(combatHints);
     foe = spawnFoeFromQueue();
     combatHints = onNextFoeForHints(combatHints, {
@@ -1957,7 +1965,6 @@ function applyFleeHeal(): void {
   const { rolled, gained } = rollAndApplyPlayerHeal();
   showPlayerHealRoll(rolled);
   if (gained > 0) {
-    combatHints = dismissHealHint(combatHints);
     render();
     persist();
   }

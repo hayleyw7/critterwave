@@ -6,6 +6,9 @@ export const LOW_HP_HINT_RATIO = 0.6;
 /** Arm dance hint on new foes from this wave if the player still has 0 hype. */
 export const DANCE_HINT_FALLBACK_WAVE = 12;
 
+export const DANCE_TEACH_BATTLE_TEXT =
+  "Dance builds HYPE — each point adds +1 ATK.";
+
 export type CombatHintsState = {
   /** Legacy: set when the player has danced this run. */
   celebratedFirstDance: boolean;
@@ -31,6 +34,8 @@ export type CombatHintsState = {
   pendingDanceHintAfterVictory: boolean;
   /** Dance hint armed for this foe only — cleared after any other action. */
   showDanceHintThisFoe: boolean;
+  /** Battle-log copy for the dance tutorial — shown once per run. */
+  dismissedDanceTeachCopy: boolean;
 };
 
 export type NewFoeDanceHintContext = {
@@ -62,6 +67,7 @@ export type LegacyCombatHintsState = {
   pendingDanceHintAfterHeal?: boolean;
   pendingDanceHintAfterVictory?: boolean;
   showDanceHintThisFoe?: boolean;
+  dismissedDanceTeachCopy?: boolean;
 };
 
 export function createCombatHintsState(
@@ -87,6 +93,7 @@ export function createCombatHintsState(
     pendingDanceHintAfterHeal: legacy.pendingDanceHintAfterHeal ?? false,
     pendingDanceHintAfterVictory: legacy.pendingDanceHintAfterVictory ?? false,
     showDanceHintThisFoe: legacy.showDanceHintThisFoe ?? false,
+    dismissedDanceTeachCopy: legacy.dismissedDanceTeachCopy ?? false,
   };
 }
 
@@ -151,12 +158,17 @@ export function shouldShowHealHint(
   hp: number,
   maxHp: number,
   phase: CombatHintPhase,
-  hasFoe: boolean
+  hasFoe: boolean,
+  foeBaseAttack = 0,
+  foeHypeLevel = 0
 ): boolean {
   if (flags.dismissedHealHint) {
     return false;
   }
   if (phase !== "combat" || !hasFoe) {
+    return false;
+  }
+  if (shouldShowRunHint(flags, hp, foeBaseAttack, foeHypeLevel, phase, hasFoe)) {
     return false;
   }
   return isLowHpForHint(hp, maxHp);
@@ -194,7 +206,7 @@ export function shouldShowDanceHint(
   if (hypeLevel >= hypeMax) {
     return false;
   }
-  if (shouldShowHealHint(flags, hp, maxHp, phase, hasFoe)) {
+  if (shouldShowHealHint(flags, hp, maxHp, phase, hasFoe, foeBaseAttack, foeHypeLevel)) {
     return false;
   }
   if (shouldShowRunHint(flags, hp, foeBaseAttack, foeHypeLevel, phase, hasFoe)) {
@@ -218,6 +230,27 @@ export function shouldShowRunHint(
     return false;
   }
   return hp <= maxFoeHitForHint(foeBaseAttack, foeHypeLevel);
+}
+
+export function dismissDanceTeachCopy(flags: CombatHintsState): CombatHintsState {
+  if (flags.dismissedDanceTeachCopy) {
+    return flags;
+  }
+  return { ...flags, dismissedDanceTeachCopy: true };
+}
+
+export function shouldShowDanceTeachCopy(
+  flags: CombatHintsState,
+  showDanceHint: boolean,
+  phase: CombatHintPhase,
+  hasFoe: boolean
+): boolean {
+  return (
+    !flags.dismissedDanceTeachCopy &&
+    showDanceHint &&
+    phase === "combat" &&
+    hasFoe
+  );
 }
 
 export function dismissDanceHintThisFoe(flags: CombatHintsState): CombatHintsState {
@@ -261,18 +294,6 @@ export function dismissHealHint(flags: CombatHintsState): CombatHintsState {
     return flags;
   }
   return { ...flags, dismissedHealHint: true };
-}
-
-/** Wave top-up or other full recovery after a low-HP teach moment — do not re-blink heal later. */
-export function dismissHealHintIfWasLow(
-  flags: CombatHintsState,
-  hpBefore: number,
-  maxHp: number
-): CombatHintsState {
-  if (flags.dismissedHealHint || !isLowHpForHint(hpBefore, maxHp)) {
-    return flags;
-  }
-  return dismissHealHint(flags);
 }
 
 export function recordHealForHints(
@@ -362,6 +383,7 @@ export function recordDanceForHints(flags: CombatHintsState): CombatHintsState {
     ...flags,
     celebratedFirstDance: true,
     dismissedDanceHint: true,
+    dismissedDanceTeachCopy: true,
     showDanceHintThisFoe: false,
   };
 }

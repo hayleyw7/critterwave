@@ -9,8 +9,8 @@ import {
   LOW_HP_HINT_RATIO,
   deferDanceHintAfterRun,
   dismissDanceHintThisFoe,
+  dismissDanceTeachCopy,
   dismissHealHint,
-  dismissHealHintIfWasLow,
   DANCE_HINT_FALLBACK_WAVE,
   maybeArmDanceHintForWave,
   onNextFoeForHints,
@@ -26,6 +26,7 @@ import {
   recordRunForHints,
   shouldShowAttackHint,
   shouldShowDanceHint,
+  shouldShowDanceTeachCopy,
   shouldShowHealHint,
   shouldShowRunHint,
   shouldArmDanceHintForNewFoe,
@@ -83,7 +84,7 @@ function hintSnapshot(
   const foeHype = opts.foeHype ?? 0;
   return {
     attack: shouldShowAttackHint(flags, combat, hasFoe),
-    heal: shouldShowHealHint(flags, hp, maxHp, combat, hasFoe),
+    heal: shouldShowHealHint(flags, hp, maxHp, combat, hasFoe, foeAtk, foeHype),
     dance: shouldShowDanceHint(flags, hp, maxHp, combat, hasFoe, hype, foeAtk, foeHype),
     run: shouldShowRunHint(flags, hp, foeAtk, foeHype, combat, hasFoe),
   };
@@ -130,19 +131,25 @@ describe("combat hints — per-run dismissals", () => {
     expect(shouldShowDanceHint(afterHeal, 20, 20, combat, true, 0, 3, 0)).toBe(false);
   });
 
-  it("dismissHealHint only clears heal glow without arming dance", () => {
+  it("dismissHealHint permanently dismisses after heal is used", () => {
     const after = dismissHealHint(fresh());
     expect(shouldShowHealHint(after, 8, 20, combat, true)).toBe(false);
     expect(after.pendingDanceHintAfterHeal).toBe(false);
   });
 
-  it("dismissHealHintIfWasLow clears heal glow after low-hp wave recovery", () => {
-    const low = dismissHealHintIfWasLow(fresh(), 10, 20);
-    expect(shouldShowHealHint(low, 8, 20, combat, true)).toBe(false);
-    expect(dismissHealHintIfWasLow(low, 10, 20)).toBe(low);
+  it("heal hint returns when low again after topping up from a kill", () => {
+    const topped = newFoeAfterKill(recordAttackForHints(fresh()), {
+      hp: 20,
+      maxHp: 20,
+    });
+    expect(shouldShowHealHint(topped, 20, 20, combat, true)).toBe(false);
+    expect(shouldShowHealHint(topped, 10, 20, combat, true)).toBe(true);
+  });
 
-    const full = dismissHealHintIfWasLow(fresh(), 18, 20);
-    expect(shouldShowHealHint(full, 8, 20, combat, true)).toBe(true);
+  it("heal hint hides while run is lethal even at low hp", () => {
+    expect(shouldShowHealHint(fresh(), 10, 20, combat, true)).toBe(true);
+    expect(shouldShowHealHint(fresh(), 3, 20, combat, true, 5, 0)).toBe(false);
+    expect(shouldShowRunHint(fresh(), 3, 5, 0, combat, true)).toBe(true);
   });
 
   it("dance hint stops for this foe after dance and stays off for the run", () => {
@@ -336,12 +343,24 @@ describe("combat hints — dance arming edge cases", () => {
     expect(dismissDanceHintThisFoe(cleared)).toBe(cleared);
   });
 
-  it("recordDanceForHints permanently dismisses future dance hints", () => {
+  it("recordDanceForHints permanently dismisses future dance hints and teach popup", () => {
     const danced = recordDanceForHints(newFoeAfterKill(afterAttack()));
     expect(danced.dismissedDanceHint).toBe(true);
+    expect(danced.dismissedDanceTeachCopy).toBe(true);
     expect(danced.showDanceHintThisFoe).toBe(false);
     const next = newFoeAfterKill(danced);
     expect(next.showDanceHintThisFoe).toBe(false);
+  });
+
+  it("shows dance teach copy once while the dance hint is active", () => {
+    const armed = newFoeAfterKill(afterAttack());
+    expect(
+      shouldShowDanceTeachCopy(armed, true, "combat", true)
+    ).toBe(true);
+    expect(
+      shouldShowDanceTeachCopy(dismissDanceTeachCopy(armed), true, "combat", true)
+    ).toBe(false);
+    expect(shouldShowDanceTeachCopy(armed, false, "combat", true)).toBe(false);
   });
 });
 
