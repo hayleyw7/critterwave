@@ -7,7 +7,7 @@ export const LOW_HP_HINT_RATIO = 0.6;
 export const DANCE_HINT_FALLBACK_WAVE = 12;
 
 export const DANCE_TEACH_TEXT =
-  "Dance builds HYPE — +1 ATK per point, for you and/or the foe.";
+  "Dance may add HYPE — +1 ATK each, for you and/or the foe.";
 export const HEAL_TEACH_TEXT = "Restore HP — foe will hit back.";
 export const RUN_TEACH_TEXT =
   "Run away — heal a little, face the next foe, and lose all HYPE.";

@@ -163,10 +163,10 @@ test.describe("combat hints — button glow", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
     await expect(page.locator("#cmd-dance-teach")).toBeVisible();
     await expect(page.locator("#cmd-dance-teach")).toContainText(
-      /Dance builds HYPE — \+1 ATK per point, for you and\/or the foe\./i
+      /Dance may add HYPE — \+1 ATK each, for you and\/or the foe\./i
     );
     await expect(page.locator("#battle-text")).not.toContainText(
-      /Dance builds HYPE — \+1 ATK per point, for you and\/or the foe\./i
+      /Dance may add HYPE — \+1 ATK each, for you and\/or the foe\./i
     );
   });
 });
@@ -201,10 +201,10 @@ test.describe("combat hints — dance after heal", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
     await expect(page.locator("#cmd-dance-teach")).toBeVisible();
     await expect(page.locator("#cmd-dance-teach")).toContainText(
-      /Dance builds HYPE — \+1 ATK per point, for you and\/or the foe\./i
+      /Dance may add HYPE — \+1 ATK each, for you and\/or the foe\./i
     );
     await expect(page.locator("#battle-text")).not.toContainText(
-      /Dance builds HYPE — \+1 ATK per point, for you and\/or the foe\./i
+      /Dance may add HYPE — \+1 ATK each, for you and\/or the foe\./i
     );
   });
 
