@@ -234,6 +234,7 @@ const DANCE_ANIM_MS = 550;
 const XP_FILL_BEAT_MS = 220;
 const DEFAULT_HERO_EMOJI = "🐱";
 const DEFAULT_HERO_LABEL = "Cat";
+const DEFAULT_PLAYER_NAME = "Dingus";
 
 function assertUniqueEmojis(entries: { emoji: string; name?: string; label?: string }[]): void {
   const seen = new Set<string>();
@@ -333,7 +334,7 @@ function restoreFoeOrder(ids: string[] | undefined, heroEmoji: string): FoeTempl
 }
 
 const player: Player = {
-  name: "Hero",
+  name: DEFAULT_PLAYER_NAME,
   hp: 20,
   maxHp: 20,
   attack: 5,
