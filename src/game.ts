@@ -1461,7 +1461,6 @@ function positionFooterTeachPopup(popup: HTMLElement, btn: HTMLElement): void {
   }
   left = Math.max(shell.left + margin, Math.min(left, shell.right - width - margin));
 
-  /* Heal mirror: popup body starts --space-2 below the button; arrow fills that gap upward. */
   popup.style.left = `${left}px`;
   popup.style.top = `${btnRect.bottom + gap}px`;
 
@@ -1472,6 +1471,12 @@ function positionFooterTeachPopup(popup: HTMLElement, btn: HTMLElement): void {
   if (Math.abs(nudge) > 0.5) {
     popup.style.top = `${popupRect.top + nudge}px`;
   }
+
+  const viewportMargin = 8;
+  const viewportTop = viewportMargin;
+  const viewportBottom = window.innerHeight - popup.offsetHeight - viewportMargin;
+  const currentTop = parseFloat(popup.style.top || "0");
+  popup.style.top = `${Math.min(Math.max(currentTop, viewportTop), viewportBottom)}px`;
 
   const placed = popup.getBoundingClientRect();
   const btnCenterX = btnRect.left + btnRect.width / 2;
