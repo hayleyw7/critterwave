@@ -43,14 +43,19 @@ function spawnParticle(width: number, emoji: string): void {
   el.className = "victory-emoji";
   el.textContent = emoji;
   el.setAttribute("aria-hidden", "true");
+
   const sizeRem = PARTICLE_SIZE_REM_MIN + Math.random() * PARTICLE_SIZE_REM_RANGE;
   el.style.fontSize = `${sizeRem}rem`;
   layerEl.appendChild(el);
 
-  const half = sizeRem * 8;
+  const rect = el.getBoundingClientRect();
+  const half = Math.max(8, rect.width / 2);
+  const minX = half;
+  const maxX = Math.max(minX, width - half);
+
   particles.push({
     el,
-    x: Math.random() * Math.max(20, width - half * 2) + half,
+    x: Math.random() * (maxX - minX) + minX,
     y: -40 - Math.random() * 120,
     vx: (Math.random() - 0.5) * 10,
     vy: Math.random() * 3 + 1,
@@ -65,7 +70,8 @@ function tick(): void {
     return;
   }
 
-  const { width, height } = layerEl.getBoundingClientRect();
+  const bounds = layerEl.closest(".game-over")?.getBoundingClientRect();
+  const { width, height } = bounds ?? layerEl.getBoundingClientRect();
   const floor = height - 28;
 
   for (const particle of particles) {

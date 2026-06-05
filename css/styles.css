@@ -2298,7 +2298,7 @@ html[data-theme="light"] .damage-pop.heal-pop {
 }
 
 .victory-emoji-layer {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
@@ -2311,6 +2311,7 @@ html[data-theme="light"] .damage-pop.heal-pop {
   top: 0;
   line-height: 1;
   will-change: transform;
+  translate: -50% -50%;
   filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.45));
   user-select: none;
 }
