@@ -2130,7 +2130,11 @@ function winCampaign(): void {
   clearAllHype();
   logLine(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`, "win");
   updateRecordsOnVictory();
-  startVictoryCelebration(el.victoryEmojiLayer);
+  startVictoryCelebration(
+    el.victoryEmojiLayer,
+    FOES.map((foe) => foe.emoji),
+    player.emoji
+  );
   persist();
   render();
 }
@@ -2755,7 +2759,11 @@ async function beginGame(): Promise<void> {
     clearLog();
     if (snapshot.phase === "victory") {
       logLine(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`, "win");
-      startVictoryCelebration(el.victoryEmojiLayer);
+      startVictoryCelebration(
+        el.victoryEmojiLayer,
+        FOES.map((foe) => foe.emoji),
+        player.emoji
+      );
       el.gameOverSummary.textContent = `All ${CAMPAIGN_WAVES} waves cleared. Critterwave legend.`;
     } else {
       logLine("You lose! Game over.", "lose");

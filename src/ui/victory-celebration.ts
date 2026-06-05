@@ -1,31 +1,18 @@
-const VICTORY_EMOJIS = [
-  "🐱",
-  "🐰",
-  "🦝",
-  "🪳",
-  "🐻",
-  "🐸",
-  "🦊",
-  "🐹",
-  "🦁",
-  "🐧",
-  "🦔",
-  "🐙",
-  "🦄",
-  "🐝",
-  "🦋",
-  "🐨",
-  "🦥",
-  "🦆",
-  "🐷",
-  "🐺",
-] as const;
+let victoryEmojis: string[] = [];
+
+function shuffle<T>(items: T[]): T[] {
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+  }
+  return shuffled;
+}
 
 const GRAVITY = 0.42;
 const BOUNCE_DAMPING = 0.72;
 const FRICTION = 0.985;
 const SPAWN_INTERVAL_MS = 110;
-const MAX_PARTICLES = 52;
 const PARTICLE_SIZE_REM_MIN = 1.35;
 const PARTICLE_SIZE_REM_RANGE = 1.65;
 
@@ -47,18 +34,14 @@ let spawnTimer: number | null = null;
 let spawnCount = 0;
 let running = false;
 
-function pickEmoji(): string {
-  return VICTORY_EMOJIS[Math.floor(Math.random() * VICTORY_EMOJIS.length)]!;
-}
-
-function spawnParticle(width: number): void {
+function spawnParticle(width: number, emoji: string): void {
   if (!layerEl) {
     return;
   }
 
   const el = document.createElement("span");
   el.className = "victory-emoji";
-  el.textContent = pickEmoji();
+  el.textContent = emoji;
   el.setAttribute("aria-hidden", "true");
   const sizeRem = PARTICLE_SIZE_REM_MIN + Math.random() * PARTICLE_SIZE_REM_RANGE;
   el.style.fontSize = `${sizeRem}rem`;
@@ -123,23 +106,27 @@ function scheduleSpawns(): void {
   }
 
   const { width } = layerEl.getBoundingClientRect();
-  if (spawnCount < MAX_PARTICLES && width > 0) {
-    spawnParticle(width);
+
+  if (spawnCount < victoryEmojis.length && width > 0) {
+    spawnParticle(width, victoryEmojis[spawnCount]!);
     spawnCount += 1;
   }
 
-  if (spawnCount < MAX_PARTICLES) {
+  if (spawnCount < victoryEmojis.length) {
     spawnTimer = window.setTimeout(scheduleSpawns, SPAWN_INTERVAL_MS);
   }
 }
 
-function spawnStaticBackdrop(layer: HTMLElement): void {
+function spawnStaticBackdrop(
+  layer: HTMLElement,
+  emojis: readonly string[]
+): void {
   layer.textContent = "";
-  const emojis = ["🐱", "🐰", "🦝", "🏆", "🪳", "🐻"];
+  const shown = emojis.slice(0, 12);
   for (let i = 0; i < emojis.length; i++) {
     const el = document.createElement("span");
     el.className = "victory-emoji victory-emoji-static";
-    el.textContent = emojis[i]!;
+    el.textContent = shown[i]!;
     el.style.left = `${12 + i * 14}%`;
     el.style.bottom = `${8 + (i % 3) * 6}%`;
     el.style.fontSize = `${1.5 + (i % 2) * 0.5}rem`;
@@ -147,14 +134,22 @@ function spawnStaticBackdrop(layer: HTMLElement): void {
   }
 }
 
-export function startVictoryCelebration(layer: HTMLElement): void {
+export function startVictoryCelebration(
+  layer: HTMLElement,
+  emojis: readonly string[],
+  playerEmoji: string
+): void {
   stopVictoryCelebration(layer);
+
+  victoryEmojis = shuffle(
+    emojis.filter((emoji) => emoji !== playerEmoji)
+  );
 
   layer.classList.remove("hidden");
   layerEl = layer;
 
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    spawnStaticBackdrop(layer);
+    spawnStaticBackdrop(layer, victoryEmojis);
     return;
   }
 
