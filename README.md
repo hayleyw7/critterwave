@@ -15,11 +15,11 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 - **Levels 1–10** — classic RPG pacing: stay Lv 1 for waves 1–10, level up at **11, 21, 31…**; HP, ATK, and max heal grow with you
 - Foe **LV** varies around yours — easier critters fight below your level, tougher ones above (same rules from wave 1)
 - Pick any roster emoji as your hero, name them, and choose a **card color**
-- **Light and dark themes** — footer toggle (persists in this browser); tuned contrast for HUD, battle log, damage pops, and footer stats
-- **Heal** (1–5 HP at Lv 1, grows with level) on your turn — foe may counterattack; does not build HYPE
+- **Light and dark themes** — footer toggle (persists in this browser); tuned contrast for HUD, battle log, damage pops, and footer stats; browser and PWA install chrome follow the active theme
+- **Heal** (1–**7** HP at Lv 1, **+1** max per level) on your turn — main way to recover HP; foe may counterattack; does not build HYPE
 - **Dance** for random foe reactions — HYPE for you and/or the foe when the line grants it, or neither (max **5 HYPE** each; **+1 ATK per HYPE**)
 - Taking damage drops **1 HYPE** (yours or theirs when they get hit)
-- **Full HP restore after each wave victory** — sparkle + floating heal number when you had missing HP
+- **Partial heal after each wave victory** — regain **30%** of missing max HP (rounded up); sparkle + floating heal number when you actually gained HP; wave 1 start and beating all 100 waves still fully top you up
 - Shuffled foe order each run
 - **Scores persist** in this browser (high score, runs played)
 - **Combat hints** on early fights — see [Combat hints](#combat-hints) below
@@ -31,9 +31,9 @@ Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages �
 | Action | Button | Notes |
 |--------|--------|--------|
 | Attack | ⚔️ | Foe may counterattack; counter damage drops 1 HYPE |
-| Heal | 💚 | 1–max HP (random); foe may counterattack; max heal grows with your level |
+| Heal | 💚 | Random **1–heal max** (up to **7** at Lv 1, +1/level); foe may counterattack; does not build HYPE |
 | Dance | 🕺 | Random reactions; HYPE for you and/or foe when granted; +1 ATK per HYPE |
-| Run | 🏃 | Flee this foe — heal a little, same wave, next foe, and lose all HYPE; **not on wave 100** |
+| Run | 🏃 | Flee this foe — same heal roll as **Heal**, same wave, next foe, lose all HYPE; **not on wave 100** |
 
 ## Combat hints
 
@@ -55,9 +55,9 @@ Highlighted buttons use an **outline pulse only** — button colors stay the sam
 |---------|----------------|
 | **High Score** | Highest wave you’ve reached this browser (updates on game over or full win). |
 | **Runs Played** | How many runs you’ve finished (game over or victory). |
-| **Light / Dark** | Switches palette (including foe card accents); persists in this browser. |
-| **New Run** | New hero and fresh run. High score and runs played are kept. |
-| **Clear Data** | Deletes your critter and all saved history on this browser. |
+| **Light / Dark** | Switches palette (including foe card accents), `theme-color`, and PWA manifest; persists in this browser. |
+| **New Run** | New hero and fresh run. High score and runs played are kept. Confirm dialog restores if you refresh mid-prompt. |
+| **Clear Data** | Deletes your critter and all saved history on this browser. Confirm dialog restores if you refresh mid-prompt. |
 
 ## What gets saved
 
@@ -65,14 +65,17 @@ Stored under `critterwave-v1` in the browser (migrates from older `goblinwave-*`
 
 - **High score** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
 - **Runs played** — how many runs you’ve finished (game over or full win)
+- **Light / dark** — `colorMode` for the footer theme toggle
 - **Hero** — emoji, name, and card color from your last run
-- **Active run** — HP, your hype and foe hype, current foe, wave, turn, combat-hint progress, and shuffled foe order (until game over or victory)
+- **Active run** — HP, your hype and foe hype, current foe, wave, turn, combat-hint progress, shuffled foe order, and any open **New Run** / **Clear Data** confirm (until game over or victory)
 
 ## Project layout
 
 ```
 index.html          # entry page
-site.webmanifest
+site.webmanifest    # PWA manifest (dark)
+site-light.webmanifest
+assets/theme-boot.js  # applies saved light/dark before first paint
 src/                # TypeScript source
   game.ts           # main game
   lib/              # rules, combat hints, color themes, save validation

@@ -27,6 +27,12 @@ export function parseSaveRecord(raw: unknown): Record<string, unknown> | null {
   return raw as Record<string, unknown>;
 }
 
+export type PendingConfirmKind = "newRun" | "clearData";
+
+export function parsePendingConfirm(value: unknown): PendingConfirmKind | undefined {
+  return value === "newRun" || value === "clearData" ? value : undefined;
+}
+
 export type ParsedSaveMeta = {
   bestWave: number;
   runsPlayed: number;
@@ -36,6 +42,7 @@ export type ParsedSaveMeta = {
   heroLabel?: string;
   heroColorTheme?: ColorThemeId;
   setupActive: boolean;
+  pendingConfirm?: PendingConfirmKind;
 };
 
 export function parseSaveMeta(
@@ -76,6 +83,7 @@ export function parseSaveMeta(
     heroLabel,
     heroColorTheme,
     setupActive: p.setupActive === true,
+    pendingConfirm: parsePendingConfirm(p.pendingConfirm),
   };
 }
 
@@ -140,7 +148,7 @@ export function sanitizeSnapshotFoe(
   if (!p) {
     return null;
   }
-  const id = typeof p.id === "string" ? p.id : "";
+  const id = typeof p.id === "string" ? canonicalFoeId(p.id) : "";
   const template = foesById.get(id);
   if (!template) {
     return null;
@@ -177,11 +185,111 @@ export function sanitizeHypeLevel(value: unknown): number {
   return clampHype(typeof value === "number" && Number.isFinite(value) ? value : 0);
 }
 
+/** Maps retired foe template ids to current ids when loading saves. */
+const LEGACY_FOE_ID_ALIASES: Readonly<Record<string, string>> = {
+  "bad-badger": "baneful-badger",
+  "batty-butterfly": "batty-butter",
+  "beastly-bat": "berserk-bat",
+  "beastly-bee": "bullying-bee",
+  "beastly-boar": "barren-boar",
+  "biting-beetle": "barbed-beetle",
+  "bloated-blowfish": "bloated-blob",
+  "bold-bison": "boorish-bison",
+  "brutal-brontosaurus": "brutal-bronto",
+  "bumbling-beaver": "belligerent-beav",
+  "burly-bear": "baleful-bear",
+  "burly-buffalo": "beastly-buffalo",
+  "callous-camel": "coy-camel",
+  "cheeky-chicken": "chaotic-chicken",
+  "cheeky-chipmunk": "churlish-chip",
+  "crabby-crab": "crazed-crab",
+  "creepy-coral": "cold-coral",
+  "cruel-crocodile": "cruel-croc",
+  "cruel-crow": "craven-crow",
+  "cunning-cat": "conniving-cat",
+  "cursed-cockroach": "rotten-roach",
+  "diabolic-devil": "devious-devil",
+  "devious-deer": "demonic-deer",
+  "devious-dolphin": "deranged-dolphin",
+  "devious-dove": "dour-dove",
+  "dreadful-dragon": "dreadful-drake",
+  "evil-eagle": "eerie-eagle",
+  "evil-elephant": "empty-elephant",
+  "flamboyant-flamingo": "flabby-flamingo",
+  "flimsy-fly": "flagrant-fly",
+  "freaky-frog": "frowzy-frog",
+  "ghastly-goblin": "ghoul-goblin",
+  "giant-giraffe": "gaunt-giraffe",
+  "goofy-goat": "guilty-goat",
+  "goofy-goose": "gaudy-goose",
+  "horrible-hamster": "horrible-hammy",
+  "horrible-hedgehog": "heinous-hog",
+  "hostile-hippo": "hateful-hippo",
+  "jaded-jellyfish": "jaded-jelly",
+  "kooky-kangaroo": "rowdy-roo",
+  "kooky-koala": "knavish-koala",
+  "loathsome-ladybug": "lazy-lady",
+  "loathsome-lion": "lousy-lion",
+  "loathsome-lizard": "lurid-liz",
+  "loathsome-llama": "leery-llama",
+  "loathsome-lobster": "limp-lob",
+  "mad-mammoth": "mighty-mammoth",
+  "malicious-mosquito": "mangy-mozzie",
+  "moody-moose": "morose-moose",
+  "obnoxious-octopus": "oppressive-octo",
+  "obnoxious-orangutan": "obnoxious-orang",
+  "obnoxious-ox": "obstinate-ox",
+  "odious-ogre": "obtuse-ogre",
+  "odious-otter": "ornery-otter",
+  "odious-oyster": "oily-oyster",
+  "pesky-phoenix": "phony-phoenix",
+  "petty-panda": "puny-panda",
+  "petty-penguin": "pasty-penguin",
+  "petulant-parrot": "petulant-polly",
+  "placid-polar-bear": "putrid-polar",
+  "pompous-poodle": "peevish-poodle",
+  "posh-peacock": "perilous-peacock",
+  "rabid-raccoon": "ravenous-raccoon",
+  "rotten-rooster": "raging-rooster",
+  "rowdy-rooster": "raging-rooster",
+  "savage-seal": "sullen-seal",
+  "shaggy-sheep": "shoddy-sheep",
+  "shocking-shark": "shifty-shark",
+  "shrill-shrimp": "skrill-skrimp",
+  "sketchy-skeleton": "sketchy-skelly",
+  "skittish-skunk": "skulking-skunk",
+  "skulking-skeleton": "sketchy-skelly",
+  "odious-owl": "outcast-owl",
+  "slothful-sloth": "sluggish-sloth",
+  "sneaky-snail": "snotty-snail",
+  "sneaky-snake": "snide-snake",
+  "soggy-snowman": "snappy-snowman",
+  "squishy-squid": "squalid-squid",
+  "swanky-swan": "swollen-swan",
+  "terrible-trex": "toxic-t-rex",
+  "terrible-turtle": "torrid-turtle",
+  "unhinged-unicorn": "useless-uni",
+  "wicked-worm": "wimpy-worm",
+  "zealous-zebra": "zapped-zebra",
+};
+
+export function canonicalFoeId(id: string): string {
+  let current = id;
+  const seen = new Set<string>();
+  while (LEGACY_FOE_ID_ALIASES[current] && !seen.has(current)) {
+    seen.add(current);
+    current = LEGACY_FOE_ID_ALIASES[current]!;
+  }
+  return current;
+}
+
 export function sanitizeIdList(value: unknown, validIds: ReadonlySet<string>): string[] | undefined {
   if (!Array.isArray(value)) {
     return undefined;
   }
-  const ids = value.filter((id): id is string => typeof id === "string" && validIds.has(id));
+  const ids = value
+    .map((id) => (typeof id === "string" ? canonicalFoeId(id) : id))
+    .filter((id): id is string => typeof id === "string" && validIds.has(id));
   return ids.length > 0 ? ids : undefined;
 }
 

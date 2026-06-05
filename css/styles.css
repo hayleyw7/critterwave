@@ -58,12 +58,16 @@
   --title-shadow-glow: rgba(253, 224, 71, 0.2);
   --cmd-attack-text: #fecaca;
   --cmd-heal-text: #bbf7d0;
+  --cmd-teach-arrow-size: 7px;
   --cmd-dance-text: #e9d5ff;
   --cmd-run-text: #bfdbfe;
   --confirm-danger-text: #fecaca;
   --confirm-danger-shadow: #500;
   --meta-danger-hover-text: #fecaca;
   --meta-danger-hover-bg: rgba(251, 113, 133, 0.28);
+  --meta-btn-bg: var(--cmd-bg);
+  --meta-btn-border: var(--cmd-border);
+  --meta-btn-hover-bg: var(--cmd-hover);
   --teach-popup-text: #fef9c3;
   --teach-popup-border: #fde047;
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 44%, var(--cmd-bg));
@@ -120,7 +124,7 @@ html[data-theme="light"] {
   --enemy: #facc15;
   --enemy-dark: #854d0e;
   --hp-bg: #c9b8e8;
-  --danger: #e11d48;
+  --danger: #be123c;
   --highlight: #fde047;
   --gold: var(--panel-edge);
   --dialog: #e0d4f8;
@@ -162,7 +166,10 @@ html[data-theme="light"] {
   --confirm-danger-text: #fecaca;
   --confirm-danger-shadow: #be123c;
   --meta-danger-hover-text: var(--danger);
-  --meta-danger-hover-bg: rgba(225, 29, 72, 0.18);
+  --meta-danger-hover-bg: rgba(190, 18, 60, 0.18);
+  --meta-btn-bg: #b8a0d8;
+  --meta-btn-border: #5a3d8a;
+  --meta-btn-hover-bg: #a78bdb;
   --teach-popup-text: var(--text);
   --teach-popup-border: #fde047;
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 36%, var(--cmd-bg));
@@ -182,11 +189,16 @@ html[data-theme="light"] {
   --focus-ring: #fde047;
   --hp-inset-shadow: var(--panel-edge);
   --hp-bar-depth: inset 0 1px 2px color-mix(in srgb, var(--panel-edge) 22%, transparent);
-  --sprite-shadow: rgba(0, 0, 0, 0.45);
+  --sprite-shadow: color-mix(in srgb, var(--panel-edge) 28%, transparent);
   --records-divider: rgba(124, 92, 191, 0.4);
   --starfield-ellipse: #c4b0e8;
   --damage-shadow: #fff;
-  --heal-pop-text: var(--hero);
+  --damage-pop-text: var(--danger);
+  --heal-pop-text: #14532d;
+  --game-over-accent: var(--danger);
+  --restart-border: var(--enemy-dark);
+  --restart-text: var(--enemy-dark);
+  --restart-bg: color-mix(in srgb, var(--enemy-dark) 14%, var(--panel));
   --crt-line: rgba(26, 15, 46, 0.025);
   --stage-floor-top: #ebe3f8;
   --stage-floor-mid: #ddd0f5;
@@ -197,12 +209,68 @@ html[data-theme="light"] {
   --meter-track-bg: var(--panel);
   --hype-track-bg: transparent;
   --hype-track-border: var(--panel-edge);
-  --vs-badge-text: #be123c;
+  --vs-badge-text: var(--danger);
   --vs-badge-shadow: var(--bg-deep);
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
+}
+
+/* Smooth light ↔ dark toggle (View Transition + property lerp on key surfaces) */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.45s;
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 2;
+  }
+
+  html.color-mode-changing :where(
+    body,
+    .crt-overlay,
+    .game-shell,
+    .setup-panel,
+    .playfield,
+    .battle-stage,
+    .stage-floor,
+    .hud,
+    .action-panel,
+    .dialog-box,
+    .confirm-overlay,
+    .confirm-panel,
+    .game-over,
+    .game-over-panel,
+    .meta-btn,
+    .cmd,
+    #player-panel,
+    .enemy-status,
+    .hp-wrap,
+    .hp-bar,
+    .hype-bar,
+    .records-bar,
+    .title,
+    .tagline,
+    #battle-text
+  ) {
+    transition:
+      background-color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      border-color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      box-shadow 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      text-shadow 0.45s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  html.color-mode-changing :where(.emoji-sprite) {
+    transition: filter 0.45s cubic-bezier(0.33, 1, 0.68, 1);
+  }
 }
 
 html[data-theme="light"] .title {
@@ -393,6 +461,8 @@ body.is-booting .game-shell {
   padding: 1rem;
   background: var(--overlay-scrim);
   backdrop-filter: blur(3px);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .confirm-overlay.hidden {
@@ -411,6 +481,10 @@ body.is-booting .game-shell {
 .confirm-overlay.confirm-danger .confirm-panel {
   border-color: var(--danger);
   box-shadow: 0 0 28px rgba(251, 113, 133, 0.35);
+}
+
+html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
+  box-shadow: 0 0 28px color-mix(in srgb, var(--danger) 35%, transparent);
 }
 
 .confirm-title {
@@ -1718,7 +1792,7 @@ html[data-theme="light"] .foe-hype-fill {
   position: absolute;
   font-family: var(--font-ui);
   font-size: 1.5rem;
-  color: var(--danger);
+  color: var(--damage-pop-text, var(--danger));
   background: transparent;
   border: none;
   padding: 0;
@@ -1726,7 +1800,7 @@ html[data-theme="light"] .foe-hype-fill {
   box-shadow: none;
   text-shadow:
     2px 2px 0 var(--damage-shadow),
-    0 0 8px var(--danger);
+    0 0 8px var(--damage-pop-text, var(--danger));
   animation: damage-float 0.9s ease-out forwards;
   white-space: nowrap;
 }
@@ -1736,6 +1810,18 @@ html[data-theme="light"] .foe-hype-fill {
   text-shadow:
     2px 2px 0 var(--damage-shadow),
     0 0 8px rgba(74, 222, 128, 0.9);
+}
+
+html[data-theme="light"] .damage-pop {
+  text-shadow:
+    2px 2px 0 var(--damage-shadow),
+    0 0 8px color-mix(in srgb, var(--damage-pop-text) 55%, transparent);
+}
+
+html[data-theme="light"] .damage-pop.heal-pop {
+  text-shadow:
+    2px 2px 0 var(--damage-shadow),
+    0 0 8px color-mix(in srgb, var(--heal-pop-text) 65%, transparent);
 }
 
 .damage-pop.hype-pop {
@@ -1764,6 +1850,8 @@ html[data-theme="light"] .foe-hype-fill {
   background: var(--dialog);
   color: var(--text);
   overflow: visible;
+  position: relative;
+  z-index: 2;
 }
 
 .dialog-box {
@@ -1891,14 +1979,12 @@ html[data-theme="light"] .foe-hype-fill {
 }
 
 .cmd-teach-popup {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + var(--space-2));
-  transform: translateX(-50%);
   z-index: 30;
   box-sizing: border-box;
   width: max-content;
+  min-width: 0;
   max-width: min(15rem, calc(100vw - var(--space-3) * 2));
+  overflow: visible;
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-ui);
   font-size: 0.92rem;
@@ -1916,13 +2002,20 @@ html[data-theme="light"] .foe-hype-fill {
   animation: cmd-teach-popup-in 0.25s ease-out;
 }
 
-.cmd-teach-popup--align-start {
+/* Heal: above the button (dance/run use --dock-footer + JS). */
+.cmd-teach-popup:not(.cmd-teach-popup--dock-footer) {
+  position: absolute;
+  bottom: calc(100% + var(--space-2));
+}
+
+.cmd-teach-popup--align-start:not(.cmd-teach-popup--dock-footer) {
   left: 0;
+  right: auto;
   transform: none;
   text-align: left;
 }
 
-.cmd-teach-popup--align-end {
+.cmd-teach-popup--align-end:not(.cmd-teach-popup--dock-footer) {
   left: auto;
   right: 0;
   transform: none;
@@ -1939,7 +2032,7 @@ html[data-theme="light"] .foe-hype-fill {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 7px solid transparent;
+  border: var(--cmd-teach-arrow-size) solid transparent;
   border-top-color: var(--teach-popup-border);
 }
 
@@ -1952,6 +2045,49 @@ html[data-theme="light"] .foe-hype-fill {
   left: auto;
   right: var(--space-4);
   transform: none;
+}
+
+.teach-popup-dock {
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Dance/run: positioned in JS (fixed). Never use % bottom — that tracks the viewport. */
+.cmd-teach-popup.cmd-teach-popup--dock-footer {
+  position: fixed;
+  z-index: 100;
+  inset: auto;
+  margin: 0;
+  transform: none;
+}
+
+/* Arrow points up at the dance/run button (same as when the tip sat on the button). */
+.cmd-teach-popup--dock-footer::after {
+  top: auto;
+  bottom: 100%;
+  left: var(--teach-arrow-offset, 50%);
+  transform: translateX(-50%);
+  border-width: var(--cmd-teach-arrow-size);
+  border-top-color: transparent;
+  border-bottom-color: var(--teach-popup-border);
+}
+
+.cmd-teach-popup--dock-footer.cmd-teach-popup--align-start::after {
+  left: var(--teach-arrow-offset, var(--space-4));
+  transform: translateX(0);
+}
+
+.cmd-teach-popup--dock-footer.cmd-teach-popup--align-end::after {
+  left: auto;
+  right: var(--teach-arrow-offset-end, var(--space-4));
+  transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+  .cmd-teach-popup {
+    max-width: 80vw;
+  }
 }
 
 @keyframes cmd-teach-popup-in {
@@ -2044,6 +2180,8 @@ html[data-theme="light"] .foe-hype-fill {
   padding: var(--space-2) 0 0;
   flex-shrink: 0;
   border-top: 1px solid var(--records-divider);
+  position: relative;
+  z-index: 1;
 }
 
 .records-stats {
@@ -2088,8 +2226,8 @@ html[data-theme="light"] .foe-hype-fill {
   padding: var(--space-1) var(--space-3);
   cursor: pointer;
   color: var(--text);
-  background: var(--cmd-bg);
-  border: 2px solid var(--cmd-border);
+  background: var(--meta-btn-bg);
+  border: 2px solid var(--meta-btn-border);
   transition: color 0.1s, background 0.1s, border-color 0.1s;
 }
 
@@ -2115,7 +2253,7 @@ html[data-theme="light"] .foe-hype-fill {
 
 .meta-btn:hover {
   color: var(--text);
-  background: var(--cmd-hover);
+  background: var(--meta-btn-hover-bg);
   border-color: var(--highlight);
 }
 
@@ -2125,13 +2263,32 @@ html[data-theme="light"] .foe-hype-fill {
   background: var(--meta-danger-hover-bg);
 }
 
+.game-over-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.25rem;
+  border: 4px solid var(--game-over-accent, var(--danger));
+  background: var(--panel);
+  box-shadow: 0 0 30px rgba(251, 113, 133, 0.3);
+
+  max-width: min(90%, 32rem);
+  max-height: calc(100vh - var(--space-8));
+  overflow-y: auto;
+}
+
 .game-over {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-4);
+  overflow-y: auto;
   background: var(--overlay-scrim-gameover);
   backdrop-filter: blur(2px);
 }
@@ -2141,7 +2298,7 @@ html[data-theme="light"] .foe-hype-fill {
 }
 
 .victory-emoji-layer {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
@@ -2154,6 +2311,7 @@ html[data-theme="light"] .foe-hype-fill {
   top: 0;
   line-height: 1;
   will-change: transform;
+  translate: -50% -50%;
   filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.45));
   user-select: none;
 }
@@ -2171,10 +2329,14 @@ html[data-theme="light"] .foe-hype-fill {
   align-items: center;
   text-align: center;
   padding: 1.25rem;
-  border: 4px solid var(--danger);
+  border: 4px solid var(--game-over-accent, var(--danger));
   background: var(--panel);
   box-shadow: 0 0 30px rgba(251, 113, 133, 0.3);
   max-width: 90%;
+}
+
+html[data-theme="light"] .game-over:not(.game-victory) .game-over-panel {
+  box-shadow: 0 0 30px color-mix(in srgb, var(--game-over-accent) 30%, transparent);
 }
 
 .game-over-panel .cmd-restart {
@@ -2237,9 +2399,27 @@ html[data-theme="light"] .foe-hype-fill {
   margin: 0 0 0.75rem;
   font-family: var(--font-ui);
   font-size: 1.75rem;
-  color: var(--danger);
+  color: var(--game-over-accent, var(--danger));
   text-shadow: 2px 2px 0 var(--confirm-danger-shadow);
   animation: game-over-blink 1s step-end infinite;
+}
+
+html[data-theme="light"] .game-over:not(.game-victory) .game-over-tag {
+  text-shadow: 2px 2px 0 var(--bg-deep);
+}
+
+html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart {
+  border-color: var(--restart-border);
+  color: var(--restart-text);
+  background: var(--restart-bg);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--restart-border) 45%, var(--bg-deep));
+}
+
+html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart:hover:not(:disabled) {
+  border-color: var(--restart-border);
+  color: var(--restart-text);
+  background: color-mix(in srgb, var(--enemy-dark) 22%, var(--panel));
+  filter: none;
 }
 
 @keyframes game-over-blink {

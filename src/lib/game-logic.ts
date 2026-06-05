@@ -7,13 +7,13 @@ export const WAVES_PER_LEVEL = 10;
 
 export const BASE_PLAYER_MAX_HP = 20;
 export const BASE_PLAYER_ATTACK = 5;
-export const BASE_HEAL_MAX = 5;
+export const BASE_HEAL_MAX = 7;
 export const PLAYER_HP_PER_LEVEL = 3;
 export const PLAYER_ATK_PER_LEVEL = 1;
 export const HEAL_MAX_PER_LEVEL = 1;
 
-/** Fraction of max HP restored after each wave win. */
-export const WAVE_VICTORY_HEAL_RATIO = 1;
+/** Fraction of missing max HP restored after each wave win (Heal button is the main recovery). */
+export const WAVE_VICTORY_HEAL_RATIO = 0.3;
 
 export const FOE_HP_PER_LEVEL = 3;
 export const FOE_ATK_PER_LEVEL = 1;

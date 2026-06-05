@@ -159,11 +159,11 @@ describe("level progression", () => {
       level: 1,
       maxHp: 20,
       attack: 5,
-      healMax: 5,
+      healMax: 7,
     });
     expect(playerStatsForLevel(5).maxHp).toBe(32);
     expect(playerStatsForLevel(10).attack).toBe(14);
-    expect(playerStatsForLevel(10).healMax).toBe(14);
+    expect(playerStatsForLevel(10).healMax).toBe(16);
   });
 
   it("derives wave stats from the wave band", () => {
@@ -289,11 +289,11 @@ describe("level progression", () => {
     expect(refreshed.hp).toBeLessThanOrEqual(refreshed.maxHp);
     expect(refreshed.attack).toBe(makeFoeFromTemplate(hard, 5).attack);
   });
-  it("tops up hp to full after wave wins", () => {
-    expect(WAVE_VICTORY_HEAL_RATIO).toBe(1);
+  it("restores a fraction of missing hp after wave wins", () => {
+    expect(WAVE_VICTORY_HEAL_RATIO).toBe(0.3);
     expect(waveVictoryHealGain(20, 20)).toBe(0);
-    expect(waveVictoryHealGain(8, 20)).toBe(12);
-    expect(healHpAfterWaveVictory(8, 20)).toBe(20);
+    expect(waveVictoryHealGain(8, 20)).toBe(6);
+    expect(healHpAfterWaveVictory(8, 20)).toBe(14);
     expect(healHpAfterWaveVictory(14, 20)).toBe(20);
   });
 });

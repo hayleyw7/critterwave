@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { patchSaveSnapshot } from "./helpers-save.js";
+import { patchSaveSnapshot, reloadAfterSavePatch } from "./helpers-save.js";
 import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers.js";
 
 test.describe("Critterwave — happy paths", () => {
@@ -97,6 +97,57 @@ test.describe("Critterwave — happy paths", () => {
     ).toBeVisible();
   });
 
+  test("new run confirm survives reload", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "New Run" }).click();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Start a new run?" })).toBeVisible();
+    await page.reload();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Start a new run?" })).toBeVisible();
+    await page.locator("#confirm-cancel").click();
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
+    await expect(page.getByLabel("Combat actions")).toBeVisible();
+  });
+
+  test("new run confirm dismisses on escape and backdrop tap", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "New Run" }).click();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
+    await expect(page.getByLabel("Combat actions")).toBeVisible();
+
+    await page.getByRole("button", { name: "New Run" }).click();
+    await page.locator("#confirm-overlay").click({
+      position: { x: 8, y: 8 },
+      force: true,
+    });
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
+  });
+
+  test("clear data confirm dismisses on backdrop tap (mobile)", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "Clear Data" }).click();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await page.locator("#confirm-overlay").click({
+      position: { x: 12, y: 12 },
+    });
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
+    await expect(page.getByLabel("Combat actions")).toBeVisible();
+  });
+
+  test("clear data confirm survives reload", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "Clear Data" }).click();
+    await expect(page.locator("#confirm-overlay")).toHaveClass(/confirm-danger/);
+    await expect(page.getByRole("heading", { name: "Delete everything?" })).toBeVisible();
+    await page.reload();
+    await expect(page.locator("#confirm-overlay")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Delete everything?" })).toBeVisible();
+  });
+
   test("hides devil emoji in hero picker on mobile only", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await clearSave(page);
@@ -113,12 +164,30 @@ test.describe("Critterwave — happy paths", () => {
     await expect(page.locator('.emoji-pick[data-emoji="😈"]')).toHaveCount(1);
   });
 
+  test("game over screen persists across reload", async ({ page }) => {
+    await page.goto("/?debug=lose");
+
+    await expect(page.locator("#game-over")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("#game-over-tag")).toHaveText("GAME OVER");
+
+    await page.reload();
+
+    await expect(page.locator("#game-over")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("#game-over-tag")).toHaveText("GAME OVER");
+    await expect(page.locator("#game-over-summary")).toContainText(/reached/i);
+    await expect(page.locator("#actions")).toHaveClass(/hidden/);
+  });
+
   test("theme toggle switches palette and persists", async ({ page }) => {
     await startFreshRun(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
     await page.getByRole("button", { name: "Switch to light mode" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+      "href",
+      /site-light\.webmanifest$/
+    );
     await expect(page.locator("#battle-text")).toHaveCSS("color", "rgb(26, 15, 46)");
 
     const saveAfterToggle = await page.evaluate((key) => {
@@ -129,6 +198,10 @@ test.describe("Critterwave — happy paths", () => {
 
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute(
+      "href",
+      /site-light\.webmanifest$/
+    );
     await expect(page.getByRole("button", { name: "Switch to dark mode" })).toBeVisible();
   });
 });
@@ -228,7 +301,7 @@ test.describe("Critterwave — sad paths", () => {
       foeHypeLevel: 5,
       combatHints: { dismissedAttackHint: true },
     });
-    await page.reload();
+    await reloadAfterSavePatch(page);
     await expect(page.locator("#battle-text")).toContainText(/restored/i);
     await expect(page.locator("#player-hype-wrap")).toHaveClass(/hype-maxed/);
     await expect(page.locator("#foe-hype-wrap")).toHaveClass(/hype-maxed/);
@@ -242,7 +315,7 @@ test.describe("Critterwave — sad paths", () => {
       player: { hp: 1, maxHp: 20 },
       foe: { attack: 20 },
     });
-    await page.reload();
+    await reloadAfterSavePatch(page);
     await page.getByRole("button", { name: "Attack" }).click();
     await expect(page.getByRole("button", { name: "Try Again?" })).toBeVisible({
       timeout: 15_000,

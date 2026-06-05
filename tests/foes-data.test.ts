@@ -45,11 +45,11 @@ describe("foes roster", () => {
     ).not.toThrow();
   });
 
-  it("includes renamed critters", () => {
-    expect(FOES.find((f) => f.id === "shrill-shrimp")?.name).toBe("Skrill Skrimp");
-    expect(FOES.find((f) => f.id === "cursed-cockroach")?.name).toBe(
-      "Rotten Roach"
-    );
+  it("uses ids derived from display names", () => {
+    for (const foe of FOES) {
+      const expected = foe.name.trim().toLowerCase().split(/\s+/).join("-");
+      expect(foe.id, foe.name).toBe(expected);
+    }
   });
 
   it("has a large roster for campaign variety", () => {

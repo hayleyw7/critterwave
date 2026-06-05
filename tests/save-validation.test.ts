@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clampInt,
   isDebugHost,
+  parsePendingConfirm,
   parseSaveMeta,
   parseSaveRecord,
   sanitizeGamePhase,
@@ -104,6 +105,16 @@ describe("parseSaveMeta", () => {
       { allowedHeroEmojis: HERO_EMOJIS }
     );
     expect(meta.heroColorTheme).toBeUndefined();
+  });
+
+  it("parses pending confirm dialog kind", () => {
+    expect(parsePendingConfirm("newRun")).toBe("newRun");
+    expect(parsePendingConfirm("clearData")).toBe("clearData");
+    expect(parsePendingConfirm("delete")).toBeUndefined();
+    expect(
+      parseSaveMeta({ pendingConfirm: "clearData" }, { allowedHeroEmojis: HERO_EMOJIS })
+        .pendingConfirm
+    ).toBe("clearData");
   });
 
   it("normalizes blank hero names to undefined", () => {
@@ -263,6 +274,20 @@ describe("sanitizeIdList", () => {
     expect(sanitizeIdList([], FOE_IDS)).toBeUndefined();
     expect(sanitizeIdList(["missing"], FOE_IDS)).toBeUndefined();
     expect(sanitizeIdList("not-array", FOE_IDS)).toBeUndefined();
+  });
+
+  it("remaps retired foe ids", () => {
+    expect(sanitizeIdList(["cunning-cat"], FOE_IDS)).toEqual(["conniving-cat"]);
+    expect(sanitizeIdList(["shrill-shrimp"], FOE_IDS)).toEqual([
+      "skrill-skrimp",
+    ]);
+    expect(sanitizeIdList(["skulking-skeleton"], FOE_IDS)).toEqual([
+      "sketchy-skelly",
+    ]);
+    expect(sanitizeIdList(["odious-owl"], FOE_IDS)).toEqual(["outcast-owl"]);
+    expect(sanitizeIdList(["skittish-skunk"], FOE_IDS)).toEqual([
+      "skulking-skunk",
+    ]);
   });
 });
 

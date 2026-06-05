@@ -75,6 +75,7 @@ describe("security — build:site output", () => {
       "js/game.js",
       "fonts/VT323-Regular.ttf",
       "site.webmanifest",
+      "site-light.webmanifest",
     ]) {
       expect(existsSync(join(dist, path))).toBe(true);
     }

@@ -13,6 +13,7 @@ const copyPaths = [
   "assets",
   "fonts",
   "site.webmanifest",
+  "site-light.webmanifest",
   ".nojekyll",
 ];
 
