@@ -1864,6 +1864,12 @@ html[data-theme="light"] .damage-pop.heal-pop {
   border-right: 1px solid var(--panel-edge);
 }
 
+@media (min-width: 768px) {
+  .dialog-box {
+    min-height: 12.5rem;
+  }
+}
+
 .battle-text {
   margin: 0;
   width: 100%;
@@ -2923,5 +2929,15 @@ html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart:hover:not(:d
 
   .emoji-sprite {
     --sprite-size: 2.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .action-panel {
+    min-height: 13rem;
+  }
+
+  .dialog-box {
+    min-height: 13rem;
   }
 }
