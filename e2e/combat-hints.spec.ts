@@ -11,7 +11,7 @@ test.describe("combat hints — button glow", () => {
       page.getByRole("heading", { name: "Which critter are you?" })
     ).toBeVisible();
     await expect(page.locator("#setup-subtitle")).toContainText(
-      /Attack — clear 100 waves of evil critters!/i
+      /Defeat all 100 waves to win!/i
     );
 
     await startFreshRun(page);

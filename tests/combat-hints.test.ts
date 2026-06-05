@@ -392,7 +392,7 @@ describe("combat hints — dance arming edge cases", () => {
   });
 
   it("formats attack teach copy from campaign length", () => {
-    expect(attackTeachText(100)).toBe("Attack — clear 100 waves of evil critters!");
+    expect(attackTeachText(100)).toBe("Defeat all 100 waves to win!");
   });
 
   it("uses plain and in teach copy strings", () => {

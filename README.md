@@ -41,7 +41,7 @@ Hints teach the four actions during your first run (each dismisses after you use
 
 | When | What you see |
 |------|----------------|
-| **Setup** | Subtitle under “Which critter are you?” — *Attack — clear 100 waves of evil critters!* |
+| **Setup** | Subtitle under “Which critter are you?” — *Defeat all 100 waves to win!* |
 | **First fight** | **Attack** gets a pulsing yellow **outline** until your first strike (no popup) |
 | **Low HP** (~60% or below) | **Heal** outline + tooltip: *Restore HP — foe will hit back.* |
 | **After a wasted heal** (or wave 12+ at full HP with 0 hype) | **Dance** outline + tooltip: *Dance may add HYPE — makes hits stronger, for you and/or the foe.* |

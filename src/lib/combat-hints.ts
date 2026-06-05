@@ -16,7 +16,7 @@ export const RUN_TEACH_TEXT =
 export const DANCE_TEACH_BATTLE_TEXT = DANCE_TEACH_TEXT;
 
 export function attackTeachText(campaignWaves = CAMPAIGN_WAVE_COUNT): string {
-  return `Attack — clear ${campaignWaves} waves of evil critters!`;
+  return `Defeat all ${campaignWaves} waves to win!`;
 }
 
 export type CombatHintsState = {
