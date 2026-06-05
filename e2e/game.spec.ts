@@ -165,21 +165,14 @@ test.describe("Critterwave — happy paths", () => {
   });
 
   test("game over screen persists across reload", async ({ page }) => {
-    await startFreshRun(page);
-    await page.evaluate((key) => {
-      const raw = localStorage.getItem(key);
-      if (!raw) throw new Error("missing save");
-      const data = JSON.parse(raw) as { snapshot?: { phase?: string; player?: { hp?: number } } };
-      if (!data.snapshot) throw new Error("missing snapshot");
-      data.snapshot.phase = "gameover";
-      if (data.snapshot.player) {
-        data.snapshot.player.hp = 0;
-      }
-      localStorage.setItem(key, JSON.stringify(data));
-    }, STORAGE_KEY);
+    await page.goto("/?debug=lose");
+
+    await expect(page.locator("#game-over")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("#game-over-tag")).toHaveText("GAME OVER");
 
     await page.reload();
-    await expect(page.locator("#game-over")).toBeVisible();
+
+    await expect(page.locator("#game-over")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator("#game-over-tag")).toHaveText("GAME OVER");
     await expect(page.locator("#game-over-summary")).toContainText(/reached/i);
     await expect(page.locator("#actions")).toHaveClass(/hidden/);

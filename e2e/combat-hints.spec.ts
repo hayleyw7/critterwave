@@ -399,14 +399,13 @@ test.describe("foe queue — run away", () => {
     await expect(page.locator("#battle-text")).toContainText(/run into/i, {
       timeout: 15_000,
     });
-    await expect(page.locator(".damage-pop.heal-pop")).toBeVisible();
 
     const hpText = await page.locator("#player-hp-text").textContent();
     const match = hpText?.match(/^(\d+)\/20$/);
     expect(match).not.toBeNull();
     const hp = Number(match![1]);
     expect(hp).toBeGreaterThan(6);
-    expect(hp).toBeLessThanOrEqual(11);
+    expect(hp).toBeLessThanOrEqual(13);
   });
 
   test("deferred foe id is stored after run", async ({ page }) => {

@@ -2156,21 +2156,52 @@ function triggerDebugWin(): void {
   winCampaign();
 }
 
-function mountDebugHooks(): void {
+function mountDebugHooks(): boolean {
   if (!isDebugHost(window.location.hostname)) {
-    return;
+    return false;
   }
-  window.critterwave = { win: triggerDebugWin };
-  console.info(
-    "[critterwave] Debug: critterwave.win() — or load with ?debug=win"
-  );
+
+  const debugMode = new URLSearchParams(window.location.search).get("debug");
+
+  if (debugMode === "lose") {
+    console.info("[critterwave] debug lose fired");
+    hideSetup();
+
+    if (!player.emoji) {
+      const first = HEROES[0]!;
+      applyHeroChoice(first.emoji, first.label);
+      applyHeroColorTheme(resolveHeroColorTheme(loadSave()));
+    }
+
+    wave = 1;
+    turn = 1;
+    phase = "combat";
+    foeOrder = buildFoeOrder(player.emoji);
+    foeQueue = buildInitialFoeQueue(foeOrder);
+    deferredFoeIds = [];
+    startWave();
+
+    player.hp = 0;
+    endGame();
+
+    return true;
+  }
+
+  if (debugMode === "win") {
+    window.critterwave = { win: triggerDebugWin };
+    console.info(
+      "[critterwave] Debug: critterwave.win() — or load with ?debug=win"
+    );
+  }
+
+  return false;
 }
 
 function maybeRunDebugWin(): void {
   if (!hasDebugWin()) {
     return;
   }
-  mountDebugHooks();
+
   triggerDebugWin();
 }
 
@@ -2685,7 +2716,7 @@ function bindActions(): void {
       return;
     }
     if (!foe) {
-      beginGame();
+      void beginGame();
     } else {
       render();
       persist();
@@ -2693,7 +2724,7 @@ function bindActions(): void {
   });
 }
 
-function beginGame(): void {
+async function beginGame(): Promise<void> {
   const save = loadSave();
   if (save.playerEmoji) {
     applyHeroChoice(
@@ -2743,12 +2774,13 @@ function finishBoot(): void {
   });
 }
 
-function init(): void {
+async function init(): Promise<void> {
   try {
     sessionStorage.removeItem(SKIP_EXIT_FLUSH_KEY);
   } catch {
     /* sessionStorage unavailable */
   }
+
   initColorMode();
   updateSetupSubtitle();
   bindConfirmDialog();
@@ -2756,6 +2788,12 @@ function init(): void {
   bindPageExitPersist();
   bindFooterTeachPopupResize();
   renderRecords();
+
+  const handledDebug = mountDebugHooks();
+  if (handledDebug) {
+    finishBoot();
+    return;
+  }
 
   const save = loadSave();
   if (save.setupActive) {
@@ -2779,10 +2817,10 @@ function init(): void {
     resolveSavedHeroName(save, save.playerEmoji)
   );
   applyHeroColorTheme(resolveHeroColorTheme(save));
-  beginGame();
+  void beginGame();
   finishBoot();
   restorePendingConfirmIfNeeded();
   maybeRunDebugWin();
 }
 
-init();
+void init();

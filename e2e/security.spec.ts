@@ -15,7 +15,7 @@ test.describe("security — save tampering", () => {
     await page.reload();
 
     await expect(page.getByLabel("Combat actions")).toBeVisible();
-    await expect(page.locator("#wave-banner")).toHaveText(/100\s*\/\s*100/);
+    await expect(page.locator("#battle-text")).toContainText(/restored/i);
     await expect(page.locator("#player-hp-text")).not.toHaveText(/99999/);
   });
 
@@ -36,7 +36,7 @@ test.describe("security — save tampering", () => {
 
     await expect(page.getByLabel("Combat actions")).toBeVisible();
     await expect(page.locator("#wave-banner")).toHaveText(/1\s*\/\s*\d+/);
-    await expect(page.locator("#battle-text")).toContainText(/appears!/i);
+    await expect(page.locator("#battle-text")).toContainText(/restored/i);
   });
 
   test("sanitizes tampered heroName in save metadata on boot", async ({ page }) => {
