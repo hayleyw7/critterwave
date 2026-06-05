@@ -244,7 +244,7 @@ const LEGACY_FOE_ID_ALIASES: Readonly<Record<string, string>> = {
   "odious-oyster": "oily-oyster",
   "pesky-phoenix": "phony-phoenix",
   "petty-panda": "puny-panda",
-  "petty-penguin": "pasty-penguin",
+  "petty-penguin": "petty-penguin",
   "petulant-parrot": "petulant-polly",
   "placid-polar-bear": "putrid-polar",
   "pompous-poodle": "peevish-poodle",

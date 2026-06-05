@@ -393,8 +393,8 @@ export const FOES = [
       "baseAtk": 3
     },
     {
-      "id": "pasty-penguin",
-      "name": "Pasty Penguin",
+      "id": "petty-penguin",
+      "name": "Petty Penguin",
       "emoji": "🐧",
       "baseHp": 11,
       "baseAtk": 3
