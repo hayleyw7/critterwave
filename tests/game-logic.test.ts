@@ -62,8 +62,8 @@ import {
 
 const SAMPLE_FOES = [
   { id: "a", name: "Angry Ant", emoji: "🐜", baseHp: 8, baseAtk: 2 },
-  { id: "b", name: "Brave Bear", emoji: "🐻", baseHp: 14, baseAtk: 4 },
-  { id: "c", name: "Clever Cat", emoji: "🐱", baseHp: 10, baseAtk: 3 },
+  { id: "b", name: "Baleful Bear", emoji: "🐻", baseHp: 14, baseAtk: 4 },
+  { id: "c", name: "Conniving Cat", emoji: "🐱", baseHp: 10, baseAtk: 3 },
 ] as const;
 
 describe("heroLabelFromFoeName", () => {

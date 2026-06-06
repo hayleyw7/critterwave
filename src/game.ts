@@ -221,8 +221,7 @@ type GameSnapshot = {
   combatHints?: CombatHintsState;
 };
 
-const STORAGE_KEY = "critterwave-v1";
-const LEGACY_STORAGE_KEYS = ["goblinwave-v4", "goblinwave-v1"] as const;
+const STORAGE_KEY = "critterwave-v5";
 let currentColorMode: ColorMode = "dark";
 const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
 const FOE_POOF_MS = 450;
@@ -590,13 +589,7 @@ function bindConfirmDialog(): void {
 }
 
 function getStorageRaw(): string | null {
-  const current = localStorage.getItem(STORAGE_KEY);
-  if (current) return current;
-  for (const key of LEGACY_STORAGE_KEYS) {
-    const legacy = localStorage.getItem(key);
-    if (legacy) return legacy;
-  }
-  return null;
+  return localStorage.getItem(STORAGE_KEY);
 }
 
 function loadSave(): SaveData {
