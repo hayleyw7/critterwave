@@ -50,7 +50,12 @@ import {
   pickFirstDanceResponse,
   resetDancePicker,
 } from "./content/dance-responses.js";
-import { appendBattleLine, setBattleLines } from "./lib/battle-log-dom.js";
+import {
+  appendBattleActionMeta,
+  appendBattleLine,
+  setBattleLines,
+  type BattleActionLabel,
+} from "./lib/battle-log-dom.js";
 import {
   clampInt,
   isDebugHost,
@@ -2008,12 +2013,6 @@ function render(): void {
   suppressTeachFlashesThisRender = false;
 }
 
-type BattleActionLabel = "Attack" | "Heal" | "Dance" | "Run";
-
-function battleActionClass(action: BattleActionLabel): string {
-  return `battle-action-${action.toLowerCase()}`;
-}
-
 function rememberBattleLogEntry(
   lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[],
   action?: BattleActionLabel,
@@ -2078,14 +2077,7 @@ function renderGameOverBattleLog(): void {
       continue;
     }
     if (entry.action) {
-      const meta = document.createElement("div");
-      meta.className = "game-over-log-meta";
-      meta.append(`Turn ${entry.turn} - `);
-      const action = document.createElement("span");
-      action.className = `battle-action ${battleActionClass(entry.action)}`;
-      action.textContent = entry.action;
-      meta.appendChild(action);
-      item.appendChild(meta);
+      appendBattleActionMeta(item, entry.turn, entry.action);
     }
     for (const line of entry.lines) {
       appendBattleLine(item, line.text, line.kind);
