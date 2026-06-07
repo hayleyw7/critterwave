@@ -1,8 +1,5 @@
-import { FOES as FOES_RAW } from "./data/foes-data.js";
-import { assertAlliterativeName } from "./lib/alliteration.js";
 import {
   buildFoeOrder as buildFoeOrderForHero,
-  CAMPAIGN_WAVE_COUNT,
   DEFEAT_VERBS,
   foeColorConflictsWithHero as heroFoeColorConflicts,
   formatFoeInText as formatFoeMessage,
@@ -36,7 +33,6 @@ import {
   xpProgressForWave,
   xpPercentForDisplay,
   xpPercentForWave,
-  heroLabelFromFoeName,
   normalizeHeroName,
   restoreFoeOrder as restoreFoeOrderForHero,
   randomDamage,
@@ -72,21 +68,16 @@ import {
   sanitizeWave,
 } from "./lib/save-validation.js";
 import {
-  assertHeroPickerOrderCovers,
-  heroPickerOrderIndex,
   HERO_PICKER_ORDER,
   isHeroEmojiHiddenInPicker,
   isMobileHeroPickerViewport,
   resolveHeroPickerEmoji,
 } from "./lib/hero-groups.js";
 import {
-  COLOR_THEME_IDS,
   COLOR_THEMES,
-  DEFAULT_COLOR_THEME,
   getColorTheme,
   colorThemeSurfaces,
   isColorThemeId,
-  type ColorThemeId,
   type ColorThemeSurfaces,
 } from "./lib/color-themes.js";
 import {
@@ -138,8 +129,54 @@ import {
   startVictoryCelebration,
   stopVictoryCelebration,
 } from "./ui/victory-celebration.js";
+import {
+  FOES,
+  FOES_BY_ID,
+  FOE_IDS,
+  HEROES,
+  HERO_EMOJIS,
+} from "./game/data.js";
+import { el } from "./game/dom.js";
+import {
+  CAMPAIGN_WAVES,
+  DANCE_ANIM_MS,
+  DEATH_BEAT_MS,
+  DEFAULT_HERO_COLOR_THEME,
+  DEFAULT_HERO_EMOJI,
+  DEFAULT_HERO_LABEL,
+  DEFAULT_PLAYER_NAME,
+  FOE_COLOR_THEMES,
+  FOE_ENTRANCE_MS,
+  FOE_POOF_MS,
+  GOLD_FLASH_MS,
+  HEAL_ANIM_MS,
+  HELP_OPEN_KEY,
+  HP_TEACH_FLASH_MS,
+  HYPE_METER_FLASH_MS,
+  LEVEL_UP_NOTICE_MS,
+  MOBILE_TEACH_LAYOUT_MQ,
+  PENDING_CONFIRM_OPTIONS,
+  SETUP_NAME_TEACH_FLASH_MS,
+  SKIP_EXIT_FLUSH_KEY,
+  STORAGE_KEY,
+  XP_FILL_BEAT_MS,
+} from "./game/constants.js";
+import type {
+  BattleLogEntry,
+  CombatTeachPopupId,
+  ConfirmOptions,
+  DebugCombatAction,
+  Enemy,
+  FoeColorTheme,
+  FoeTemplate,
+  GameSnapshot,
+  HeroColorTheme,
+  HeroOption,
+  LegacySnapshot,
+  Player,
+  SaveData,
+} from "./game/types.js";
 
-const HYPE_METER_FLASH_MS = 450 * 3 + 50;
 declare global {
   interface Window {
     critterwave?: {
@@ -151,42 +188,6 @@ declare global {
   }
 }
 
-type Player = {
-  name: string;
-  hp: number;
-  maxHp: number;
-  attack: number;
-  emoji: string;
-};
-
-type Enemy = {
-  id: string;
-  name: string;
-  emoji: string;
-  hp: number;
-  maxHp: number;
-  attack: number;
-  level: number;
-};
-
-type FoeTemplate = {
-  id: string;
-  /** Two words; adjective + creature must share the same opening sound. */
-  name: string;
-  emoji: string;
-  baseHp: number;
-  baseAtk: number;
-};
-
-type HeroOption = {
-  id: string;
-  label: string;
-  emoji: string;
-};
-
-const FOE_COLOR_THEMES = COLOR_THEME_IDS;
-type FoeColorTheme = ColorThemeId;
-
 function normalizeFoeColorTheme(theme: string | undefined): FoeColorTheme {
   if (theme && isColorThemeId(theme)) {
     return theme;
@@ -194,91 +195,9 @@ function normalizeFoeColorTheme(theme: string | undefined): FoeColorTheme {
   return "amber";
 }
 
-type HeroColorTheme = ColorThemeId;
-const DEFAULT_HERO_COLOR_THEME: HeroColorTheme = DEFAULT_COLOR_THEME;
-
-type SaveData = {
-  bestWave: number;
-  runsPlayed: number;
-  colorMode?: ColorMode;
-  playerEmoji?: string;
-  /** Custom display name chosen by the player. */
-  heroName?: string;
-  /** @deprecated Legacy — creature label; use heroName when present. */
-  heroLabel?: string;
-  heroColorTheme?: HeroColorTheme;
-  /** True while the hero setup overlay should stay up (survives refresh). */
-  setupActive?: boolean;
-  /** Footer confirm dialog open — restored after refresh until dismissed. */
-  pendingConfirm?: PendingConfirmKind;
-};
-
-type GameSnapshot = {
-  player: Player;
-  foe: Enemy | null;
-  turn: number;
-  wave: number;
-  phase: "combat" | "gameover" | "victory";
-  hypeLevel: number;
-  foeHypeLevel: number;
-  /** Shuffled foe sequence for this run (foe template ids). */
-  foeOrderIds?: string[];
-  /** Active foe queue — front is the current encounter. */
-  foeQueueIds?: string[];
-  /** Foes fled from; appended after the queue empties. */
-  deferredFoeIds?: string[];
-  foeColorTheme?: FoeColorTheme;
-  heroColorTheme?: HeroColorTheme;
-  combatHints?: CombatHintsState;
-  battleLogHistory?: BattleLogEntry[];
-};
-
-const STORAGE_KEY = "critterwave-v6";
 let currentColorMode: ColorMode = "dark";
 let debugInstantTransitions = false;
-const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
-const FOE_POOF_MS = 450;
-const FOE_ENTRANCE_MS = 550;
-const DEATH_BEAT_MS = 1200;
-const GOLD_FLASH_MS = 650;
-const HEAL_ANIM_MS = 420;
-const DANCE_ANIM_MS = 550;
-const XP_FILL_BEAT_MS = 220;
-const DEFAULT_HERO_EMOJI = "🐱";
-const DEFAULT_HERO_LABEL = "Cat";
-const DEFAULT_PLAYER_NAME = "Dingus";
 
-function assertUniqueEmojis(entries: { emoji: string; name?: string; label?: string }[]): void {
-  const seen = new Set<string>();
-  for (const entry of entries) {
-    if (seen.has(entry.emoji)) {
-      throw new Error(`Duplicate emoji ${entry.emoji} (${entry.name ?? entry.label})`);
-    }
-    seen.add(entry.emoji);
-  }
-}
-
-function heroesFromFoes(foes: FoeTemplate[]): HeroOption[] {
-  return foes.map((foe) => ({
-    id: foe.id,
-    label: heroLabelFromFoeName(foe.name),
-    emoji: foe.emoji,
-  }));
-}
-
-const FOES: FoeTemplate[] = FOES_RAW.map((f) => ({ ...f }));
-const HEROES: HeroOption[] = heroesFromFoes(FOES).sort(
-  (a, b) => heroPickerOrderIndex(a.emoji) - heroPickerOrderIndex(b.emoji)
-);
-const HERO_EMOJIS = new Set(HEROES.map((hero) => hero.emoji));
-const FOES_BY_ID = new Map(FOES.map((foe) => [foe.id, foe]));
-const FOE_IDS = new Set(FOES.map((foe) => foe.id));
-
-for (const foe of FOES) {
-  assertAlliterativeName(foe.name);
-}
-assertUniqueEmojis(FOES);
-assertHeroPickerOrderCovers(FOES.map((f) => f.emoji));
 function buildFoeOrder(heroEmoji: string): FoeTemplate[] {
   return buildFoeOrderForHero(FOES, heroEmoji);
 }
@@ -383,113 +302,11 @@ let displayedFoeHype = 0;
 let skipPlayerHypeTeachThisRender = false;
 /** Skip HYPE teach pulses on the first render after mid-run restore. */
 let suppressTeachFlashesThisRender = false;
-type CombatTeachPopupId = "cmd-heal-teach" | "cmd-dance-teach" | "cmd-run-teach";
 const temporarilyClosedTeachPopups = new Set<CombatTeachPopupId>();
-const el = {
-  arena: document.getElementById("arena")!,
-  battleStage: document.getElementById("battle-stage")!,
-  playerPanel: document.getElementById("player-panel")!,
-  playerStatus: document.querySelector("#player-panel .hero-status") as HTMLElement,
-  foePanel: document.getElementById("foe-panel")!,
-  foeStatus: document.querySelector("#foe-panel .enemy-status") as HTMLElement,
-  damageLayer: document.getElementById("damage-layer")!,
-  heroLevelUpLayer: document.getElementById("hero-level-up-layer")!,
-  xpBar: document.getElementById("xp-bar")!,
-  xpFill: document.getElementById("xp-fill")!,
-  xpText: document.getElementById("xp-text")!,
-  bestWave: document.getElementById("stat-best-wave")!,
-  runs: document.getElementById("stat-runs")!,
-  waveBanner: document.getElementById("wave-banner")!,
-  playerHpFill: document.getElementById("player-hp-fill")!,
-  playerHpText: document.getElementById("player-hp-text")!,
-  playerLevel: document.getElementById("player-level")!,
-  playerAttack: document.getElementById("player-attack")!,
-  playerBuff: document.getElementById("player-buff")!,
-  playerHypeWrap: document.getElementById("player-hype-wrap")!,
-  playerHypeBar: document.getElementById("player-hype-bar")!,
-  playerHypeFill: document.getElementById("player-hype-fill")!,
-  playerEmoji: document.getElementById("hero-emoji")!,
-  playerName: document.getElementById("hero-name")!,
-  foeName: document.getElementById("foe-name")!,
-  foeLevel: document.getElementById("foe-level")!,
-  foeAttack: document.getElementById("foe-attack")!,
-  foeBuff: document.getElementById("foe-buff")!,
-  foeHypeWrap: document.getElementById("foe-hype-wrap")!,
-  foeHypeBar: document.getElementById("foe-hype-bar")!,
-  foeHypeFill: document.getElementById("foe-hype-fill")!,
-  foeEmoji: document.getElementById("foe-emoji")!,
-  foeHpFill: document.getElementById("foe-hp-fill")!,
-  foeHpText: document.getElementById("foe-hp-text")!,
-  turnLabel: document.getElementById("turn-label")!,
-  battleText: document.getElementById("battle-text")!,
-  actions: document.getElementById("actions")!,
-  healBtn:
-    document.getElementById("cmd-heal") ??
-    document.querySelector<HTMLButtonElement>('[data-action="heal"]')!,
-  danceBtn:
-    document.getElementById("cmd-dance") ??
-    document.querySelector<HTMLButtonElement>('[data-action="dance"]')!,
-  attackBtn:
-    document.getElementById("cmd-attack") ??
-    document.querySelector<HTMLButtonElement>('[data-action="attack"]')!,
-  healTeachPopup: document.getElementById("cmd-heal-teach")!,
-  danceTeachPopup: document.getElementById("cmd-dance-teach")!,
-  runTeachPopup: document.getElementById("cmd-run-teach")!,
-  runBtn:
-    document.getElementById("cmd-run") ??
-    document.querySelector<HTMLButtonElement>('[data-action="run"]')!,
-  recordsBar: document.querySelector(".records-bar") as HTMLElement,
-  gameOver: document.getElementById("game-over")!,
-  victoryEmojiLayer: document.getElementById("victory-emoji-layer")!,
-  gameOverTag: document.getElementById("game-over-tag")!,
-  gameOverSummary: document.getElementById("game-over-summary")!,
-  gameOverBattleLog: document.getElementById("game-over-battle-log")!,
-  gameOverLog: document.querySelector(".game-over-log") as HTMLDetailsElement,
-  restartLabel: document.querySelector("#restart-btn .cmd-label")!,
-  restartBtn: document.getElementById("restart-btn")!,
-  quitBtn: document.getElementById("quit-btn")!,
-  resetStatsBtn: document.getElementById("reset-stats-btn")!,
-  footerMore: document.getElementById("footer-more") as HTMLDetailsElement,
-  helpBtn: document.getElementById("help-btn")!,
-  helpOverlay: document.getElementById("help-overlay")!,
-  helpPanel: document.getElementById("help-panel")!,
-  helpClose: document.getElementById("help-close")!,
-  themeToggle: document.getElementById("theme-toggle")!,
-  themeToggleIcon: document.querySelector("#theme-toggle .theme-toggle-icon")!,
-  confirmOverlay: document.getElementById("confirm-overlay")!,
-  confirmPanel: document.getElementById("confirm-panel")!,
-  confirmTitle: document.getElementById("confirm-title")!,
-  confirmMessage: document.getElementById("confirm-message")!,
-  confirmOk: document.getElementById("confirm-ok")!,
-  confirmCancel: document.getElementById("confirm-cancel")!,
-  setupOverlay: document.getElementById("character-setup")!,
-  setupSubtitle: document.getElementById("setup-subtitle")!,
-  heroPicker: document.getElementById("hero-picker")!,
-  heroNameInput: document.getElementById("hero-name-input") as HTMLInputElement,
-  heroColorSwatches: document.getElementById("hero-color-swatches")!,
-  heroColorToggle: document.getElementById("hero-color-toggle") as HTMLButtonElement,
-  heroColorPopup: document.getElementById("hero-color-popup")!,
-  setupStartBtn: document.getElementById("setup-start-btn") as HTMLButtonElement,
-  setupHint: document.getElementById("setup-hint")!,
-  gameShell: document.querySelector(".game-shell") as HTMLElement,
-};
 
 let setupHintForced = false;
 let setupColorPickerBound = false;
 let waveAttempt = 1;
-type BattleLogEntry = {
-  title?: string;
-  waveTitle?: { wave: number; attempt: number };
-  wave: number;
-  turn: number;
-  action?: "Attack" | "Heal" | "Dance" | "Run";
-  playerAttack: number;
-  playerPower: number;
-  foeAttack: number | null;
-  foePower: number | null;
-  foeColorTheme: FoeColorTheme;
-  lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[];
-};
 const battleLogHistory: BattleLogEntry[] = [];
 
 function sanitizeBattleLogHistory(raw: unknown): BattleLogEntry[] | undefined {
@@ -558,30 +375,6 @@ function sanitizeBattleLogHistory(raw: unknown): BattleLogEntry[] | undefined {
   }
   return entries.length > 0 ? entries : undefined;
 }
-
-type ConfirmOptions = {
-  title: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  danger?: boolean;
-};
-
-const PENDING_CONFIRM_OPTIONS: Record<PendingConfirmKind, ConfirmOptions> = {
-  newRun: {
-    title: "Start a new run?",
-    message:
-      "Your high score and run count stay. This run can't be continued.",
-    confirmLabel: "New Run",
-  },
-  clearData: {
-    title: "Delete everything?",
-    message:
-      "Permanently delete your critter and all-time play history. This can't be undone.",
-    confirmLabel: "Clear Data",
-    danger: true,
-  },
-};
 
 let confirmResolve: ((confirmed: boolean) => void) | null = null;
 
@@ -782,11 +575,6 @@ function readPersistedFields(): Record<string, unknown> {
   }
 }
 
-type LegacySnapshot = GameSnapshot & {
-  goblin?: Enemy | null;
-  goblinHypeLevel?: number;
-};
-
 function loadSnapshot(): GameSnapshot | null {
   try {
     const raw = getStorageRaw();
@@ -889,10 +677,6 @@ function persist(snapshot?: GameSnapshot): void {
 function isConfirmDialogOpen(): boolean {
   return !el.confirmOverlay.classList.contains("hidden");
 }
-
-/** Set by e2e save patches so pagehide does not overwrite localStorage before reload. */
-const SKIP_EXIT_FLUSH_KEY = "critterwave-skip-exit-flush";
-const HELP_OPEN_KEY = "critterwave-help-open";
 
 function shouldFlushSnapshotOnPageExit(): boolean {
   try {
@@ -1249,8 +1033,6 @@ function updateSetupStartButton(): void {
   el.setupHint.classList.add("setup-hint-error");
 }
 
-const SETUP_NAME_TEACH_FLASH_MS = 1400;
-
 function playSetupNameTeachFlash(): void {
   el.heroNameInput.classList.remove("setup-name-teach-flash");
   void el.heroNameInput.offsetWidth;
@@ -1441,8 +1223,6 @@ function syncFirstHypeFlashes(): void {
   }
 }
 
-const HP_TEACH_FLASH_MS = 1400;
-
 function playHpBarTeachFlash(fill: HTMLElement, className: string): void {
   const bar = fill.parentElement;
   if (!bar) {
@@ -1542,8 +1322,6 @@ function teachPopupArrowPx(): number {
     .trim();
   return parseFloat(raw) || 7;
 }
-
-const MOBILE_TEACH_LAYOUT_MQ = window.matchMedia("(max-width: 768px)");
 
 function teachPopupMaxWidthForLayout(): string | null {
   if (!MOBILE_TEACH_LAYOUT_MQ.matches) {
@@ -1713,6 +1491,10 @@ function closeVisibleCombatTeachPopups(): void {
   syncCombatHintClasses();
 }
 
+function isCombatCommandClick(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest("#actions [data-action]") !== null;
+}
+
 function bindCombatTeachPopupDismissal(): void {
   document.addEventListener("click", (event) => {
     const visiblePopups = visibleCombatTeachPopups();
@@ -1721,6 +1503,10 @@ function bindCombatTeachPopupDismissal(): void {
     }
     const target = event.target;
     if (target instanceof Node && visiblePopups.some(({ popup }) => popup.contains(target))) {
+      return;
+    }
+    // Hints can appear mid-handler when a command triggers a counter-attack; ignore that click.
+    if (isCombatCommandClick(target)) {
       return;
     }
     closeVisibleCombatTeachPopups();
@@ -1909,8 +1695,6 @@ function showDamagePop(
   void pop.offsetWidth;
   window.setTimeout(() => pop.remove(), 900);
 }
-
-const LEVEL_UP_NOTICE_MS = 1800;
 
 function playLevelUpNotice(level: number): Promise<void> {
   if (debugInstantTransitions) {
@@ -2536,7 +2320,6 @@ function ensureDebugHeroChoice(): void {
 function waitForDebugTick(): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
-type DebugCombatAction = "attack" | "heal" | "dance" | "run";
 
 function performDebugCombatAction(action: DebugCombatAction): void {
   switch (action) {

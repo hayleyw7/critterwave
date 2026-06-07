@@ -46,6 +46,38 @@ test.describe("combat hints — button glow", () => {
     await expect(page.locator("#cmd-heal-teach")).toBeHidden();
   });
 
+  test("run teach popup survives the attack click that triggers lethal hint", async ({
+    page,
+  }) => {
+    await startFreshRun(page);
+    const foeAttackText = await page.locator("#foe-attack").textContent();
+    const foeAttack = Number.parseInt(foeAttackText ?? "", 10);
+    expect(Number.isFinite(foeAttack)).toBe(true);
+
+    await patchSaveSnapshot(page, {
+      player: { hp: foeAttack + 1, maxHp: 20 },
+      foe: { hp: 999, maxHp: 999 },
+      combatHints: {
+        dismissedAttackHint: true,
+        dismissedHealHint: true,
+        dismissedDanceHint: true,
+      },
+    });
+    await reloadAfterSavePatch(page);
+
+    await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "off");
+    await page.getByRole("button", { name: "Attack" }).click();
+    await expect(page.locator("#battle-text")).toContainText(/hits you for/i, {
+      timeout: 10_000,
+    });
+
+    await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-run-teach")).toBeVisible();
+    await expect(page.locator("#cmd-run-teach")).toContainText(
+      /Run away — heal a little, face the next foe, and lose all HYPE\./i
+    );
+  });
+
   test("run glows at lethal hp and hides heal hint", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
