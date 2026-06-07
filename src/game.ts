@@ -435,6 +435,7 @@ const el = {
   restartBtn: document.getElementById("restart-btn")!,
   quitBtn: document.getElementById("quit-btn")!,
   resetStatsBtn: document.getElementById("reset-stats-btn")!,
+  footerMore: document.getElementById("footer-more") as HTMLDetailsElement,
   helpBtn: document.getElementById("help-btn")!,
   helpOverlay: document.getElementById("help-overlay")!,
   helpPanel: document.getElementById("help-panel")!,
@@ -3103,6 +3104,33 @@ function bindHelpDialog(): void {
   });
 }
 
+function closeFooterMore(): void {
+  el.footerMore.open = false;
+}
+
+function bindFooterMoreMenu(): void {
+  document.addEventListener("click", (event) => {
+    if (!el.footerMore.open) {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Node && el.footerMore.contains(target)) {
+      return;
+    }
+    closeFooterMore();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (!el.footerMore.open) {
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeFooterMore();
+    }
+  });
+}
+
 async function beginGame(): Promise<void> {
   const save = loadSave();
   if (save.playerEmoji) {
@@ -3174,6 +3202,7 @@ async function init(): Promise<void> {
   updateSetupSubtitle();
   bindConfirmDialog();
   bindHelpDialog();
+  bindFooterMoreMenu();
   bindActions();
   bindPageExitPersist();
   bindFooterTeachPopupResize();

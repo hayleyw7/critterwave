@@ -1,6 +1,15 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { patchSaveSnapshot, reloadAfterSavePatch } from "./helpers-save.js";
 import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers.js";
+
+async function openMoreOptions(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "More options" }).click();
+}
+
+async function clickFooterMenuButton(page: Page, name: "New Run" | "Clear Data"): Promise<void> {
+  await openMoreOptions(page);
+  await page.getByRole("button", { name }).click();
+}
 
 test.describe("Critterwave — happy paths", () => {
   test("hero setup starts a run", async ({ page }) => {
@@ -85,8 +94,14 @@ test.describe("Critterwave — happy paths", () => {
     await expect(page.getByText("Runs", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "How to play" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Switch to light mode" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "More options" })).toBeVisible();
+    await openMoreOptions(page);
     await expect(page.getByRole("button", { name: "New Run" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Clear Data" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("button", { name: "New Run" })).toBeHidden();
+    await openMoreOptions(page);
+    await page.locator("#battle-text").click();
+    await expect(page.getByRole("button", { name: "New Run" })).toBeHidden();
     await expect(page.locator(".records-stat-label--long").first()).toBeHidden();
     await expect(page.locator(".records-stat-label--short").first()).toBeVisible();
   });
@@ -108,7 +123,7 @@ test.describe("Critterwave — happy paths", () => {
 
   test("new run returns to hero setup", async ({ page }) => {
     await startFreshRun(page);
-    await page.getByRole("button", { name: "New Run" }).click();
+    await clickFooterMenuButton(page, "New Run");
     await page.locator("#confirm-ok").click();
     await expect(
       page.getByRole("heading", { name: "Which critter are you?" })
@@ -117,7 +132,7 @@ test.describe("Critterwave — happy paths", () => {
 
   test("new run confirm survives reload", async ({ page }) => {
     await startFreshRun(page);
-    await page.getByRole("button", { name: "New Run" }).click();
+    await clickFooterMenuButton(page, "New Run");
     await expect(page.locator("#confirm-overlay")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Start a new run?" })).toBeVisible();
     await page.reload();
@@ -130,13 +145,13 @@ test.describe("Critterwave — happy paths", () => {
 
   test("new run confirm dismisses on escape and backdrop tap", async ({ page }) => {
     await startFreshRun(page);
-    await page.getByRole("button", { name: "New Run" }).click();
+    await clickFooterMenuButton(page, "New Run");
     await expect(page.locator("#confirm-overlay")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.locator("#confirm-overlay")).toHaveClass(/hidden/);
     await expect(page.getByLabel("Combat actions")).toBeVisible();
 
-    await page.getByRole("button", { name: "New Run" }).click();
+    await clickFooterMenuButton(page, "New Run");
     await page.locator("#confirm-overlay").click({
       position: { x: 8, y: 8 },
       force: true,
@@ -147,7 +162,7 @@ test.describe("Critterwave — happy paths", () => {
   test("clear data confirm dismisses on backdrop tap (mobile)", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await startFreshRun(page);
-    await page.getByRole("button", { name: "Clear Data" }).click();
+    await clickFooterMenuButton(page, "Clear Data");
     await expect(page.locator("#confirm-overlay")).toBeVisible();
     await page.locator("#confirm-overlay").click({
       position: { x: 12, y: 12 },
@@ -158,7 +173,7 @@ test.describe("Critterwave — happy paths", () => {
 
   test("clear data confirm survives reload", async ({ page }) => {
     await startFreshRun(page);
-    await page.getByRole("button", { name: "Clear Data" }).click();
+    await clickFooterMenuButton(page, "Clear Data");
     await expect(page.locator("#confirm-overlay")).toHaveClass(/confirm-danger/);
     await expect(page.getByRole("heading", { name: "Delete everything?" })).toBeVisible();
     await page.reload();
@@ -274,7 +289,7 @@ test.describe("Critterwave — sad paths", () => {
 
   test("new run setup survives reload", async ({ page }) => {
     await startFreshRun(page);
-    await page.getByRole("button", { name: "New Run" }).click();
+    await clickFooterMenuButton(page, "New Run");
     await page.locator("#confirm-ok").click();
     await expect(
       page.getByRole("heading", { name: "Which critter are you?" })
@@ -289,7 +304,7 @@ test.describe("Critterwave — sad paths", () => {
 
   test("clear data resets to setup", async ({ page }) => {
     await startFreshRun(page);
-    await page.getByRole("button", { name: "Clear Data" }).click();
+    await clickFooterMenuButton(page, "Clear Data");
     await page.locator("#confirm-ok").click();
     await expect(
       page.getByRole("heading", { name: "Which critter are you?" })

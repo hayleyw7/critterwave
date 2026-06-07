@@ -167,9 +167,9 @@ html[data-theme="light"] {
   --confirm-danger-shadow: #be123c;
   --meta-danger-hover-text: var(--danger);
   --meta-danger-hover-bg: rgba(190, 18, 60, 0.18);
-  --meta-btn-bg: #b8a0d8;
-  --meta-btn-border: #5a3d8a;
-  --meta-btn-hover-bg: #a78bdb;
+  --meta-btn-bg: var(--cmd-bg);
+  --meta-btn-border: var(--cmd-border);
+  --meta-btn-hover-bg: var(--cmd-hover);
   --teach-popup-text: var(--text);
   --teach-popup-border: #fde047;
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 36%, var(--cmd-bg));
@@ -579,6 +579,8 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
 
 .help-close {
   flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 0;
 }
 
 .help-copy {
@@ -2273,7 +2275,7 @@ html[data-theme="light"] .damage-pop.heal-pop {
   flex-shrink: 0;
   border-top: 1px solid var(--records-divider);
   position: relative;
-  z-index: 1;
+  z-index: 100;
 }
 
 .records-stats {
@@ -2308,6 +2310,7 @@ html[data-theme="light"] .damage-pop.heal-pop {
 .meta-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
 }
 
@@ -2353,6 +2356,61 @@ html[data-theme="light"] .damage-pop.heal-pop {
   color: var(--text);
   background: var(--meta-btn-hover-bg);
   border-color: var(--highlight);
+}
+
+.meta-more {
+  position: relative;
+  z-index: 120;
+}
+
+.meta-more summary {
+  list-style: none;
+}
+
+.meta-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.meta-more-toggle {
+  user-select: none;
+}
+
+.meta-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-1));
+  z-index: 120;
+  display: grid;
+  gap: var(--space-1);
+  min-width: 8rem;
+  padding: var(--space-1);
+  border: 2px solid var(--meta-btn-border);
+  background: var(--panel);
+  box-shadow: 0 0 18px rgba(10, 6, 18, 0.5);
+}
+
+.meta-menu .meta-btn {
+  width: 100%;
+  white-space: nowrap;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.meta-btn-success {
+  color: var(--cmd-heal-text);
+}
+
+.meta-btn-success:hover {
+  color: #dcfce7;
+  border-color: #86efac;
+  background: rgba(34, 197, 94, 0.22);
+}
+
+.meta-btn-danger {
+  color: var(--danger);
 }
 
 .meta-btn-danger:hover {

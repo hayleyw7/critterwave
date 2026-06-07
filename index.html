@@ -72,7 +72,7 @@
           </button>
         </div>
         <div class="help-copy">
-          <p class="help-goal">Defeat 100 waves of critters to win!</p>
+          <p class="help-goal">Defeat 100 waves of critters!</p>
 
           <p class="help-section-title">STATS</p>
           <ul class="help-list">
@@ -392,10 +392,20 @@
           >
             <span class="theme-toggle-icon" aria-hidden="true">☀</span>
           </button>
-          <button type="button" class="meta-btn" id="quit-btn">New Run</button>
-          <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
-            Clear Data
-          </button>
+          <details class="meta-more" id="footer-more">
+            <summary
+              class="meta-btn meta-btn-icon meta-more-toggle"
+              role="button"
+              aria-label="More options"
+              title="More options"
+            >⋯</summary>
+            <div class="meta-menu">
+              <button type="button" class="meta-btn meta-btn-success" id="quit-btn">New Run</button>
+              <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
+                Clear Data
+              </button>
+            </div>
+          </details>
         </div>
       </footer>
     </div>
