@@ -137,7 +137,12 @@ import {
 const HYPE_METER_FLASH_MS = 450 * 3 + 50;
 declare global {
   interface Window {
-    critterwave?: { win: () => void };
+    critterwave?: {
+      win: () => void;
+      lose?: () => void;
+      winLog?: () => void;
+      loseLog?: () => void;
+    };
   }
 }
 
@@ -223,8 +228,9 @@ type GameSnapshot = {
   battleLogHistory?: BattleLogEntry[];
 };
 
-const STORAGE_KEY = "critterwave-v5";
+const STORAGE_KEY = "critterwave-v6";
 let currentColorMode: ColorMode = "dark";
+let debugInstantTransitions = false;
 const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
 const FOE_POOF_MS = 450;
 const FOE_ENTRANCE_MS = 550;
@@ -431,6 +437,7 @@ const el = {
   gameOverTag: document.getElementById("game-over-tag")!,
   gameOverSummary: document.getElementById("game-over-summary")!,
   gameOverBattleLog: document.getElementById("game-over-battle-log")!,
+  gameOverLog: document.querySelector(".game-over-log") as HTMLDetailsElement,
   restartLabel: document.querySelector("#restart-btn .cmd-label")!,
   restartBtn: document.getElementById("restart-btn")!,
   quitBtn: document.getElementById("quit-btn")!,
@@ -1366,6 +1373,14 @@ function canBeDefeatedByNextHit(hp: number, incomingAttack: number): boolean {
 }
 
 function playXpBarFullBeat(): Promise<void> {
+  if (debugInstantTransitions) {
+    const { max } = xpProgressForWave(wave);
+    setHpBar(el.xpFill, max, max);
+    el.xpText.textContent = "100%";
+    el.xpBar.setAttribute("aria-valuenow", String(max));
+    el.xpBar.setAttribute("aria-valuemax", String(max));
+    return Promise.resolve();
+  }
   const { max } = xpProgressForWave(wave);
   setHpBar(el.xpFill, max, max);
   el.xpText.textContent = "100%";
@@ -1663,6 +1678,9 @@ function syncCombatTeachPopups(
 }
 
 function briefClass(element: HTMLElement, className: string, ms: number): void {
+  if (debugInstantTransitions) {
+    return;
+  }
   element.classList.remove(className);
   void element.offsetWidth;
   element.classList.add(className);
@@ -1670,6 +1688,9 @@ function briefClass(element: HTMLElement, className: string, ms: number): void {
 }
 
 function playStageClass(className: string, ms: number): Promise<void> {
+  if (debugInstantTransitions) {
+    return Promise.resolve();
+  }
   return new Promise((resolve) => {
     el.battleStage.classList.remove(className);
     void el.battleStage.offsetWidth;
@@ -1717,6 +1738,9 @@ function clearHitReact(panel: HTMLElement): void {
 }
 
 function playHeroHeal(): Promise<void> {
+  if (debugInstantTransitions) {
+    return Promise.resolve();
+  }
   return new Promise((resolve) => {
     el.playerPanel.classList.remove("hero-heal");
     void el.playerPanel.offsetWidth;
@@ -1745,11 +1769,17 @@ function playRunEntrance(): void {
 }
 
 function playFoeEntrance(): void {
+  if (debugInstantTransitions) {
+    return;
+  }
   el.foePanel.classList.remove("foe-sprite-hidden");
   briefClass(el.foePanel, "foe-enter", FOE_ENTRANCE_MS);
 }
 
 function playFoePoof(): Promise<void> {
+  if (debugInstantTransitions) {
+    return Promise.resolve();
+  }
   return new Promise((resolve) => {
     el.foePanel.classList.remove("foe-poof", "foe-sprite-hidden");
     void el.foePanel.offsetWidth;
@@ -1763,6 +1793,9 @@ function playFoePoof(): Promise<void> {
 }
 
 async function playFoeDefeat(isFinal: boolean): Promise<void> {
+  if (debugInstantTransitions) {
+    return;
+  }
   if (isFinal) {
     await Promise.all([playFoePoof(), playStageClass("stage-flash-gold", GOLD_FLASH_MS)]);
     briefClass(el.playerPanel, "hero-victory-wobble", 450);
@@ -1822,6 +1855,9 @@ function showDamagePop(
 const LEVEL_UP_NOTICE_MS = 1800;
 
 function playLevelUpNotice(level: number): Promise<void> {
+  if (debugInstantTransitions) {
+    return Promise.resolve();
+  }
   return new Promise((resolve) => {
     const pop = document.createElement("span");
     pop.className = "level-up-pop";
@@ -1911,6 +1947,7 @@ function render(): void {
   el.gameOver.classList.toggle("game-victory", phase === "victory");
   el.gameOverTag.textContent = phase === "victory" ? "YOU WIN!" : "GAME OVER";
   el.restartLabel.textContent = phase === "victory" ? "Play Again?" : "Try Again?";
+  el.gameOverLog.open = false;
   renderGameOverBattleLog();
   el.actions.classList.toggle("hidden", inEndScreen);
   syncFirstHypeFlashes();
@@ -2417,7 +2454,7 @@ function winCampaign(): void {
   applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
   phase = "victory";
   clearAllHype();
-  logEndTitle(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`);
+  logEndTitle(`YOU WIN!`);
   updateRecordsOnVictory();
   startVictoryCelebration(
     el.victoryEmojiLayer,
@@ -2434,19 +2471,190 @@ function hasDebugWin(): boolean {
     new URLSearchParams(window.location.search).get("debug") === "win"
   );
 }
+function ensureDebugHeroChoice(): void {
+  if (player.emoji) {
+    return;
+  }
+  const first = HEROES[0]!;
+  applyHeroChoice(first.emoji, first.label);
+  applyHeroColorTheme(resolveHeroColorTheme(loadSave()));
+}
+
+function waitForDebugTick(): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
+}
+type DebugCombatAction = "attack" | "heal" | "dance" | "run";
+
+function performDebugCombatAction(action: DebugCombatAction): void {
+  switch (action) {
+    case "heal":
+      onHeal();
+      return;
+    case "dance":
+      onDance();
+      return;
+    case "run":
+      onRun();
+      return;
+    default:
+      onAttack();
+  }
+}
+
+function scriptedDebugAction(
+  actions: readonly DebugCombatAction[],
+  index: number,
+  campaignLength: number
+): { action: DebugCombatAction; nextIndex: number } {
+  if (index >= actions.length) {
+    return { action: "attack", nextIndex: index };
+  }
+  const candidate = actions[index]!;
+  if (candidate === "run" && wave >= campaignLength) {
+    return { action: "attack", nextIndex: index + 1 };
+  }
+  return { action: candidate, nextIndex: index + 1 };
+}
+
+function tuneDebugLoseLogFoe(): void {
+  if (!foe) {
+    return;
+  }
+  if (foe.maxHp < 60) {
+    foe.maxHp = 60;
+    foe.hp = Math.max(foe.hp, 60);
+  }
+  foe.attack = Math.max(foe.attack, 12);
+}
 
 function triggerDebugWin(): void {
   hideSetup();
-
-  if (!player.emoji) {
-    const first = HEROES[0]!;
-    applyHeroChoice(first.emoji, first.label);
-    applyHeroColorTheme(resolveHeroColorTheme(loadSave()));
-  }
+  ensureDebugHeroChoice();
 
   wave = getCampaignLength();
   clearLog();
   winCampaign();
+}
+
+async function triggerDebugWinLog(): Promise<void> {
+  hideSetup();
+  ensureDebugHeroChoice();
+
+  debugInstantTransitions = true;
+  try {
+    const campaignLength = getCampaignLength();
+    const scriptedActions: readonly DebugCombatAction[] = [
+      "dance",
+      "heal",
+      "attack",
+      "run",
+      "dance",
+      "attack",
+      "heal",
+      "attack",
+    ];
+    let scriptedActionIndex = 0;
+    resetGame();
+    player.hp = 9999;
+    player.maxHp = 9999;
+    player.attack = 9999;
+    render();
+    persist();
+
+    while (phase === "combat") {
+      if (!foe) {
+        await waitForDebugTick();
+        continue;
+      }
+      if (!canUseCombatActions()) {
+        await waitForDebugTick();
+        continue;
+      }
+      player.attack = 9999;
+      const scripted = scriptedDebugAction(
+        scriptedActions,
+        scriptedActionIndex,
+        campaignLength
+      );
+      scriptedActionIndex = scripted.nextIndex;
+      let action = scripted.action;
+      if (
+        action === "attack" &&
+        wave < campaignLength &&
+        waveAttempt === 1 &&
+        turn === 1
+      ) {
+        if (wave % 33 === 0) {
+          action = "run";
+        } else if (wave % 19 === 0) {
+          action = "heal";
+        } else if (wave % 12 === 0) {
+          action = "dance";
+        }
+      }
+      performDebugCombatAction(action);
+      await waitForDebugTick();
+    }
+  } finally {
+    debugInstantTransitions = false;
+  }
+}
+
+function triggerDebugLose(): void {
+  console.info("[critterwave] debug lose fired");
+  hideSetup();
+  ensureDebugHeroChoice();
+  resetGame();
+  player.hp = 0;
+  endGame();
+}
+
+async function triggerDebugLoseLog(): Promise<void> {
+  hideSetup();
+  ensureDebugHeroChoice();
+
+  debugInstantTransitions = true;
+  try {
+    const campaignLength = getCampaignLength();
+    const scriptedActions: readonly DebugCombatAction[] = [
+      "dance",
+      "heal",
+      "run",
+      "dance",
+      "heal",
+      "attack",
+    ];
+    let scriptedActionIndex = 0;
+    resetGame();
+    player.hp = 40;
+    player.maxHp = 40;
+    player.attack = 1;
+    tuneDebugLoseLogFoe();
+    render();
+    persist();
+
+    while (phase === "combat") {
+      if (!foe) {
+        await waitForDebugTick();
+        continue;
+      }
+      if (!canUseCombatActions()) {
+        await waitForDebugTick();
+        continue;
+      }
+      tuneDebugLoseLogFoe();
+      const scripted = scriptedDebugAction(
+        scriptedActions,
+        scriptedActionIndex,
+        campaignLength
+      );
+      scriptedActionIndex = scripted.nextIndex;
+      performDebugCombatAction(scripted.action);
+      await waitForDebugTick();
+    }
+  } finally {
+    debugInstantTransitions = false;
+  }
 }
 
 function mountDebugHooks(): boolean {
@@ -2457,34 +2665,54 @@ function mountDebugHooks(): boolean {
   const debugMode = new URLSearchParams(window.location.search).get("debug");
 
   if (debugMode === "lose") {
-    console.info("[critterwave] debug lose fired");
-    hideSetup();
+    triggerDebugLose();
+    return true;
+  }
 
-    if (!player.emoji) {
-      const first = HEROES[0]!;
-      applyHeroChoice(first.emoji, first.label);
-      applyHeroColorTheme(resolveHeroColorTheme(loadSave()));
-    }
-
-    wave = 1;
-    turn = 1;
-    phase = "combat";
-    foeOrder = buildFoeOrder(player.emoji);
-    foeQueue = buildInitialFoeQueue(foeOrder);
-    deferredFoeIds = [];
-    startWave();
-
-    player.hp = 0;
-    endGame();
+  if (debugMode === "lose-log") {
+    window.critterwave = {
+      win: triggerDebugWin,
+      lose: triggerDebugLose,
+      winLog: triggerDebugWinLog,
+      loseLog: triggerDebugLoseLog,
+    };
+    window.setTimeout(() => {
+      void triggerDebugLoseLog();
+    }, 0);
+    console.info(
+      "[critterwave] Debug: simulated lose log — or load with ?debug=lose-log"
+    );
 
     return true;
   }
 
   if (debugMode === "win") {
-    window.critterwave = { win: triggerDebugWin };
+    window.critterwave = {
+      win: triggerDebugWin,
+      lose: triggerDebugLose,
+      winLog: triggerDebugWinLog,
+      loseLog: triggerDebugLoseLog,
+    };
     console.info(
-      "[critterwave] Debug: critterwave.win() — or load with ?debug=win"
+      "[critterwave] Debug: critterwave.win() / lose() / winLog() / loseLog() — or load with ?debug=win|win-log|lose|lose-log"
     );
+    return false;
+  }
+
+  if (debugMode === "win-log") {
+    window.critterwave = {
+      win: triggerDebugWin,
+      lose: triggerDebugLose,
+      winLog: triggerDebugWinLog,
+      loseLog: triggerDebugLoseLog,
+    };
+    window.setTimeout(() => {
+      void triggerDebugWinLog();
+    }, 0);
+    console.info(
+      "[critterwave] Debug: simulated win log — or load with ?debug=win-log"
+    );
+    return true;
   }
 
   return false;

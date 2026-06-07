@@ -1,5 +1,5 @@
 (function () {
-  var key = "critterwave-v5";
+  var key = "critterwave-v6";
   var raw = localStorage.getItem(key);
   var mode = "dark";
   if (raw) {

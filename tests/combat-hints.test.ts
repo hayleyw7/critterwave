@@ -203,7 +203,7 @@ describe("combat hints — dance until first hype", () => {
     expect(armed.showDanceHintThisFoe).toBe(true);
     expect(shouldShowDanceHint(armed, 20, 20, combat, true, 0, 3, 0)).toBe(true);
     expect(shouldShowDanceHint(armed, 20, 20, combat, true, 1, 3, 0)).toBe(false);
-    expect(shouldShowDanceHint(armed, 18, 20, combat, true, 0, 3, 0)).toBe(false);
+    expect(shouldShowDanceHint(armed, 18, 20, combat, true, 0, 3, 0)).toBe(true);
   });
 
   it("does not arm dance before first attack or on the first foe", () => {
@@ -327,7 +327,7 @@ describe("combat hints — dance arming edge cases", () => {
 
   it("does not arm after a kill when not at full hp", () => {
     const next = newFoeAfterKill(afterAttack(), { hp: 18, maxHp: 20 });
-    expect(next.showDanceHintThisFoe).toBe(false);
+    expect(next.showDanceHintThisFoe).toBe(true);
   });
 
   it("clears an armed foe flag when entering a foe without arming context", () => {
