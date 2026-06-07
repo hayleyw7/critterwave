@@ -162,7 +162,7 @@ html[data-theme="light"] {
   --cmd-attack-text: #881337;
   --cmd-heal-text: #14532d;
   --cmd-dance-text: #5a3d8a;
-  --cmd-run-text: #5a3d8a;
+  --cmd-run-text: #1e40af;
   --confirm-danger-text: #fecaca;
   --confirm-danger-shadow: #be123c;
   --meta-danger-hover-text: var(--danger);
@@ -618,6 +618,22 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
 .help-copy strong {
   color: var(--gold);
   font-weight: normal;
+}
+
+.help-copy .help-action-attack {
+  color: var(--cmd-attack-text);
+}
+
+.help-copy .help-action-heal {
+  color: var(--cmd-heal-text);
+}
+
+.help-copy .help-action-dance {
+  color: var(--cmd-dance-text);
+}
+
+.help-copy .help-action-run {
+  color: var(--cmd-run-text);
 }
 
 .character-setup {
