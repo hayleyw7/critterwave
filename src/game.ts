@@ -1818,11 +1818,11 @@ function showDamagePop(
 
 const LEVEL_UP_NOTICE_MS = 1800;
 
-function playLevelUpNotice(): Promise<void> {
+function playLevelUpNotice(level: number): Promise<void> {
   return new Promise((resolve) => {
     const pop = document.createElement("span");
     pop.className = "level-up-pop";
-    pop.textContent = "LEVEL UP";
+    pop.textContent = `Level ${level}`;
     pop.setAttribute("role", "status");
     el.heroLevelUpLayer.setAttribute("aria-hidden", "false");
     el.heroLevelUpLayer.appendChild(pop);
@@ -2223,7 +2223,7 @@ async function transitionToNextWave(
 
     if (playerLevel > levelBefore) {
       render();
-      void playLevelUpNotice();
+      void playLevelUpNotice(playerLevel);
     }
   } else if (fledId) {
     waveAttempt += 1;
