@@ -77,6 +77,48 @@ test.describe("combat hints — button glow", () => {
     await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "off");
   });
 
+  test("teach popups can be temporarily closed while keeping the hint glow", async ({ page }) => {
+    await startFreshRun(page);
+    await patchSaveSnapshot(page, {
+      player: { hp: 10, maxHp: 20 },
+      combatHints: { dismissedAttackHint: true },
+    });
+    await reloadAfterSavePatch(page);
+
+    await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-heal")).toHaveClass(/cmd-hint-flash/);
+    await expect(page.locator("#cmd-heal-teach")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+
+    await expect(page.locator("#cmd-heal-teach")).toBeHidden();
+    await expect(page.locator("#cmd-heal")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-heal")).toHaveClass(/cmd-hint-flash/);
+  });
+
+  test("clicking outside a teach popup closes only the popup", async ({ page }) => {
+    await startFreshRun(page);
+    await patchSaveSnapshot(page, {
+      player: { hp: 3, maxHp: 20 },
+      foe: { attack: 5 },
+      combatHints: {
+        dismissedAttackHint: true,
+        dismissedDanceHint: true,
+      },
+    });
+    await reloadAfterSavePatch(page);
+
+    await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-run")).toHaveClass(/cmd-hint-flash/);
+    await expect(page.locator("#cmd-run-teach")).toBeVisible();
+
+    await page.locator("#battle-text").click();
+
+    await expect(page.locator("#cmd-run-teach")).toBeHidden();
+    await expect(page.locator("#cmd-run")).toHaveAttribute("data-combat-hint", "on");
+    await expect(page.locator("#cmd-run")).toHaveClass(/cmd-hint-flash/);
+  });
+
   test("heal hint stays off after heal was used this run", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {

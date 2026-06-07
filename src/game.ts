@@ -378,6 +378,8 @@ let displayedFoeHype = 0;
 let skipPlayerHypeTeachThisRender = false;
 /** Skip HYPE teach pulses on the first render after mid-run restore. */
 let suppressTeachFlashesThisRender = false;
+type CombatTeachPopupId = "cmd-heal-teach" | "cmd-dance-teach" | "cmd-run-teach";
+const temporarilyClosedTeachPopups = new Set<CombatTeachPopupId>();
 const el = {
   arena: document.getElementById("arena")!,
   battleStage: document.getElementById("battle-stage")!,
@@ -1612,11 +1614,15 @@ function positionFooterTeachPopup(popup: HTMLElement, btn: HTMLElement): void {
 function syncCmdTeachPopup(
   popup: HTMLElement,
   btn: HTMLElement,
-  popupId: string,
+  popupId: CombatTeachPopupId,
   show: boolean
 ): void {
-  popup.classList.toggle("hidden", !show);
-  if (show) {
+  if (!show) {
+    temporarilyClosedTeachPopups.delete(popupId);
+  }
+  const visible = show && !temporarilyClosedTeachPopups.has(popupId);
+  popup.classList.toggle("hidden", !visible);
+  if (visible) {
     btn.setAttribute("aria-describedby", popupId);
     if (popup.classList.contains("cmd-teach-popup--dock-footer")) {
       requestAnimationFrame(() => {
@@ -1676,6 +1682,52 @@ function syncCombatTeachPopups(
     "cmd-run-teach",
     shouldShowRunTeachCopy(combatHints, showRun, phase, hasFoe)
   );
+}
+
+const COMBAT_TEACH_POPUPS: readonly {
+  id: CombatTeachPopupId;
+  popup: HTMLElement;
+}[] = [
+  { id: "cmd-heal-teach", popup: el.healTeachPopup },
+  { id: "cmd-dance-teach", popup: el.danceTeachPopup },
+  { id: "cmd-run-teach", popup: el.runTeachPopup },
+];
+
+function visibleCombatTeachPopups(): typeof COMBAT_TEACH_POPUPS {
+  return COMBAT_TEACH_POPUPS.filter(({ popup }) => !popup.classList.contains("hidden"));
+}
+
+function closeVisibleCombatTeachPopups(): void {
+  const visiblePopups = visibleCombatTeachPopups();
+  if (visiblePopups.length === 0) {
+    return;
+  }
+  for (const { id } of visiblePopups) {
+    temporarilyClosedTeachPopups.add(id);
+  }
+  syncCombatHintClasses();
+}
+
+function bindCombatTeachPopupDismissal(): void {
+  document.addEventListener("click", (event) => {
+    const visiblePopups = visibleCombatTeachPopups();
+    if (visiblePopups.length === 0) {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Node && visiblePopups.some(({ popup }) => popup.contains(target))) {
+      return;
+    }
+    closeVisibleCombatTeachPopups();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || visibleCombatTeachPopups().length === 0) {
+      return;
+    }
+    event.preventDefault();
+    closeVisibleCombatTeachPopups();
+  });
 }
 
 function briefClass(element: HTMLElement, className: string, ms: number): void {
@@ -3432,6 +3484,7 @@ async function init(): Promise<void> {
   bindConfirmDialog();
   bindHelpDialog();
   bindFooterMoreMenu();
+  bindCombatTeachPopupDismissal();
   bindActions();
   bindPageExitPersist();
   bindFooterTeachPopupResize();
