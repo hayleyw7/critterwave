@@ -67,7 +67,7 @@
   --cmd-teach-arrow-size: 7px;
   --cmd-dance-text: #bfdbfe;
   --cmd-dance-hover-border: #60a5fa;
-  --cmd-run-text: #fdba74;
+  --cmd-run-text: #fbbf7a;
   --cmd-run-hover-border: #f97316;
   --confirm-danger-text: #fecaca;
   --confirm-danger-shadow: #500;
@@ -186,7 +186,7 @@ html[data-theme="light"] {
   --cmd-heal-hover-border: #4ade80;
   --cmd-dance-text: #1e40af;
   --cmd-dance-hover-border: #60a5fa;
-  --cmd-run-text: #b45309;
+  --cmd-run-text: #b85c00;
   --cmd-run-hover-border: #f97316;
   --confirm-danger-text: #fecaca;
   --confirm-danger-shadow: #be123c;
