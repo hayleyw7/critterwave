@@ -47,9 +47,10 @@ test.describe("Critterwave — happy paths", () => {
   test("first dance gives player hype only", async ({ page }) => {
     await startFreshRun(page);
     await page.getByRole("button", { name: "Dance" }).click();
-    await expect(page.locator("#battle-text")).toContainText(/You get.*\+1 HYPE/i, {
+    await expect(page.locator("#battle-text .battle-line.battle-player")).toContainText(/\+1 HYPE$/, {
       timeout: 10_000,
     });
+    await expect(page.locator("#battle-text .battle-hype-line")).toHaveCount(0);
     await expect(page.locator("#player-buff")).toHaveText("HYPE 1/5");
     await expect(page.locator("#foe-buff")).toHaveText("HYPE 0/5");
   });
@@ -311,6 +312,42 @@ test.describe("Critterwave — sad paths", () => {
     await expect(page.locator("#foe-hype-wrap")).toHaveClass(/hype-maxed/);
     await expect(page.locator("#player-hype-wrap")).not.toHaveClass(/hype-maxed-flash/);
     await expect(page.locator("#foe-hype-wrap")).not.toHaveClass(/hype-maxed-flash/);
+  });
+
+  test("game over log keeps capped dance hype inline", async ({ page }) => {
+    await startFreshRun(page);
+    await patchSaveSnapshot(page, { hypeLevel: 5 });
+    await reloadAfterSavePatch(page);
+    await page.getByRole("button", { name: "Dance" }).click();
+
+    await expect(page.locator("#battle-text .battle-line.battle-player")).toContainText(
+      /MAX HYPE$/,
+      { timeout: 10_000 }
+    );
+
+    await patchSaveSnapshot(page, {
+      player: { hp: 0, maxHp: 20 },
+    });
+    await page.evaluate((key) => {
+      const raw = localStorage.getItem(key);
+      if (!raw) throw new Error("missing save");
+      const save = JSON.parse(raw);
+      save.snapshot.phase = "gameover";
+      localStorage.setItem(key, JSON.stringify(save));
+    }, STORAGE_KEY);
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Try Again?" })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    await page.getByText("Battle Log").click();
+    await expect(page.locator("#game-over-battle-log")).toContainText(/MAX HYPE/);
+    await expect(page.locator("#game-over-battle-log")).not.toContainText(
+      "You're max hype!"
+    );
+    await expect(page.locator("#game-over-battle-log .game-over-log-entry", {
+      hasText: /Turn \d+ - Dance/,
+    })).toContainText(/MAX HYPE/);
   });
 
   test("shows turn dash on game over", async ({ page }) => {

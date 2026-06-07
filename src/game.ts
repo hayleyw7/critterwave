@@ -50,11 +50,7 @@ import {
   pickFirstDanceResponse,
   resetDancePicker,
 } from "./content/dance-responses.js";
-import {
-  appendBattleHypeTail,
-  appendBattleLine,
-  setBattleLines,
-} from "./lib/battle-log-dom.js";
+import { appendBattleLine, setBattleLines } from "./lib/battle-log-dom.js";
 import {
   clampInt,
   isDebugHost,
@@ -2050,41 +2046,48 @@ function logBattleLines(
   revealBattleLog();
 }
 
-function logDanceLines(opener: string, reaction: string, tail: string, turnOverride = turn): void {
-  const lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[] = [
-    { text: opener, kind: "player" },
-    { text: reaction, kind: "foe" },
-  ];
-  const tailText = htmlToPlainText(tail);
-  if (tailText) {
-    if (tailText.includes("You both get")) {
-      lines[0] = { ...lines[0]!, text: `${lines[0]!.text} +1 HYPE` };
-      lines[1] = { ...lines[1]!, text: `${lines[1]!.text} +1 HYPE` };
-    } else if (tailText.includes("You get")) {
-      lines[0] = { ...lines[0]!, text: `${lines[0]!.text} +1 HYPE` };
-    } else if (tailText.includes("gets +")) {
-      lines[1] = { ...lines[1]!, text: `${lines[1]!.text} +1 HYPE` };
-    } else {
-      lines.push({ text: tailText, kind: "info" });
-    }
+function appendDanceHypeSuffix(line: string, suffix: string): string {
+  return suffix ? `${line} ${suffix}` : line;
+}
+
+function danceHypeSuffix(gain: number, capped: boolean): string {
+  if (gain > 0) {
+    return `+${gain} HYPE`;
   }
-  rememberBattleLogEntry(lines, "Dance", undefined, turnOverride);
-  setBattleLines(el.battleText, [
-    { text: opener, kind: "player" },
-    { text: reaction, kind: "foe" },
-  ]);
-  appendBattleHypeTail(el.battleText, tail);
+  if (capped) {
+    return "MAX HYPE";
+  }
+  return "";
+}
+
+function logDanceLines(
+  opener: string,
+  reaction: string,
+  opts: {
+    playerGain: number;
+    foeGain: number;
+    playerCapped: boolean;
+    foeCapped: boolean;
+    turnOverride?: number;
+  }
+): void {
+  const lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[] = [
+    {
+      text: appendDanceHypeSuffix(opener, danceHypeSuffix(opts.playerGain, opts.playerCapped)),
+      kind: "player",
+    },
+    {
+      text: appendDanceHypeSuffix(reaction, danceHypeSuffix(opts.foeGain, opts.foeCapped)),
+      kind: "foe",
+    },
+  ];
+  rememberBattleLogEntry(lines, "Dance", undefined, opts.turnOverride ?? turn);
+  setBattleLines(el.battleText, lines);
   revealBattleLog();
 }
 
 function revealBattleLog(): void {
   el.battleText.closest(".dialog-box")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-}
-
-function htmlToPlainText(html: string): string {
-  const template = document.createElement("template");
-  template.innerHTML = html;
-  return template.content.textContent?.trim() ?? "";
 }
 
 function pause(ms: number): Promise<void> {
@@ -2769,7 +2772,13 @@ function onDance(): void {
   });
 
   playHeroDance();
-  logDanceLines(opener, reaction, tail, actionTurn);
+  logDanceLines(opener, reaction, {
+    playerGain: actualPlayerGain,
+    foeGain: actualFoeGain,
+    playerCapped,
+    foeCapped,
+    turnOverride: actionTurn,
+  });
 
   const foeDances = joins || attemptedFoeGain > 0;
   if (tail) {
