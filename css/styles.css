@@ -707,7 +707,7 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
   padding-left: 1.2rem;
 }
 
-.help-copy strong {
+.help-term {
   color: var(--gold);
   font-weight: normal;
 }
@@ -2432,7 +2432,7 @@ html[data-theme="light"] .damage-pop.hype-pop {
   color: var(--records-label);
 }
 
-.records-stat strong {
+.records-stat-value {
   color: var(--records-value);
   font-weight: normal;
   font-size: 1.15rem;
@@ -3307,7 +3307,7 @@ html[data-theme="light"] .game-over.game-victory .cmd-restart:hover:not(:disable
     min-width: 0;
   }
 
-  .records-stat strong {
+  .records-stat-value {
     font-size: 0.95rem;
   }
 
