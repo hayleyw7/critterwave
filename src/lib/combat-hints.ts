@@ -219,9 +219,6 @@ export function shouldShowDanceHint(
   if (!flags.dismissedAttackHint) {
     return false;
   }
-  if (!isFullHpForHint(hp, maxHp)) {
-    return false;
-  }
   if (hypeLevel >= hypeMax) {
     return false;
   }
@@ -327,9 +324,6 @@ export function shouldArmDanceHintForNewFoe(
     return false;
   }
   if (!flags.dismissedAttackHint) {
-    return false;
-  }
-  if (!isFullHpForHint(ctx.hp, ctx.maxHp)) {
     return false;
   }
   if (ctx.viaKill) {

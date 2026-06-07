@@ -235,7 +235,7 @@ test.describe("combat hints — dance after heal", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
   });
 
-  test("dance returns after run once topped up to full hp", async ({ page }) => {
+  test("dance returns at the start of each new foe until used once", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
       player: { hp: 12, maxHp: 20 },
@@ -259,7 +259,6 @@ test.describe("combat hints — dance after heal", () => {
     await expect(page.locator("#battle-text")).toContainText(/appears!/i, {
       timeout: 15_000,
     });
-    await expect(page.locator("#player-hp-text")).toHaveText("20/20");
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "on");
   });
 

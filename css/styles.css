@@ -2576,6 +2576,12 @@ html[data-theme="light"] .game-over:not(.game-victory) .game-over-panel {
   scrollbar-width: thin;
 }
 
+@media (max-width: 768px) {
+  .game-over-log-list {
+    padding-left: 1.4rem;
+  }
+}
+
 .game-over-log-list::-webkit-scrollbar {
   width: 0.75rem;
 }
