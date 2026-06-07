@@ -435,9 +435,12 @@ const el = {
   restartBtn: document.getElementById("restart-btn")!,
   quitBtn: document.getElementById("quit-btn")!,
   resetStatsBtn: document.getElementById("reset-stats-btn")!,
+  helpBtn: document.getElementById("help-btn")!,
+  helpOverlay: document.getElementById("help-overlay")!,
+  helpPanel: document.getElementById("help-panel")!,
+  helpClose: document.getElementById("help-close")!,
   themeToggle: document.getElementById("theme-toggle")!,
   themeToggleIcon: document.querySelector("#theme-toggle .theme-toggle-icon")!,
-  themeToggleLabel: document.querySelector("#theme-toggle .theme-toggle-label")!,
   confirmOverlay: document.getElementById("confirm-overlay")!,
   confirmPanel: document.getElementById("confirm-panel")!,
   confirmTitle: document.getElementById("confirm-title")!,
@@ -712,13 +715,11 @@ function initColorMode(): void {
 
 function updateThemeToggleUi(): void {
   const isDark = currentColorMode === "dark";
+  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
   el.themeToggle.setAttribute("aria-pressed", isDark ? "false" : "true");
-  el.themeToggle.setAttribute(
-    "aria-label",
-    isDark ? "Switch to light mode" : "Switch to dark mode"
-  );
+  el.themeToggle.setAttribute("aria-label", label);
+  el.themeToggle.setAttribute("title", label);
   el.themeToggleIcon.textContent = isDark ? "☀" : "☾";
-  el.themeToggleLabel.textContent = isDark ? "Light" : "Dark";
 }
 
 function toggleColorMode(): void {
@@ -875,6 +876,7 @@ function isConfirmDialogOpen(): boolean {
 
 /** Set by e2e save patches so pagehide does not overwrite localStorage before reload. */
 const SKIP_EXIT_FLUSH_KEY = "critterwave-skip-exit-flush";
+const HELP_OPEN_KEY = "critterwave-help-open";
 
 function shouldFlushSnapshotOnPageExit(): boolean {
   try {
@@ -3033,6 +3035,74 @@ function bindActions(): void {
   });
 }
 
+function openHelp(): void {
+  el.helpOverlay.classList.remove("hidden");
+  try {
+    sessionStorage.setItem(HELP_OPEN_KEY, "1");
+  } catch {
+    /* sessionStorage unavailable */
+  }
+  el.helpClose.focus();
+}
+
+function closeHelp(): void {
+  el.helpOverlay.classList.add("hidden");
+  try {
+    sessionStorage.removeItem(HELP_OPEN_KEY);
+  } catch {
+    /* sessionStorage unavailable */
+  }
+  el.helpBtn.focus();
+}
+
+function restoreHelpDialog(): void {
+  try {
+    if (sessionStorage.getItem(HELP_OPEN_KEY) === "1") {
+      openHelp();
+    }
+  } catch {
+    /* sessionStorage unavailable */
+  }
+}
+
+function isHelpBackdropTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Node)) {
+    return false;
+  }
+  return !el.helpPanel.contains(target);
+}
+
+function dismissHelpFromBackdrop(event: Event): void {
+  if (el.helpOverlay.classList.contains("hidden")) {
+    return;
+  }
+  if (!isHelpBackdropTarget(event.target)) {
+    return;
+  }
+  if (event instanceof PointerEvent && event.button !== 0) {
+    return;
+  }
+  event.preventDefault();
+  closeHelp();
+}
+
+function bindHelpDialog(): void {
+  el.helpBtn.addEventListener("click", openHelp);
+  el.helpClose.addEventListener("click", closeHelp);
+  el.helpOverlay.addEventListener("click", dismissHelpFromBackdrop);
+  el.helpOverlay.addEventListener("pointerup", dismissHelpFromBackdrop);
+
+  document.addEventListener("keydown", (event) => {
+    if (el.helpOverlay.classList.contains("hidden")) {
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeHelp();
+    }
+  });
+}
+
 async function beginGame(): Promise<void> {
   const save = loadSave();
   if (save.playerEmoji) {
@@ -3103,10 +3173,12 @@ async function init(): Promise<void> {
   initColorMode();
   updateSetupSubtitle();
   bindConfirmDialog();
+  bindHelpDialog();
   bindActions();
   bindPageExitPersist();
   bindFooterTeachPopupResize();
   renderRecords();
+  restoreHelpDialog();
 
   const handledDebug = mountDebugHooks();
   if (handledDebug) {

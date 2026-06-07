@@ -83,10 +83,27 @@ test.describe("Critterwave — happy paths", () => {
     await startFreshRun(page);
     await expect(page.getByText("Best", { exact: true })).toBeVisible();
     await expect(page.getByText("Runs", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "How to play" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Switch to light mode" })).toBeVisible();
     await expect(page.getByRole("button", { name: "New Run" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Clear Data" })).toBeVisible();
     await expect(page.locator(".records-stat-label--long").first()).toBeHidden();
     await expect(page.locator(".records-stat-label--short").first()).toBeVisible();
+  });
+
+  test("help modal opens and closes from footer", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "How to play" }).click();
+    await expect(page.locator("#help-overlay")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "How to Play" })).toBeVisible();
+    await expect(page.locator("#help-overlay")).toContainText("Dance");
+    await expect(page.locator(".help-goal")).toHaveText("Defeat 100 waves of critters!");
+    await page.reload();
+    await expect(page.locator("#help-overlay")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#help-overlay")).toHaveClass(/hidden/);
+    await page.reload();
+    await expect(page.locator("#help-overlay")).toHaveClass(/hidden/);
   });
 
   test("new run returns to hero setup", async ({ page }) => {

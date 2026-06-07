@@ -57,6 +57,40 @@
         </div>
       </div>
     </div>
+    <div
+      class="help-overlay hidden"
+      id="help-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-title"
+    >
+      <div class="help-panel" id="help-panel">
+        <div class="help-header">
+          <h2 class="help-title" id="help-title">How to Play</h2>
+          <button type="button" class="meta-btn meta-btn-icon help-close" id="help-close" aria-label="Close help">
+            ×
+          </button>
+        </div>
+        <div class="help-copy">
+          <p class="help-goal">Defeat 100 waves of critters to win!</p>
+
+          <p class="help-section-title">STATS</p>
+          <ul class="help-list">
+            <li><strong>HP (Health):</strong> How much damage you can take before losing.</li>
+            <li><strong>ATK (Attack):</strong> How much damage your attacks deal.</li>
+            <li><strong>HYPE (Bonus):</strong> Temporarily increases attack power.</li>
+          </ul>
+
+          <p class="help-section-title">ACTIONS</p>
+          <ul class="help-list">
+            <li><strong>Attack:</strong> Deal damage. Foe attacks back.</li>
+            <li><strong>Heal:</strong> Restore HP. Foe attacks back.</li>
+            <li><strong>Dance:</strong> HYPE may increase for you, the foe, or both.</li>
+            <li><strong>Run:</strong> Escape the current foe, regain a little HP, lose HYPE, and face a new foe.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <div class="character-setup hidden" id="character-setup">
       <div class="setup-panel">
@@ -343,13 +377,20 @@
         <div class="meta-actions">
           <button
             type="button"
-            class="meta-btn theme-toggle"
+            class="meta-btn meta-btn-icon"
+            id="help-btn"
+            aria-label="How to play"
+            title="How to play"
+          >?</button>
+          <button
+            type="button"
+            class="meta-btn meta-btn-icon theme-toggle"
             id="theme-toggle"
             aria-pressed="false"
             aria-label="Switch to light mode"
+            title="Switch to light mode"
           >
             <span class="theme-toggle-icon" aria-hidden="true">☀</span>
-            <span class="theme-toggle-label">Light</span>
           </button>
           <button type="button" class="meta-btn" id="quit-btn">New Run</button>
           <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
