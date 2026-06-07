@@ -1,12 +1,6 @@
 (function () {
-  var key = "critterwave-v1";
-  var legacy = ["goblinwave-v4", "goblinwave-v1"];
+  var key = "critterwave-v5";
   var raw = localStorage.getItem(key);
-  if (!raw) {
-    for (var i = 0; i < legacy.length && !raw; i++) {
-      raw = localStorage.getItem(legacy[i]);
-    }
-  }
   var mode = "dark";
   if (raw) {
     try {

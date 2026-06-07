@@ -1,5 +1,5 @@
 const INITIAL_CLUSTERS = [
-  "scr", "squ", "str", "spl", "shr", "th", "ch", "sh", "wh",
+  "scr", "squ", "str", "spl", "shr", "th", "ch", "sh",
   "cr", "br", "bl", "cl", "dr", "fl", "fr", "gl", "gr", "pl", "pr",
   "sk", "sl", "sm", "sn", "sp", "st", "sw", "tr", "tw", "wr",
 ];

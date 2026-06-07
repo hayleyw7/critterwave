@@ -24,6 +24,7 @@ describe("isAlliterativeName", () => {
     expect(isAlliterativeName("Skrill Skrimp")).toBe(true);
     expect(isAlliterativeName("Rabid Rabbit")).toBe(true);
     expect(isAlliterativeName("Rotten Roach")).toBe(true);
+    expect(isAlliterativeName("Wanton Whale")).toBe(true);
     expect(isAlliterativeName("Tiny T-Rex")).toBe(true);
     expect(isAlliterativeName("Happy Cat")).toBe(false);
   });

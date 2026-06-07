@@ -70,7 +70,7 @@ test.describe("security — XSS-safe rendering", () => {
   test("battle log dance lines do not inject script elements", async ({ page }) => {
     await startFreshRun(page, { name: "Safe Hero" });
     await page.getByRole("button", { name: "Dance" }).click();
-    await expect(page.locator(".battle-line.battle-foe")).toBeVisible({
+    await expect(page.locator("#battle-text .battle-line.battle-foe").first()).toBeVisible({
       timeout: 10_000,
     });
     await expect(page.locator("#battle-text script")).toHaveCount(0);

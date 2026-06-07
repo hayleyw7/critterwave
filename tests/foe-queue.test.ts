@@ -8,9 +8,9 @@ import {
 } from "../src/lib/game-logic.js";
 
 const SAMPLE_FOES = [
-  { id: "a", name: "Alpha Ant", emoji: "🐜", baseHp: 10, baseAtk: 2 },
-  { id: "b", name: "Beta Bat", emoji: "🦇", baseHp: 12, baseAtk: 3 },
-  { id: "c", name: "Cold Cat", emoji: "🐱", baseHp: 14, baseAtk: 4 },
+  { id: "a", name: "Angry Ant", emoji: "🐜", baseHp: 10, baseAtk: 2 },
+  { id: "b", name: "Berserk Bat", emoji: "🦇", baseHp: 12, baseAtk: 3 },
+  { id: "c", name: "Conniving Cat", emoji: "🐱", baseHp: 14, baseAtk: 4 },
 ] as const;
 
 describe("foe queue", () => {

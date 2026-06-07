@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-export const STORAGE_KEY = "critterwave-v1";
+export const STORAGE_KEY = "critterwave-v5";
 
 export async function clearSave(page: Page): Promise<void> {
   await page.goto("/");

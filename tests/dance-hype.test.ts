@@ -111,11 +111,11 @@ describe("dance content invariants", () => {
     }
   });
 
-  it("has four hype buckets with balanced counts", () => {
-    expect(NO_HYPE.length).toBe(17);
-    expect(PLAYER_HYPE.length).toBe(14);
-    expect(FOE_HYPE.length).toBe(8);
-    expect(JOIN_HYPE.length).toBe(14);
+  it("has no neutral dance outcomes and balanced hype buckets", () => {
+    expect(NO_HYPE.length).toBe(0);
+    expect(PLAYER_HYPE.length).toBe(18);
+    expect(FOE_HYPE.length).toBe(18);
+    expect(JOIN_HYPE.length).toBe(17);
     expect(
       NO_HYPE.length + PLAYER_HYPE.length + FOE_HYPE.length + JOIN_HYPE.length
     ).toBe(DANCE_RESPONSES.length);

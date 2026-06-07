@@ -52,6 +52,11 @@ describe("foes roster", () => {
     }
   });
 
+  it("is sorted by display name", () => {
+    const names = FOES.map((foe) => foe.name);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b)));
+  });
+
   it("has a large roster for campaign variety", () => {
     expect(FOES.length).toBeGreaterThanOrEqual(100);
   });

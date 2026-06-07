@@ -275,20 +275,6 @@ describe("sanitizeIdList", () => {
     expect(sanitizeIdList(["missing"], FOE_IDS)).toBeUndefined();
     expect(sanitizeIdList("not-array", FOE_IDS)).toBeUndefined();
   });
-
-  it("remaps retired foe ids", () => {
-    expect(sanitizeIdList(["cunning-cat"], FOE_IDS)).toEqual(["conniving-cat"]);
-    expect(sanitizeIdList(["shrill-shrimp"], FOE_IDS)).toEqual([
-      "skrill-skrimp",
-    ]);
-    expect(sanitizeIdList(["skulking-skeleton"], FOE_IDS)).toEqual([
-      "sketchy-skelly",
-    ]);
-    expect(sanitizeIdList(["odious-owl"], FOE_IDS)).toEqual(["outcast-owl"]);
-    expect(sanitizeIdList(["skittish-skunk"], FOE_IDS)).toEqual([
-      "skulking-skunk",
-    ]);
-  });
 });
 
 describe("isDebugHost", () => {

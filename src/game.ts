@@ -50,8 +50,9 @@ import {
   pickFirstDanceResponse,
   resetDancePicker,
 } from "./content/dance-responses.js";
-import { appendBattleHypeTail, setBattleLines } from "./lib/battle-log-dom.js";
+import { appendBattleLine, setBattleLines } from "./lib/battle-log-dom.js";
 import {
+  clampInt,
   isDebugHost,
   parsePendingConfirm,
   parseSaveMeta,
@@ -219,10 +220,10 @@ type GameSnapshot = {
   foeColorTheme?: FoeColorTheme;
   heroColorTheme?: HeroColorTheme;
   combatHints?: CombatHintsState;
+  battleLogHistory?: BattleLogEntry[];
 };
 
-const STORAGE_KEY = "critterwave-v1";
-const LEGACY_STORAGE_KEYS = ["goblinwave-v4", "goblinwave-v1"] as const;
+const STORAGE_KEY = "critterwave-v5";
 let currentColorMode: ColorMode = "dark";
 const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
 const FOE_POOF_MS = 450;
@@ -429,13 +430,18 @@ const el = {
   victoryEmojiLayer: document.getElementById("victory-emoji-layer")!,
   gameOverTag: document.getElementById("game-over-tag")!,
   gameOverSummary: document.getElementById("game-over-summary")!,
+  gameOverBattleLog: document.getElementById("game-over-battle-log")!,
   restartLabel: document.querySelector("#restart-btn .cmd-label")!,
   restartBtn: document.getElementById("restart-btn")!,
   quitBtn: document.getElementById("quit-btn")!,
   resetStatsBtn: document.getElementById("reset-stats-btn")!,
+  footerMore: document.getElementById("footer-more") as HTMLDetailsElement,
+  helpBtn: document.getElementById("help-btn")!,
+  helpOverlay: document.getElementById("help-overlay")!,
+  helpPanel: document.getElementById("help-panel")!,
+  helpClose: document.getElementById("help-close")!,
   themeToggle: document.getElementById("theme-toggle")!,
   themeToggleIcon: document.querySelector("#theme-toggle .theme-toggle-icon")!,
-  themeToggleLabel: document.querySelector("#theme-toggle .theme-toggle-label")!,
   confirmOverlay: document.getElementById("confirm-overlay")!,
   confirmPanel: document.getElementById("confirm-panel")!,
   confirmTitle: document.getElementById("confirm-title")!,
@@ -456,6 +462,88 @@ const el = {
 
 let setupHintForced = false;
 let setupColorPickerBound = false;
+let waveAttempt = 1;
+type BattleLogEntry = {
+  title?: string;
+  waveTitle?: { wave: number; attempt: number };
+  wave: number;
+  turn: number;
+  action?: "Attack" | "Heal" | "Dance" | "Run";
+  playerAttack: number;
+  playerPower: number;
+  foeAttack: number | null;
+  foePower: number | null;
+  foeColorTheme: FoeColorTheme;
+  lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[];
+};
+const battleLogHistory: BattleLogEntry[] = [];
+
+function sanitizeBattleLogHistory(raw: unknown): BattleLogEntry[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const entries: BattleLogEntry[] = [];
+  for (const entry of raw.slice(-200)) {
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as Record<string, unknown>;
+    const linesRaw = Array.isArray(record.lines) ? record.lines : [];
+    const lines = linesRaw
+      .map((line) => {
+        if (!line || typeof line !== "object") return null;
+        const lineRecord = line as Record<string, unknown>;
+        const text = typeof lineRecord.text === "string" ? lineRecord.text : "";
+        const kind = lineRecord.kind;
+        if (
+          kind !== "info" &&
+          kind !== "player" &&
+          kind !== "foe" &&
+          kind !== "win" &&
+          kind !== "lose"
+        ) {
+          return null;
+        }
+        return { text: text.slice(0, 240), kind };
+      })
+      .filter((line): line is BattleLogEntry["lines"][number] => !!line);
+    const action = record.action;
+    const safeAction =
+      action === "Attack" || action === "Heal" || action === "Dance" || action === "Run"
+        ? action
+        : undefined;
+    const wave = clampInt(record.wave, 1, CAMPAIGN_WAVES, 1);
+    const attempt = clampInt(
+      (record.waveTitle as Record<string, unknown> | undefined)?.attempt,
+      1,
+      99,
+      1
+    );
+    const waveTitle =
+      record.waveTitle && typeof record.waveTitle === "object"
+        ? { wave, attempt }
+        : undefined;
+    entries.push({
+      title: typeof record.title === "string" ? record.title.slice(0, 80) : undefined,
+      waveTitle,
+      wave,
+      turn: clampInt(record.turn, 1, 99_999, 1),
+      action: safeAction,
+      playerAttack: clampInt(record.playerAttack, 0, 999, 0),
+      playerPower: clampInt(record.playerPower, 0, HYPE_MAX, 0),
+      foeAttack:
+        typeof record.foeAttack === "number"
+          ? clampInt(record.foeAttack, 0, 999, 0)
+          : null,
+      foePower:
+        typeof record.foePower === "number"
+          ? clampInt(record.foePower, 0, HYPE_MAX, 0)
+          : null,
+      foeColorTheme:
+        typeof record.foeColorTheme === "string" && isColorThemeId(record.foeColorTheme)
+          ? record.foeColorTheme
+          : "amber",
+      lines,
+    });
+  }
+  return entries.length > 0 ? entries : undefined;
+}
 
 type ConfirmOptions = {
   title: string;
@@ -590,13 +678,7 @@ function bindConfirmDialog(): void {
 }
 
 function getStorageRaw(): string | null {
-  const current = localStorage.getItem(STORAGE_KEY);
-  if (current) return current;
-  for (const key of LEGACY_STORAGE_KEYS) {
-    const legacy = localStorage.getItem(key);
-    if (legacy) return legacy;
-  }
-  return null;
+  return localStorage.getItem(STORAGE_KEY);
 }
 
 function loadSave(): SaveData {
@@ -634,13 +716,11 @@ function initColorMode(): void {
 
 function updateThemeToggleUi(): void {
   const isDark = currentColorMode === "dark";
+  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
   el.themeToggle.setAttribute("aria-pressed", isDark ? "false" : "true");
-  el.themeToggle.setAttribute(
-    "aria-label",
-    isDark ? "Switch to light mode" : "Switch to dark mode"
-  );
+  el.themeToggle.setAttribute("aria-label", label);
+  el.themeToggle.setAttribute("title", label);
   el.themeToggleIcon.textContent = isDark ? "☀" : "☾";
-  el.themeToggleLabel.textContent = isDark ? "Light" : "Dark";
 }
 
 function toggleColorMode(): void {
@@ -738,6 +818,7 @@ function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
     combatHints: createCombatHintsState(snap.combatHints ?? {}),
     foeQueueIds: sanitizeIdList(snap.foeQueueIds, FOE_IDS),
     deferredFoeIds: sanitizeIdList(snap.deferredFoeIds, FOE_IDS),
+    battleLogHistory: sanitizeBattleLogHistory(snap.battleLogHistory),
   };
 }
 
@@ -796,6 +877,7 @@ function isConfirmDialogOpen(): boolean {
 
 /** Set by e2e save patches so pagehide does not overwrite localStorage before reload. */
 const SKIP_EXIT_FLUSH_KEY = "critterwave-skip-exit-flush";
+const HELP_OPEN_KEY = "critterwave-help-open";
 
 function shouldFlushSnapshotOnPageExit(): boolean {
   try {
@@ -908,6 +990,11 @@ function getSnapshot(): GameSnapshot {
     foeColorTheme,
     heroColorTheme,
     combatHints: combatHintsForSnapshot(combatHints),
+    battleLogHistory: battleLogHistory.map((entry) => ({
+      ...entry,
+      lines: entry.lines.map((line) => ({ ...line })),
+      waveTitle: entry.waveTitle ? { ...entry.waveTitle } : undefined,
+    })),
   };
 }
 
@@ -916,6 +1003,7 @@ function applySnapshot(snapshot: GameSnapshot): void {
   foe = snapshot.foe ? { ...snapshot.foe } : null;
   turn = snapshot.turn;
   wave = snapshot.wave;
+  waveAttempt = 1;
   phase = snapshot.phase;
   hypeLevel = clampHype(snapshot.hypeLevel ?? 0);
   foeHypeLevel = clampHype(snapshot.foeHypeLevel ?? 0);
@@ -938,6 +1026,11 @@ function applySnapshot(snapshot: GameSnapshot): void {
   lastFoeColorTheme = foeColorTheme;
   ensureFoeColorDistinctFromHero();
   applyFoeColorTheme(foeColorTheme);
+  battleLogHistory.splice(
+    0,
+    battleLogHistory.length,
+    ...(snapshot.battleLogHistory ?? [])
+  );
   if (wave > CAMPAIGN_WAVES) {
     wave = CAMPAIGN_WAVES;
   }
@@ -1266,6 +1359,10 @@ function renderRecords(): void {
 function setHpBar(fill: HTMLElement, current: number, max: number): void {
   const pct = max > 0 ? Math.max(0, Math.min(100, (current / max) * 100)) : 0;
   fill.style.width = `${pct}%`;
+}
+
+function canBeDefeatedByNextHit(hp: number, incomingAttack: number): boolean {
+  return hp > 0 && incomingAttack >= hp;
 }
 
 function playXpBarFullBeat(): Promise<void> {
@@ -1724,11 +1821,11 @@ function showDamagePop(
 
 const LEVEL_UP_NOTICE_MS = 1800;
 
-function playLevelUpNotice(): Promise<void> {
+function playLevelUpNotice(level: number): Promise<void> {
   return new Promise((resolve) => {
     const pop = document.createElement("span");
     pop.className = "level-up-pop";
-    pop.textContent = "LEVEL UP";
+    pop.textContent = `Level ${level}`;
     pop.setAttribute("role", "status");
     el.heroLevelUpLayer.setAttribute("aria-hidden", "false");
     el.heroLevelUpLayer.appendChild(pop);
@@ -1775,7 +1872,10 @@ function render(): void {
   );
 
   const playerHpBar = el.playerPanel.querySelector(".hp-bar");
-  playerHpBar?.classList.toggle("hp-low", player.hp / player.maxHp < 0.3);
+  playerHpBar?.classList.toggle(
+    "hp-low",
+    canBeDefeatedByNextHit(player.hp, getEffectiveFoeAttack())
+  );
 
   if (foe && !suppressFoePanelRender) {
     applyFoeColorTheme(foeColorTheme);
@@ -1796,7 +1896,10 @@ function render(): void {
     setHpBar(el.foeHpFill, foe.hp, foe.maxHp);
     el.foeHpText.textContent = `${foe.hp}/${foe.maxHp}`;
     const foeHpBar = el.foePanel.querySelector(".hp-bar");
-    foeHpBar?.classList.toggle("hp-low", foe.hp / foe.maxHp < 0.3);
+    foeHpBar?.classList.toggle(
+      "hp-low",
+      canBeDefeatedByNextHit(foe.hp, getEffectiveAttack())
+    );
   } else {
     el.foeStatus.classList.remove("hype-full");
   }
@@ -1808,32 +1911,181 @@ function render(): void {
   el.gameOver.classList.toggle("game-victory", phase === "victory");
   el.gameOverTag.textContent = phase === "victory" ? "YOU WIN!" : "GAME OVER";
   el.restartLabel.textContent = phase === "victory" ? "Play Again?" : "Try Again?";
+  renderGameOverBattleLog();
   el.actions.classList.toggle("hidden", inEndScreen);
   syncFirstHypeFlashes();
   syncCombatHintClasses();
   suppressTeachFlashesThisRender = false;
 }
 
-function logLine(text: string, kind: "info" | "player" | "foe" | "win" | "lose" = "info"): void {
+type BattleActionLabel = "Attack" | "Heal" | "Dance" | "Run";
+
+function rememberBattleLogEntry(
+  lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[],
+  action?: BattleActionLabel,
+  title?: string,
+  turnOverride = turn
+): void {
+  battleLogHistory.push({
+    title,
+    waveTitle:
+      title && title.startsWith("WAVE ")
+        ? { wave, attempt: waveAttempt }
+        : undefined,
+    wave,
+    turn: turnOverride,
+    action,
+    playerAttack: getEffectiveAttack(),
+    playerPower: hypeLevel,
+    foeAttack: foe ? getEffectiveFoeAttack() : null,
+    foePower: foe ? foeHypeLevel : null,
+    foeColorTheme,
+    lines: lines.map((line) => ({ ...line })),
+  });
+}
+
+function resetBattleLogHistory(): void {
+  battleLogHistory.length = 0;
+}
+
+function renderGameOverBattleLog(): void {
+  const waveAttemptCounts = new Map<number, number>();
+  for (const entry of battleLogHistory) {
+    if (!entry.waveTitle) continue;
+    waveAttemptCounts.set(
+      entry.waveTitle.wave,
+      Math.max(waveAttemptCounts.get(entry.waveTitle.wave) ?? 0, entry.waveTitle.attempt)
+    );
+  }
+  el.gameOverBattleLog.replaceChildren();
+  for (const entry of battleLogHistory) {
+    const item = document.createElement("li");
+    item.className = entry.title
+      ? "game-over-log-entry game-over-log-entry-title"
+      : "game-over-log-entry";
+    const colors = colorThemeSurfaces(getColorTheme(entry.foeColorTheme), currentColorMode);
+    item.style.setProperty(
+      "--entry-foe-text",
+      currentColorMode === "dark" ? colors.accent : colors.plateText
+    );
+    if (entry.title) {
+      const meta = document.createElement("div");
+      meta.className = "game-over-log-meta";
+      if (entry.waveTitle && (waveAttemptCounts.get(entry.waveTitle.wave) ?? 1) > 1) {
+        meta.textContent = `WAVE ${entry.waveTitle.wave}.${entry.waveTitle.attempt}`;
+      } else {
+        meta.textContent = entry.title;
+      }
+      item.appendChild(meta);
+      for (const line of entry.lines) {
+        appendBattleLine(item, line.text, line.kind);
+      }
+      el.gameOverBattleLog.appendChild(item);
+      continue;
+    }
+    if (entry.action) {
+      const meta = document.createElement("div");
+      meta.className = "game-over-log-meta";
+      meta.textContent = `Turn ${entry.turn} - ${entry.action}`;
+      item.appendChild(meta);
+    }
+    for (const line of entry.lines) {
+      appendBattleLine(item, line.text, line.kind);
+    }
+    el.gameOverBattleLog.appendChild(item);
+  }
+}
+
+function logLine(
+  text: string,
+  kind: "info" | "player" | "foe" | "win" | "lose" = "info",
+  action?: BattleActionLabel,
+  turnOverride = turn,
+  historyText = text
+): void {
+  rememberBattleLogEntry([{ text: historyText, kind }], action, undefined, turnOverride);
   el.battleText.textContent = text;
   el.battleText.className = `battle-text battle-${kind}`;
   revealBattleLog();
 }
 
+function logWaveStart(): void {
+  if (!foe) return;
+  const title = `WAVE ${wave}`;
+  const lines: BattleLogEntry["lines"] = [];
+  if ((wave - 1) % WAVES_PER_LEVEL === 0) {
+    lines.push({
+      text: `LEVEL ${playerLevelForWave(wave)}: ${player.maxHp} HP · ATK ${getEffectiveAttack()}`,
+      kind: "player",
+    });
+  }
+  lines.push({
+    text: `${foe.name} · ATK ${getEffectiveFoeAttack()} · HP ${foe.maxHp}`,
+    kind: "foe",
+  });
+  rememberBattleLogEntry(
+    lines,
+    undefined,
+    title
+  );
+}
+
+function logEndTitle(text: string): void {
+  rememberBattleLogEntry([], undefined, text);
+}
+
+function levelUpStatsText(): string {
+  return `LEVEL UP · ATK ${getEffectiveAttack()} · HP ${player.maxHp}`;
+}
+
 function logBattleLines(
   primary: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" },
-  secondary: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }
+  secondary: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" },
+  action?: BattleActionLabel,
+  turnOverride = turn
 ): void {
+  rememberBattleLogEntry([primary, secondary], action, undefined, turnOverride);
   setBattleLines(el.battleText, [primary, secondary]);
   revealBattleLog();
 }
 
-function logDanceLines(opener: string, reaction: string, tail: string): void {
-  setBattleLines(el.battleText, [
-    { text: opener, kind: "player" },
-    { text: reaction, kind: "foe" },
-  ]);
-  appendBattleHypeTail(el.battleText, tail);
+function appendDanceHypeSuffix(line: string, suffix: string): string {
+  return suffix ? `${line} ${suffix}` : line;
+}
+
+function danceHypeSuffix(gain: number, capped: boolean): string {
+  if (gain > 0) {
+    return `+${gain} HYPE`;
+  }
+  if (capped) {
+    return "MAX HYPE";
+  }
+  return "";
+}
+
+function logDanceLines(
+  opener: string,
+  reaction: string,
+  opts: {
+    playerGain: number;
+    foeGain: number;
+    playerCapped: boolean;
+    foeCapped: boolean;
+    turnOverride?: number;
+  }
+): void {
+  const lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[] = [
+    {
+      text: appendDanceHypeSuffix(opener, danceHypeSuffix(opts.playerGain, opts.playerCapped)),
+      kind: "player",
+    },
+    {
+      text: appendDanceHypeSuffix(reaction, danceHypeSuffix(opts.foeGain, opts.foeCapped)),
+      kind: "foe",
+    },
+  ];
+  rememberBattleLogEntry(lines, "Dance", undefined, opts.turnOverride ?? turn);
+  setBattleLines(el.battleText, lines);
   revealBattleLog();
 }
 
@@ -1886,7 +2138,8 @@ function playNextFoeReveal(
   secondary: { text: string; kind: "foe" }
 ): void {
   applyFoeColorTheme(foeColorTheme);
-  logBattleLines(primary, secondary);
+  setBattleLines(el.battleText, [primary, secondary]);
+  revealBattleLog();
   render();
   playFoeEntrance();
 }
@@ -1896,7 +2149,8 @@ async function transitionToNextWave(
   transition: "flee" | "defeat",
   entrance: "run" | "foe" = "foe",
   exitAnimPromise?: Promise<void>,
-  knownDefeatVerb?: string
+  knownDefeatVerb?: string,
+  knownDefeatText?: string
 ): Promise<void> {
   const defeatVerb =
     transition === "defeat" ? (knownDefeatVerb ?? nextDefeatVerb()) : undefined;
@@ -1904,14 +2158,26 @@ async function transitionToNextWave(
   const fledId = foe?.id;
 
   if (fleeWithExitAnim) {
-    logLine(`You run away from ${previousFoeName},`, "player");
+    logLine(
+      `You run away from ${previousFoeName},`,
+      "player",
+      "Run",
+      turn,
+      `You run away from ${previousFoeName}.`
+    );
   } else if (!(transition === "defeat" && knownDefeatVerb)) {
     const actionText =
       transition === "flee"
         ? `You run away from ${previousFoeName},`
         : `You ${defeatVerb} ${previousFoeName},`;
 
-    logLine(actionText, "player");
+    logLine(
+      actionText,
+      "player",
+      transition === "flee" ? "Run" : "Attack",
+      turn,
+      transition === "flee" ? `You run away from ${previousFoeName}.` : actionText
+    );
   }
 
   turn = 1;
@@ -1929,6 +2195,7 @@ async function transitionToNextWave(
     }
 
     wave += 1;
+    waveAttempt = 1;
     const levelBefore = playerLevelForWave(wave - 1);
     const hpBeforeHeal = player.hp;
     const maxHpBeforeHeal = player.maxHp;
@@ -1972,9 +2239,10 @@ async function transitionToNextWave(
 
     if (playerLevel > levelBefore) {
       render();
-      void playLevelUpNotice();
+      void playLevelUpNotice(playerLevel);
     }
   } else if (fledId) {
+    waveAttempt += 1;
     const advanced = advanceFoeQueueAfterFlee(
       foeQueue,
       deferredFoeIds,
@@ -1996,6 +2264,8 @@ async function transitionToNextWave(
     persist();
   }
 
+  logWaveStart();
+
   if (fleeWithExitAnim) {
     suppressFoePanelRender = true;
     render();
@@ -2007,7 +2277,7 @@ async function transitionToNextWave(
     );
   } else {
     playNextFoeReveal(
-      { text: `You ${defeatVerb} ${previousFoeName},`, kind: "player" },
+      { text: knownDefeatText ?? `You ${defeatVerb} ${previousFoeName},`, kind: "player" },
       { text: `but ${foe!.name} appears!`, kind: "foe" }
     );
   }
@@ -2020,7 +2290,9 @@ async function transitionToNextWave(
 }
 
 function clearLog(): void {
-  logLine("What will you do?", "info");
+  resetBattleLogHistory();
+  el.battleText.textContent = "What will you do?";
+  el.battleText.className = "battle-text battle-info";
 }
 
 function rollDamage(max: number): number {
@@ -2055,6 +2327,7 @@ function nextDefeatVerb(): string {
 }
 
 function startWave(): void {
+  waveAttempt = 1;
   syncPlayerForCurrentWave({ healToMax: wave === 1 });
   if (foeQueue.length === 0) {
     foeQueue = buildInitialFoeQueue(foeOrder);
@@ -2065,6 +2338,7 @@ function startWave(): void {
   foeHypeLevel = 0;
   combatHints = maybeArmDanceHintForWave(combatHints, wave);
   applyFoeColorTheme(foeColorTheme);
+  logWaveStart();
   setBattleLines(el.battleText, [{ text: `${foe.name} appears!`, kind: "foe" }]);
   revealBattleLog();
   render();
@@ -2072,15 +2346,17 @@ function startWave(): void {
   persist();
 }
 
-function gameOverSummaryText(currentWave: number): string {
+function gameOverSummaryText(currentWave: number, isNewRecord = false): string {
   const completedWave = Math.max(0, currentWave - 1);
   const waveText = completedWave === 1 ? "1 wave" : `${completedWave} waves`;
-  return `You reached ${waveText}.`;
+  const summary = `You beat ${waveText}.`;
+  return isNewRecord ? `NEW RECORD! ${summary}` : summary;
 }
 
-function updateRecordsOnGameOver(): void {
+function updateRecordsOnGameOver(): boolean {
   const save = loadSave();
   const completedWave = Math.max(0, wave - 1);
+  const isNewRecord = completedWave > save.bestWave;
   const bestWave = Math.max(save.bestWave, completedWave);
   const runsPlayed = save.runsPlayed + 1;
 
@@ -2099,7 +2375,8 @@ function updateRecordsOnGameOver(): void {
     )
   );
 
-  el.gameOverSummary.textContent = gameOverSummaryText(wave);
+  el.gameOverSummary.textContent = gameOverSummaryText(wave, isNewRecord);
+  return isNewRecord;
 }
 
 function updateRecordsOnVictory(): void {
@@ -2130,7 +2407,7 @@ function endGame(): void {
   applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
   phase = "gameover";
   clearAllHype();
-  logLine("You lose! Game over.", "lose");
+  logEndTitle("GAME OVER");
   updateRecordsOnGameOver();
   persist();
   render();
@@ -2140,7 +2417,7 @@ function winCampaign(): void {
   applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
   phase = "victory";
   clearAllHype();
-  logLine(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`, "win");
+  logEndTitle(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`);
   updateRecordsOnVictory();
   startVictoryCelebration(
     el.victoryEmojiLayer,
@@ -2221,7 +2498,7 @@ function maybeRunDebugWin(): void {
   triggerDebugWin();
 }
 
-async function winWave(defeatVerb: string): Promise<void> {
+async function winWave(defeatVerb: string, defeatText: string): Promise<void> {
   if (!foe) return;
 
   const defeatedFoe = foe.name;
@@ -2230,7 +2507,7 @@ async function winWave(defeatVerb: string): Promise<void> {
     return;
   }
 
-  await transitionToNextWave(defeatedFoe, "defeat", "foe", undefined, defeatVerb);
+  await transitionToNextWave(defeatedFoe, "defeat", "foe", undefined, defeatVerb, defeatText);
 }
 
 function playHitExchange(
@@ -2330,6 +2607,7 @@ function onAttack(): void {
   const generation = lockCombat();
   if (generation === null) return;
   const currentFoe = foe!;
+  const actionTurn = turn;
 
   const firstAttack = !combatHints.dismissedAttackHint;
   combatHints = recordAttackForHints(combatHints);
@@ -2349,7 +2627,14 @@ function onAttack(): void {
 
   if (foeKilled) {
     const defeatVerb = nextDefeatVerb();
-    logLine(`You ${defeatVerb} ${currentFoe.name},`, "player");
+    const defeatText = `You ${defeatVerb} ${currentFoe.name} with ${hit} damage,`;
+    logLine(
+      defeatText,
+      "player",
+      "Attack",
+      actionTurn,
+      `You ${defeatVerb} ${currentFoe.name} with ${hit} damage.`
+    );
     render();
     const isFinal = wave >= getCampaignLength();
     void playFoeDefeat(isFinal)
@@ -2359,7 +2644,7 @@ function onAttack(): void {
           await playXpBarFullBeat();
           winCampaign();
         } else {
-          return winWave(defeatVerb);
+          return winWave(defeatVerb, defeatText);
         }
       })
       .finally(() => finishCombatAction(generation));
@@ -2376,7 +2661,9 @@ function onAttack(): void {
 
   logBattleLines(
     { text: `You hit ${currentFoe.name} for ${hit} damage.`, kind: "player" },
-    { text: `${currentFoe.name} hits you for ${counterHit} damage.`, kind: "foe" }
+    { text: `${currentFoe.name} hits you for ${counterHit} damage.`, kind: "foe" },
+    "Attack",
+    actionTurn
   );
   render();
   persist();
@@ -2415,6 +2702,7 @@ function onHeal(): void {
   const generation = lockCombat();
   if (generation === null) return;
   const currentFoe = foe!;
+  const actionTurn = turn;
 
   skipPlayerHypeTeachThisRender = true;
 
@@ -2440,7 +2728,9 @@ function onHeal(): void {
 
   logBattleLines(
     { text: `You healed yourself for ${rolled} HP.`, kind: "player" },
-    { text: `${currentFoe.name} hits you for ${counterHit} damage.`, kind: "foe" }
+    { text: `${currentFoe.name} hits you for ${counterHit} damage.`, kind: "foe" },
+    "Heal",
+    actionTurn
   );
   render();
   persist();
@@ -2451,6 +2741,7 @@ function onDance(): void {
   const generation = lockCombat();
   if (generation === null) return;
   const currentFoe = foe!;
+  const actionTurn = turn;
 
   const isFirstDance = !combatHints.celebratedFirstDance;
   combatHints = recordDanceForHints(combatHints);
@@ -2484,7 +2775,13 @@ function onDance(): void {
   });
 
   playHeroDance();
-  logDanceLines(opener, reaction, tail);
+  logDanceLines(opener, reaction, {
+    playerGain: actualPlayerGain,
+    foeGain: actualFoeGain,
+    playerCapped,
+    foeCapped,
+    turnOverride: actionTurn,
+  });
 
   const foeDances = joins || attemptedFoeGain > 0;
   if (tail) {
@@ -2509,7 +2806,7 @@ function onRun(): void {
   const currentFoe = foe!;
 
   if (wave >= getCampaignLength()) {
-    logLine("No fleeing the final foe!", "info");
+    logLine("No fleeing the final foe!", "info", "Run");
     finishCombatAction(generation);
     return;
   }
@@ -2646,7 +2943,6 @@ function resetGame(): void {
   stopVictoryCelebration(el.victoryEmojiLayer);
   el.gameOver.classList.add("hidden");
   clearLog();
-  logLine("A new adventure begins.", "info");
   startWave();
 }
 
@@ -2740,6 +3036,101 @@ function bindActions(): void {
   });
 }
 
+function openHelp(): void {
+  el.helpOverlay.classList.remove("hidden");
+  try {
+    sessionStorage.setItem(HELP_OPEN_KEY, "1");
+  } catch {
+    /* sessionStorage unavailable */
+  }
+  el.helpClose.focus();
+}
+
+function closeHelp(): void {
+  el.helpOverlay.classList.add("hidden");
+  try {
+    sessionStorage.removeItem(HELP_OPEN_KEY);
+  } catch {
+    /* sessionStorage unavailable */
+  }
+  el.helpBtn.focus();
+}
+
+function restoreHelpDialog(): void {
+  try {
+    if (sessionStorage.getItem(HELP_OPEN_KEY) === "1") {
+      openHelp();
+    }
+  } catch {
+    /* sessionStorage unavailable */
+  }
+}
+
+function isHelpBackdropTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Node)) {
+    return false;
+  }
+  return !el.helpPanel.contains(target);
+}
+
+function dismissHelpFromBackdrop(event: Event): void {
+  if (el.helpOverlay.classList.contains("hidden")) {
+    return;
+  }
+  if (!isHelpBackdropTarget(event.target)) {
+    return;
+  }
+  if (event instanceof PointerEvent && event.button !== 0) {
+    return;
+  }
+  event.preventDefault();
+  closeHelp();
+}
+
+function bindHelpDialog(): void {
+  el.helpBtn.addEventListener("click", openHelp);
+  el.helpClose.addEventListener("click", closeHelp);
+  el.helpOverlay.addEventListener("click", dismissHelpFromBackdrop);
+  el.helpOverlay.addEventListener("pointerup", dismissHelpFromBackdrop);
+
+  document.addEventListener("keydown", (event) => {
+    if (el.helpOverlay.classList.contains("hidden")) {
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeHelp();
+    }
+  });
+}
+
+function closeFooterMore(): void {
+  el.footerMore.open = false;
+}
+
+function bindFooterMoreMenu(): void {
+  document.addEventListener("click", (event) => {
+    if (!el.footerMore.open) {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Node && el.footerMore.contains(target)) {
+      return;
+    }
+    closeFooterMore();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (!el.footerMore.open) {
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeFooterMore();
+    }
+  });
+}
+
 async function beginGame(): Promise<void> {
   const save = loadSave();
   if (save.playerEmoji) {
@@ -2752,14 +3143,17 @@ async function beginGame(): Promise<void> {
   const snapshot = loadSnapshot();
   if (snapshot && snapshot.phase === "combat" && snapshot.foe) {
     applySnapshot(snapshot);
-    clearLog();
-    logBattleLines(
+    if (battleLogHistory.length === 0) {
+      logWaveStart();
+    }
+    setBattleLines(el.battleText, [
       { text: "Welcome back — your run was restored.", kind: "info" },
       {
         text: `It's your turn against ${foe!.name}!`,
         kind: "player",
-      }
-    );
+      },
+    ]);
+    revealBattleLog();
     render();
     persist();
     return;
@@ -2768,9 +3162,10 @@ async function beginGame(): Promise<void> {
   if (snapshot?.phase === "gameover" || snapshot?.phase === "victory") {
     applySnapshot(snapshot);
     applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
-    clearLog();
     if (snapshot.phase === "victory") {
-      logLine(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`, "win");
+      if (battleLogHistory.length === 0) {
+        logEndTitle(`Wave ${CAMPAIGN_WAVES} cleared! Total victory!`);
+      }
       startVictoryCelebration(
         el.victoryEmojiLayer,
         FOES.map((foe) => foe.emoji),
@@ -2778,7 +3173,9 @@ async function beginGame(): Promise<void> {
       );
       el.gameOverSummary.textContent = `All ${CAMPAIGN_WAVES} waves cleared. Critterwave legend.`;
     } else {
-      logLine("You lose! Game over.", "lose");
+      if (battleLogHistory.length === 0) {
+        logEndTitle("GAME OVER");
+      }
       el.gameOverSummary.textContent = gameOverSummaryText(snapshot.wave);
     }
     render();
@@ -2804,10 +3201,13 @@ async function init(): Promise<void> {
   initColorMode();
   updateSetupSubtitle();
   bindConfirmDialog();
+  bindHelpDialog();
+  bindFooterMoreMenu();
   bindActions();
   bindPageExitPersist();
   bindFooterTeachPopupResize();
   renderRecords();
+  restoreHelpDialog();
 
   const handledDebug = mountDebugHooks();
   if (handledDebug) {
