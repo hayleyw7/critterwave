@@ -313,6 +313,22 @@ test.describe("Critterwave — sad paths", () => {
     await expect(page.locator("#foe-hype-wrap")).not.toHaveClass(/hype-maxed-flash/);
   });
 
+  test("hp bars blink when next hype-adjusted hit can defeat", async ({ page }) => {
+    await startFreshRun(page);
+    await patchSaveSnapshot(page, {
+      player: { hp: 6, maxHp: 20 },
+      foe: { hp: 6, maxHp: 20, attack: 5 },
+      hypeLevel: 1,
+      foeHypeLevel: 1,
+    });
+    await reloadAfterSavePatch(page);
+
+    await expect(page.locator("#player-panel .hp-bar")).toHaveClass(/hp-low/);
+    await expect(page.locator("#foe-panel .hp-bar")).toHaveClass(/hp-low/);
+    await expect(page.locator("#player-attack")).toHaveText("6");
+    await expect(page.locator("#foe-attack")).toHaveText("6");
+  });
+
   test("shows turn dash on game over", async ({ page }) => {
     await startFreshRun(page);
     await page.evaluate((key) => {

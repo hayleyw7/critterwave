@@ -1362,6 +1362,10 @@ function setHpBar(fill: HTMLElement, current: number, max: number): void {
   fill.style.width = `${pct}%`;
 }
 
+function canBeDefeatedByNextHit(hp: number, incomingAttack: number): boolean {
+  return hp > 0 && incomingAttack >= hp;
+}
+
 function playXpBarFullBeat(): Promise<void> {
   const { max } = xpProgressForWave(wave);
   setHpBar(el.xpFill, max, max);
@@ -1869,7 +1873,10 @@ function render(): void {
   );
 
   const playerHpBar = el.playerPanel.querySelector(".hp-bar");
-  playerHpBar?.classList.toggle("hp-low", player.hp / player.maxHp < 0.3);
+  playerHpBar?.classList.toggle(
+    "hp-low",
+    canBeDefeatedByNextHit(player.hp, getEffectiveFoeAttack())
+  );
 
   if (foe && !suppressFoePanelRender) {
     applyFoeColorTheme(foeColorTheme);
@@ -1890,7 +1897,10 @@ function render(): void {
     setHpBar(el.foeHpFill, foe.hp, foe.maxHp);
     el.foeHpText.textContent = `${foe.hp}/${foe.maxHp}`;
     const foeHpBar = el.foePanel.querySelector(".hp-bar");
-    foeHpBar?.classList.toggle("hp-low", foe.hp / foe.maxHp < 0.3);
+    foeHpBar?.classList.toggle(
+      "hp-low",
+      canBeDefeatedByNextHit(foe.hp, getEffectiveAttack())
+    );
   } else {
     el.foeStatus.classList.remove("hype-full");
   }
