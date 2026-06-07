@@ -2624,13 +2624,13 @@ function onAttack(): void {
 
   if (foeKilled) {
     const defeatVerb = nextDefeatVerb();
-    const defeatText = `You ${defeatVerb} ${currentFoe.name} for ${hit} damage,`;
+    const defeatText = `You ${defeatVerb} ${currentFoe.name} with ${hit} damage,`;
     logLine(
       defeatText,
       "player",
       "Attack",
       actionTurn,
-      `You ${defeatVerb} ${currentFoe.name} for ${hit} damage.`
+      `You ${defeatVerb} ${currentFoe.name} with ${hit} damage.`
     );
     render();
     const isFinal = wave >= getCampaignLength();
