@@ -119,14 +119,14 @@
   --title-shadow-color: #6b4423;
   --title-shadow-glow: rgba(253, 224, 71, 0.2);
   --cmd-attack-text: var(--color-rose-200);
-  --cmd-attack-hover-border: var(--color-rose-400);
+  --cmd-attack-hover-border: var(--cmd-attack-text);
   --cmd-heal-text: var(--color-green-200);
-  --cmd-heal-hover-border: var(--color-green-400);
+  --cmd-heal-hover-border: var(--cmd-heal-text);
   --cmd-teach-arrow-size: 7px;
   --cmd-dance-text: var(--color-blue-300);
-  --cmd-dance-hover-border: var(--color-blue-400);
+  --cmd-dance-hover-border: var(--cmd-dance-text);
   --cmd-run-text: var(--color-orange-300);
-  --cmd-run-hover-border: var(--color-orange-500);
+  --cmd-run-hover-border: var(--cmd-run-text);
   --confirm-danger-text: var(--color-rose-200);
   --confirm-danger-shadow: #500;
   --meta-danger-hover-text: var(--color-rose-200);
@@ -239,13 +239,13 @@ html[data-theme="light"] {
   --title-shadow-color: var(--panel-light);
   --title-shadow-glow: none;
   --cmd-attack-text: var(--color-rose-900);
-  --cmd-attack-hover-border: var(--color-rose-400);
+  --cmd-attack-hover-border: var(--cmd-attack-text);
   --cmd-heal-text: var(--color-green-900);
-  --cmd-heal-hover-border: var(--color-green-400);
+  --cmd-heal-hover-border: var(--cmd-heal-text);
   --cmd-dance-text: var(--color-blue-800);
-  --cmd-dance-hover-border: var(--color-blue-400);
+  --cmd-dance-hover-border: var(--cmd-dance-text);
   --cmd-run-text: var(--color-orange-700);
-  --cmd-run-hover-border: var(--color-orange-500);
+  --cmd-run-hover-border: var(--cmd-run-text);
   --confirm-danger-text: var(--color-rose-200);
   --confirm-danger-shadow: var(--color-rose-700);
   --meta-danger-hover-text: var(--danger);
@@ -2107,6 +2107,22 @@ html[data-theme="light"] .damage-pop.hype-pop {
 .battle-line.battle-hype-line .battle-hype-gain {
   color: inherit;
   text-shadow: none;
+}
+
+.battle-action-attack {
+  color: var(--cmd-attack-text);
+}
+
+.battle-action-heal {
+  color: var(--cmd-heal-text);
+}
+
+.battle-action-dance {
+  color: var(--cmd-dance-text);
+}
+
+.battle-action-run {
+  color: var(--cmd-run-text);
 }
 
 .command-menu {

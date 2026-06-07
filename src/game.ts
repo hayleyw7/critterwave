@@ -2010,6 +2010,10 @@ function render(): void {
 
 type BattleActionLabel = "Attack" | "Heal" | "Dance" | "Run";
 
+function battleActionClass(action: BattleActionLabel): string {
+  return `battle-action-${action.toLowerCase()}`;
+}
+
 function rememberBattleLogEntry(
   lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[],
   action?: BattleActionLabel,
@@ -2076,7 +2080,11 @@ function renderGameOverBattleLog(): void {
     if (entry.action) {
       const meta = document.createElement("div");
       meta.className = "game-over-log-meta";
-      meta.textContent = `Turn ${entry.turn} - ${entry.action}`;
+      meta.append(`Turn ${entry.turn} - `);
+      const action = document.createElement("span");
+      action.className = `battle-action ${battleActionClass(entry.action)}`;
+      action.textContent = entry.action;
+      meta.appendChild(action);
       item.appendChild(meta);
     }
     for (const line of entry.lines) {
