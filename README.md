@@ -61,7 +61,7 @@ Highlighted buttons use an **outline pulse only** — button colors stay the sam
 
 ## What gets saved
 
-Stored under `critterwave-v5` in the browser:
+Stored under `critterwave-v6` in the browser:
 
 - **High score** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
 - **Runs played** — how many runs you’ve finished (game over or full win)

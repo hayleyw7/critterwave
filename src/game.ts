@@ -228,7 +228,7 @@ type GameSnapshot = {
   battleLogHistory?: BattleLogEntry[];
 };
 
-const STORAGE_KEY = "critterwave-v5";
+const STORAGE_KEY = "critterwave-v6";
 let currentColorMode: ColorMode = "dark";
 let debugInstantTransitions = false;
 const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
