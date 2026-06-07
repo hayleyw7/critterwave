@@ -1969,6 +1969,13 @@ html[data-theme="light"] .damage-pop.heal-pop {
     0 0 8px rgba(250, 204, 21, 0.9);
 }
 
+html[data-theme="light"] .damage-pop.hype-pop {
+  color: #997300;
+  text-shadow:
+    2px 2px 0 var(--damage-shadow),
+    0 0 8px color-mix(in srgb, #997300 55%, transparent);
+}
+
 @keyframes damage-float {
   0% {
     opacity: 1;
