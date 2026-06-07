@@ -84,14 +84,14 @@ test.describe("security — debug hooks", () => {
     await expect(page.locator("#game-over")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator("#game-over-tag")).toHaveText("YOU WIN!");
     await expect(page.locator("#game-over-summary")).toContainText(/100 waves cleared/i);
-    await expect(page.locator("#game-over-battle-log")).toBeVisible();
-    await expect(page.locator(".game-over-log")).toHaveAttribute("open", "");
+    await expect(page.locator(".game-over-log")).not.toHaveAttribute("open", "");
   });
 
   test("debug win-log auto-plays a full campaign log", async ({ page }) => {
     await page.goto("/?debug=win-log");
     await expect(page.locator("#game-over")).toBeVisible({ timeout: 15_000 });
     await expect(page.locator("#game-over-tag")).toHaveText("YOU WIN!");
+    await page.locator(".game-over-log summary").click();
     await expect(page.locator("#game-over-battle-log")).toBeVisible();
     await expect(page.locator("#game-over-battle-log")).toContainText(/WAVE 1/i);
     await expect(page.locator("#game-over-battle-log")).toContainText(/Turn 1/i);
