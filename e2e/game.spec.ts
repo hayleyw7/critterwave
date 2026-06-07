@@ -39,7 +39,7 @@ test.describe("Critterwave — happy paths", () => {
     await expect(page.locator("#battle-text")).toContainText(/^You /i, {
       timeout: 10_000,
     });
-    await expect(page.locator(".battle-line.battle-foe")).toBeVisible({
+    await expect(page.locator("#battle-text .battle-line.battle-foe")).toBeVisible({
       timeout: 10_000,
     });
   });
@@ -174,7 +174,11 @@ test.describe("Critterwave — happy paths", () => {
 
     await expect(page.locator("#game-over")).toBeVisible({ timeout: 10_000 });
     await expect(page.locator("#game-over-tag")).toHaveText("GAME OVER");
-    await expect(page.locator("#game-over-summary")).toContainText(/reached/i);
+    await expect(page.locator("#game-over-summary")).toContainText(/beat/i);
+    await expect(page.locator("#game-over-battle-log")).toBeHidden();
+    await page.getByText("Battle Log").click();
+    await expect(page.locator("#game-over-battle-log")).toContainText("GAME OVER");
+    await expect(page.locator("#game-over-battle-log")).toContainText(/WAVE|Turn/);
     await expect(page.locator("#actions")).toHaveClass(/hidden/);
   });
 
@@ -311,16 +315,58 @@ test.describe("Critterwave — sad paths", () => {
 
   test("shows turn dash on game over", async ({ page }) => {
     await startFreshRun(page);
+    await page.evaluate((key) => {
+      const raw = localStorage.getItem(key);
+      const save = raw ? JSON.parse(raw) : {};
+      localStorage.setItem(key, JSON.stringify({ ...save, bestWave: 0 }));
+    }, STORAGE_KEY);
     await patchSaveSnapshot(page, {
       player: { hp: 1, maxHp: 20 },
       foe: { attack: 20 },
+      wave: 2,
     });
     await reloadAfterSavePatch(page);
     await page.getByRole("button", { name: "Attack" }).click();
     await expect(page.getByRole("button", { name: "Try Again?" })).toBeVisible({
       timeout: 15_000,
     });
+    await expect(page.locator("#game-over-summary")).toContainText(
+      /^NEW RECORD! You beat 1 wave\./
+    );
     await expect(page.locator("#turn-label")).toHaveText("-");
     await expect(page.locator("#wave-banner")).toContainText("Wave");
+    await expect(page.locator("#game-over-battle-log")).toBeHidden();
+    await page.getByText("Battle Log").click();
+    await expect(page.locator("#game-over-battle-log")).not.toContainText(
+      "What will you do?"
+    );
+    await expect(page.locator("#game-over-battle-log")).toContainText("WAVE 1");
+    await expect(
+      page.locator("#game-over-battle-log .game-over-log-meta", { hasText: "WAVE 1" })
+    ).toHaveCount(1);
+    await expect(page.locator("#game-over-battle-log")).toContainText(
+      /LEVEL 1: \d+ HP · ATK \d+/
+    );
+    await expect(page.locator("#game-over-battle-log")).toContainText(
+      /[A-Za-z -]+ · ATK \d+ · HP \d+/
+    );
+    await expect(page.locator("#game-over-battle-log")).not.toContainText(
+      /HP \d+\/\d+/
+    );
+    await expect(page.locator("#game-over-battle-log")).not.toContainText(
+      "Welcome back"
+    );
+    await expect(page.locator("#game-over-battle-log")).not.toContainText(
+      "It's your turn against"
+    );
+    await expect(page.locator("#game-over-battle-log")).not.toContainText("appears!");
+    await expect(page.locator("#game-over-battle-log")).toContainText(
+      "Turn 1 - Attack"
+    );
+    await expect(page.locator("#game-over-battle-log")).not.toContainText(
+      /You PWR \d\/5 · ATK \d+/
+    );
+    await expect(page.locator("#game-over-battle-log")).toContainText("GAME OVER");
+    await expect(page.locator("#game-over-battle-log")).toContainText(/hits you/i);
   });
 });

@@ -2350,6 +2350,125 @@ html[data-theme="light"] .game-over:not(.game-victory) .game-over-panel {
   min-width: 12rem;
 }
 
+.game-over-log {
+  width: min(100%, 28rem);
+  margin: 0.25rem 0 0.55rem;
+  text-align: left;
+}
+
+.game-over-log summary {
+  cursor: pointer;
+  font-family: var(--font-ui);
+  color: var(--highlight);
+  text-align: center;
+}
+
+.game-over-log summary::marker {
+  content: "▸  ";
+}
+
+.game-over-log[open] summary::marker {
+  content: "▾  ";
+}
+
+.game-over-log:not([open]) .game-over-log-list {
+  display: none;
+}
+
+.game-over-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: min(42vh, 18rem);
+  margin: 0.65rem 0 0;
+  padding: 0.75rem 0.9rem 0.75rem 1.9rem;
+  overflow-y: auto;
+  border: 2px solid var(--border);
+  background: #160b24;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.25;
+  scrollbar-color: #7c5cff #0a0611;
+  scrollbar-width: thin;
+}
+
+.game-over-log-list::-webkit-scrollbar {
+  width: 0.75rem;
+}
+
+.game-over-log-list::-webkit-scrollbar-track {
+  background: #0a0611;
+}
+
+.game-over-log-list::-webkit-scrollbar-thumb {
+  background: #7c5cff;
+  border: 2px solid #0a0611;
+}
+
+.game-over-log-list li::marker {
+  color: var(--muted);
+}
+
+.game-over-log-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.game-over-log-entry .battle-player,
+.game-over-log-entry .battle-foe,
+.game-over-log-entry .battle-info,
+.game-over-log-entry .battle-win,
+.game-over-log-entry .battle-lose {
+  color: var(--text);
+}
+
+.game-over-log-entry:not(.game-over-log-entry-title) .battle-player {
+  color: var(--battle-hero-text);
+}
+
+.game-over-log-entry:not(.game-over-log-entry-title) .battle-foe {
+  color: var(--entry-foe-text, var(--battle-foe-text));
+}
+
+.game-over-log-entry-title .battle-foe {
+  color: var(--entry-foe-text, var(--battle-foe-text));
+}
+
+.game-over-log-meta {
+  font-family: var(--font-ui);
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.game-over-log-entry-title .game-over-log-meta {
+  font-size: 1.35rem;
+}
+
+.game-over-log-entry:not(.game-over-log-entry-title) .game-over-log-meta {
+  color: var(--text);
+}
+
+.game-over-log-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.1rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.game-over-log-stat-player {
+  color: var(--text);
+}
+
+.game-over-log-stat-foe {
+  color: var(--text);
+}
+
 .game-over.game-victory .game-over-panel {
   border-color: var(--highlight);
   box-shadow:
