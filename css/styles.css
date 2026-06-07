@@ -2106,7 +2106,7 @@ html[data-theme="light"] .damage-pop.heal-pop {
 }
 
 .cmd-teach-popup {
-  z-index: 30;
+  z-index: 2400;
   box-sizing: border-box;
   width: max-content;
   min-width: 0;
@@ -2178,12 +2178,13 @@ html[data-theme="light"] .damage-pop.heal-pop {
   height: 0;
   overflow: visible;
   pointer-events: none;
+  z-index: 2400;
 }
 
 /* Dance/run: positioned in JS (fixed). Never use % bottom — that tracks the viewport. */
 .cmd-teach-popup.cmd-teach-popup--dock-footer {
   position: fixed;
-  z-index: 100;
+  z-index: 2400;
   inset: auto;
   margin: 0;
   transform: none;
