@@ -120,14 +120,10 @@
   --title-shadow-color: #6b4423;
   --title-shadow-glow: rgba(253, 224, 71, 0.2);
   --cmd-attack-text: var(--color-rose-200);
-  --cmd-attack-hover-border: var(--cmd-attack-text);
   --cmd-heal-text: var(--color-green-200);
-  --cmd-heal-hover-border: var(--cmd-heal-text);
   --cmd-teach-arrow-size: 7px;
   --cmd-dance-text: var(--color-blue-300);
-  --cmd-dance-hover-border: var(--cmd-dance-text);
   --cmd-run-text: var(--color-orange-300);
-  --cmd-run-hover-border: var(--cmd-run-text);
   --confirm-danger-text: var(--color-rose-200);
   --confirm-danger-shadow: #500;
   --meta-danger-hover-text: var(--color-rose-200);
@@ -240,13 +236,9 @@ html[data-theme="light"] {
   --title-shadow-color: var(--panel-light);
   --title-shadow-glow: none;
   --cmd-attack-text: var(--color-rose-900);
-  --cmd-attack-hover-border: var(--cmd-attack-text);
   --cmd-heal-text: var(--color-green-900);
-  --cmd-heal-hover-border: var(--cmd-heal-text);
   --cmd-dance-text: var(--color-blue-800);
-  --cmd-dance-hover-border: var(--cmd-dance-text);
   --cmd-run-text: var(--color-orange-800);
-  --cmd-run-hover-border: var(--cmd-run-text);
   --confirm-danger-text: var(--color-rose-200);
   --confirm-danger-shadow: var(--color-rose-700);
   --meta-danger-hover-text: var(--danger);
@@ -711,22 +703,6 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
 .help-term {
   color: var(--gold);
   font-weight: normal;
-}
-
-.help-copy .help-action-attack {
-  color: var(--cmd-attack-text);
-}
-
-.help-copy .help-action-heal {
-  color: var(--cmd-heal-text);
-}
-
-.help-copy .help-action-dance {
-  color: var(--cmd-dance-text);
-}
-
-.help-copy .help-action-run {
-  color: var(--cmd-run-text);
 }
 
 .character-setup {
@@ -2110,18 +2086,26 @@ html[data-theme="light"] .damage-pop.hype-pop {
   text-shadow: none;
 }
 
+.cmd-attack,
+.help-action-attack,
 .battle-action-attack {
   color: var(--cmd-attack-text);
 }
 
+.cmd-heal,
+.help-action-heal,
 .battle-action-heal {
   color: var(--cmd-heal-text);
 }
 
+.cmd-dance,
+.help-action-dance,
 .battle-action-dance {
   color: var(--cmd-dance-text);
 }
 
+.cmd-run,
+.help-action-run,
 .battle-action-run {
   color: var(--cmd-run-text);
 }
@@ -2165,8 +2149,12 @@ html[data-theme="light"] .damage-pop.hype-pop {
 @media (hover: hover) {
   .cmd:hover:not(:disabled) {
     background: var(--cmd-hover);
-    border-color: var(--cmd-hover-border, var(--highlight));
+    border-color: var(--highlight);
     filter: brightness(1.08);
+  }
+
+  .command-menu .cmd:hover:not(:disabled) {
+    border-color: currentColor;
   }
 }
 
@@ -2178,21 +2166,6 @@ html[data-theme="light"] .damage-pop.hype-pop {
   opacity: 0.45;
   cursor: not-allowed;
   transform: none;
-}
-
-.cmd-attack {
-  --cmd-hover-border: var(--cmd-attack-hover-border);
-  color: var(--cmd-attack-text);
-}
-
-.cmd-heal {
-  --cmd-hover-border: var(--cmd-heal-hover-border);
-  color: var(--cmd-heal-text);
-}
-
-.cmd-dance {
-  --cmd-hover-border: var(--cmd-dance-hover-border);
-  color: var(--cmd-dance-text);
 }
 
 .command-menu .cmd.cmd-hint-flash {
@@ -2378,11 +2351,6 @@ html[data-theme="light"] .damage-pop.hype-pop {
       var(--hp-bar-depth),
       0 0 10px 2px rgba(253, 224, 71, 0.85);
   }
-}
-
-.cmd-run {
-  --cmd-hover-border: var(--cmd-run-hover-border);
-  color: var(--cmd-run-text);
 }
 
 .cmd-restart {
