@@ -731,6 +731,7 @@ function updateThemeToggleUi(): void {
 }
 
 function toggleColorMode(): void {
+  el.footerMore.open = false;
   currentColorMode = currentColorMode === "dark" ? "light" : "dark";
   runColorModeTransition(() => {
     applyColorMode(currentColorMode);

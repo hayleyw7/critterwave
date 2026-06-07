@@ -1,7 +1,7 @@
 /**
  * @vitest-environment happy-dom
  */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   applyColorMode,
   parseColorMode,
@@ -71,35 +71,43 @@ describe("syncPwaManifest", () => {
 });
 
 describe("runColorModeTransition", () => {
-  it("runs update immediately when View Transition is unavailable", () => {
-    let ran = false;
-    runColorModeTransition(() => {
-      ran = true;
-    });
-    expect(ran).toBe(true);
-    expect(document.documentElement.classList.contains("color-mode-changing")).toBe(
-      false
-    );
+  afterEach(() => {
+    vi.useRealTimers();
+    document.documentElement.classList.remove("color-mode-changing");
   });
 
-  it("uses startViewTransition when supported", async () => {
-    const original = document.startViewTransition;
-    document.startViewTransition = (callback: () => void) => {
-      callback();
-      return { finished: Promise.resolve() } as ViewTransition;
-    };
+  it("runs update immediately when reduced motion is requested", () => {
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = (() => ({ matches: true })) as typeof window.matchMedia;
 
     let ran = false;
     runColorModeTransition(() => {
       ran = true;
     });
     expect(ran).toBe(true);
-    await Promise.resolve();
     expect(document.documentElement.classList.contains("color-mode-changing")).toBe(
       false
     );
 
-    document.startViewTransition = original;
+    window.matchMedia = originalMatchMedia;
+  });
+
+  it("applies the theme update synchronously while the CSS transition class settles", () => {
+    vi.useFakeTimers();
+
+    let ran = false;
+    runColorModeTransition(() => {
+      ran = true;
+    });
+    expect(ran).toBe(true);
+    expect(document.documentElement.classList.contains("color-mode-changing")).toBe(
+      true
+    );
+
+    vi.advanceTimersByTime(450);
+    expect(document.documentElement.classList.contains("color-mode-changing")).toBe(
+      false
+    );
   });
 });
 

@@ -273,6 +273,7 @@ html[data-theme="dark"] {
     .confirm-panel,
     .game-over,
     .game-over-panel,
+    .meta-menu,
     .meta-btn,
     .cmd,
     #player-panel,
@@ -2427,7 +2428,7 @@ html[data-theme="light"] .damage-pop.heal-pop {
   min-width: 8rem;
   padding: var(--space-1);
   border: 2px solid var(--meta-btn-border);
-  background: var(--panel);
+  background-color: var(--panel);
   box-shadow: 0 0 18px rgba(10, 6, 18, 0.5);
 }
 
@@ -2439,6 +2440,7 @@ html[data-theme="light"] .damage-pop.heal-pop {
   font-weight: normal;
   letter-spacing: 0.04em;
   line-height: 1;
+  transition: none;
 }
 
 .meta-btn-success {
