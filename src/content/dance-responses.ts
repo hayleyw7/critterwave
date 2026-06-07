@@ -2,7 +2,7 @@ import { escapeHtml } from "../lib/escape-html.js";
 
 export type DanceResponse = {
   message: string;
-  /** Player hype gain; defaults to 1 when omitted (unless only foeHype is set). */
+  /** Player hype gain; defaults to 0 unless foeJoins is set. */
   playerHype?: number;
   /** Foe hype gain without joining the dance. */
   foeHype?: number;
@@ -11,24 +11,64 @@ export type DanceResponse = {
 };
 
 export const DANCE_RESPONSES: DanceResponse[] = [
-  // No hype — foe ignores, pans, or shuts you down. (17)
-  { message: "{foe} boos loudly.", playerHype: 0 },
-  { message: "{foe} crosses their arms and watches silently.", playerHype: 0 },
-  { message: "{foe} refuses to acknowledge your performance.", playerHype: 0 },
-  { message: "{foe} looks disappointed in you personally.", playerHype: 0 },
-  { message: "{foe} throws a tomato at you.", playerHype: 0 },
-  { message: "{foe} rates your performance a 7/10.", playerHype: 0 },
-  { message: "{foe} checks their watch pointedly.", playerHype: 0 },
-  { message: "{foe} yawns mid-dance.", playerHype: 0 },
-  { message: "{foe} holds up a little sign that says 2/10.", playerHype: 0 },
-  { message: "{foe} pretends to take an important phone call.", playerHype: 0 },
-  { message: "{foe} slowly backs away from the dance floor.", playerHype: 0 },
-  { message: "{foe} eats a sandwich, unimpressed.", playerHype: 0 },
-  { message: "{foe} claps once, then stops forever.", playerHype: 0 },
-  { message: "{foe} puts on sunglasses and stares at the ceiling.", playerHype: 0 },
-  { message: "{foe} whispers they've seen better at a funeral.", playerHype: 0 },
-  { message: "{foe} looks terrified by your moves.", playerHype: 0 },
-  { message: "{foe} pretends to be a dance judge.", playerHype: 0 },
+  // Former neutral reactions, reassigned so every dance grants HYPE.
+  { message: "{foe} boos loudly, but the crowd loves your confidence.", playerHype: 1 },
+  { message: "{foe} rates your performance a 7/10.", playerHype: 1 },
+  { message: "{foe} claps once, then nods despite themselves.", playerHype: 1 },
+  { message: "{foe} looks terrified by your moves.", playerHype: 1 },
+  {
+    message: "{foe} crosses their arms and studies your rhythm.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} refuses to acknowledge you, and powers up out of spite.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} looks disappointed, which somehow fuels them.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} throws a tomato, then winds up for more.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} checks their watch and catches the tempo.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} yawns, stretches, and gets battle-ready.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} holds up a 2/10 sign and gets smug.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} pretends to take a pep-talk phone call.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} slowly backs away, then finds their footing.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  {
+    message: "{foe} eats a sandwich and carb-loads mid-fight.",
+    playerHype: 0,
+    foeHype: 1,
+  },
+  { message: "{foe} puts on sunglasses and joins with a cool-guy two-step.", foeJoins: true, playerHype: 1 },
+  { message: "{foe} starts a somber funeral sway. It works.", foeJoins: true, playerHype: 1 },
+  { message: "{foe} declares a bonus round and dances as the judge.", foeJoins: true, playerHype: 1 },
 
   // +1 player hype — foe cheers but doesn't dance. (14)
   { message: "{foe} claps politely.", playerHype: 1 },
