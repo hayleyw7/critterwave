@@ -1947,7 +1947,7 @@ function render(): void {
   el.gameOver.classList.toggle("game-victory", phase === "victory");
   el.gameOverTag.textContent = phase === "victory" ? "YOU WIN!" : "GAME OVER";
   el.restartLabel.textContent = phase === "victory" ? "Play Again?" : "Try Again?";
-  el.gameOverLog.open = phase === "victory";
+  el.gameOverLog.open = false;
   renderGameOverBattleLog();
   el.actions.classList.toggle("hidden", inEndScreen);
   syncFirstHypeFlashes();
