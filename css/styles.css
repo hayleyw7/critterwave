@@ -7,30 +7,88 @@
 }
 
 :root {
-  --bg-deep: #0a0612;
-  --bg-mid: #1a0f2e;
-  --panel: #2d1b4e;
-  --panel-edge: #5a3d8a;
-  --panel-light: #7c5cbf;
-  --text: #f8f0ff;
-  --text-dim: #b8a0d8;
-  --hero: #4ade80;
-  --hero-dark: #166534;
-  --enemy: #facc15;
-  --enemy-dark: #854d0e;
-  --hp-bg: #1e1033;
-  --danger: #fb7185;
-  --highlight: #fde047;
+  --color-black: #000;
+  --color-white: #fff;
+  --color-white-soft: #f8f0ff;
+  --color-cyan-100: #cffafe;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-300: #86efac;
+  --color-green-400: #4ade80;
+  --color-green-900: #14532d;
+  --color-green-950: #166534;
+  --color-yellow-50: #fef9c3;
+  --color-yellow-300: #fde047;
+  --color-yellow-400: #facc15;
+  --color-yellow-700: #997300;
+  --color-amber-800: #854d0e;
+  --color-rose-100: #ffe4e6;
+  --color-rose-200: #fecaca;
+  --color-rose-400: #fb7185;
+  --color-rose-700: #be123c;
+  --color-rose-900: #881337;
+  --color-blue-100: #e0f2fe;
+  --color-blue-300: #bfdbfe;
+  --color-blue-400: #60a5fa;
+  --color-blue-800: #1e40af;
+  --color-orange-100: #ffedd5;
+  --color-orange-300: #fbbf7a;
+  --color-orange-500: #f97316;
+  --color-orange-700: #b85c00;
+  --color-purple-50: #fdf4ff;
+  --color-purple-100: #e9d5ff;
+  --color-purple-100-light: #ebe3f8;
+  --color-purple-150: #ddd0f5;
+  --color-purple-200: #d4c4f0;
+  --color-purple-250: #c9b8e8;
+  --color-purple-300: #c4a8f0;
+  --color-purple-350: #c4b0e8;
+  --color-purple-400: #b8a0d8;
+  --color-purple-450: #b49ae8;
+  --color-purple-500: #a78bdb;
+  --color-purple-550: #9f7fd8;
+  --color-purple-600: #8b6fc4;
+  --color-purple-650: #7c5cbf;
+  --color-purple-700: #5a3d8a;
+  --color-purple-750: #4a3080;
+  --color-purple-800: #2d1b4e;
+  --color-purple-850: #2a1848;
+  --color-purple-875: #2a1450;
+  --color-purple-900: #1e1033;
+  --color-purple-920: #1e1040;
+  --color-purple-925: #1a0f2e;
+  --color-purple-930: #1a0f28;
+  --color-purple-940: #160b24;
+  --color-purple-950: #120a1f;
+  --color-purple-960: #120820;
+  --color-purple-970: #120a1c;
+  --color-purple-980: #0a0612;
+  --color-purple-990: #0a0611;
+
+  --bg-deep: var(--color-purple-980);
+  --bg-mid: var(--color-purple-925);
+  --panel: var(--color-purple-800);
+  --panel-edge: var(--color-purple-700);
+  --panel-light: var(--color-purple-650);
+  --text: var(--color-white-soft);
+  --text-dim: var(--color-purple-400);
+  --hero: var(--color-green-400);
+  --hero-dark: var(--color-green-950);
+  --enemy: var(--color-yellow-400);
+  --enemy-dark: var(--color-amber-800);
+  --hp-bg: var(--color-purple-900);
+  --danger: var(--color-rose-400);
+  --highlight: var(--color-yellow-300);
   --gold: var(--highlight);
-  --dialog: #120a1f;
-  --cmd-bg: #2a1848;
-  --cmd-hover: #4a3080;
-  --cmd-border: #a78bdb;
+  --dialog: var(--color-purple-950);
+  --cmd-bg: var(--color-purple-850);
+  --cmd-hover: var(--color-purple-750);
+  --cmd-border: var(--color-purple-500);
   --font-ui: "VT323", monospace;
-  --scrollbar-track: #120820;
-  --scrollbar-thumb: #8b6fc4;
-  --scrollbar-thumb-hover: #b49ae8;
-  --scrollbar-border: #c4a8f0;
+  --scrollbar-track: var(--color-purple-960);
+  --scrollbar-thumb: var(--color-purple-600);
+  --scrollbar-thumb-hover: var(--color-purple-450);
+  --scrollbar-border: var(--color-purple-300);
   --overlay-scrim: rgba(10, 6, 18, 0.92);
   --overlay-scrim-gameover: rgba(10, 6, 18, 0.88);
   --overlay-scrim-victory: rgba(10, 6, 18, 0.52);
@@ -44,8 +102,8 @@
   --confirm-danger-title-text: var(--danger);
   --confirm-danger-ok-text: var(--danger);
   --new-run-text: var(--hero);
-  --new-run-border: #86efac;
-  --new-run-hover-text: #cffafe;
+  --new-run-border: var(--color-green-300);
+  --new-run-hover-text: var(--color-cyan-100);
   --new-run-hover-bg: rgba(34, 197, 94, 0.22);
   --setup-start-text: var(--gold);
   --setup-start-border: var(--gold);
@@ -60,60 +118,60 @@
   --setup-control-border-focus: var(--panel-light);
   --title-shadow-color: #6b4423;
   --title-shadow-glow: rgba(253, 224, 71, 0.2);
-  --cmd-attack-text: #fecaca;
-  --cmd-attack-hover-border: #fb7185;
-  --cmd-heal-text: #bbf7d0;
-  --cmd-heal-hover-border: #4ade80;
+  --cmd-attack-text: var(--color-rose-200);
+  --cmd-attack-hover-border: var(--color-rose-400);
+  --cmd-heal-text: var(--color-green-200);
+  --cmd-heal-hover-border: var(--color-green-400);
   --cmd-teach-arrow-size: 7px;
-  --cmd-dance-text: #bfdbfe;
-  --cmd-dance-hover-border: #60a5fa;
-  --cmd-run-text: #fbbf7a;
-  --cmd-run-hover-border: #f97316;
-  --confirm-danger-text: #fecaca;
+  --cmd-dance-text: var(--color-blue-300);
+  --cmd-dance-hover-border: var(--color-blue-400);
+  --cmd-run-text: var(--color-orange-300);
+  --cmd-run-hover-border: var(--color-orange-500);
+  --confirm-danger-text: var(--color-rose-200);
   --confirm-danger-shadow: #500;
-  --meta-danger-hover-text: #fecaca;
+  --meta-danger-hover-text: var(--color-rose-200);
   --meta-danger-hover-bg: rgba(251, 113, 133, 0.28);
   --meta-btn-bg: var(--cmd-bg);
   --meta-btn-border: var(--cmd-border);
   --meta-btn-hover-bg: var(--cmd-hover);
-  --teach-popup-text: #fef9c3;
-  --teach-popup-border: #fde047;
+  --teach-popup-text: var(--color-yellow-50);
+  --teach-popup-border: var(--color-yellow-300);
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 44%, var(--cmd-bg));
   --teach-popup-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 12px rgba(253, 224, 71, 0.35);
-  --hint-flash-border: #fde047;
+  --hint-flash-border: var(--color-yellow-300);
   --hint-flash-bg: color-mix(in srgb, var(--highlight) 60%, var(--cmd-bg));
   --hint-flash-glow: rgba(253, 224, 71, 0.55);
   --hint-flash-glow-peak: rgba(253, 224, 71, 0.95);
   --hint-flash-glow-radius: 10px;
   --hint-flash-glow-radius-peak: 24px;
-  --hint-flash-text: #fecaca;
-  --hint-flash-heal-text: #fef9c3;
-  --hint-flash-dance-text: #fdf4ff;
+  --hint-flash-text: var(--color-rose-200);
+  --hint-flash-heal-text: var(--color-yellow-50);
+  --hint-flash-dance-text: var(--color-purple-50);
   --hype-maxed-text: var(--gold);
   --hype-maxed-glow: 0 0 8px rgba(253, 224, 71, 0.85);
-  --focus-ring: #fff;
-  --hp-inset-shadow: #0a0612;
+  --focus-ring: var(--color-white);
+  --hp-inset-shadow: var(--color-purple-980);
   --hp-bar-depth: inset 0 1px 3px rgba(0, 0, 0, 0.6);
   --sprite-shadow: rgba(0, 0, 0, 0.45);
   --records-divider: rgba(90, 61, 138, 0.45);
-  --starfield-ellipse: #2a1450;
-  --damage-shadow: #000;
-  --heal-pop-text: #4ade80;
+  --starfield-ellipse: var(--color-purple-875);
+  --damage-shadow: var(--color-black);
+  --heal-pop-text: var(--color-green-400);
   --game-over-accent: var(--danger);
   --victory-accent: var(--highlight);
-  --victory-title-shadow: 3px 3px 0 #854d0e, 0 0 24px rgba(253, 224, 71, 0.55);
+  --victory-title-shadow: 3px 3px 0 var(--color-amber-800), 0 0 24px rgba(253, 224, 71, 0.55);
   --end-log-summary-text: var(--highlight);
-  --end-log-bg: #160b24;
+  --end-log-bg: var(--color-purple-940);
   --end-log-border: var(--panel-edge);
   --end-log-marker: var(--text-dim);
-  --end-log-scrollbar-track: #0a0611;
+  --end-log-scrollbar-track: var(--color-purple-990);
   --end-log-scrollbar-thumb: #7c5cff;
   --crt-line: rgba(0, 0, 0, 0.08);
-  --stage-floor-top: #1e1040;
+  --stage-floor-top: var(--color-purple-920);
   --stage-floor-mid: #2d1a50;
   --stage-floor-bottom: #4a2d6a;
-  --stage-floor-shadow-mid: #1a0f28;
-  --stage-floor-shadow-deep: #120a1c;
+  --stage-floor-shadow-mid: var(--color-purple-930);
+  --stage-floor-shadow-deep: var(--color-purple-970);
   --stage-vignette-color: rgba(0, 0, 0, 0.45);
   --meter-track-bg: rgba(255, 255, 255, 0.08);
   --hype-track-bg: var(--meter-track-bg);
@@ -129,29 +187,29 @@
 
 html[data-theme="light"] {
   color-scheme: light;
-  --bg-deep: #f8f0ff;
-  --bg-mid: #ebe3f8;
-  --panel: #ddd0f5;
-  --panel-edge: #7c5cbf;
-  --panel-light: #9f7fd8;
-  --text: #1a0f2e;
-  --text-dim: #5a3d8a;
-  --hero: #4ade80;
-  --hero-dark: #166534;
-  --enemy: #facc15;
-  --enemy-dark: #854d0e;
-  --hp-bg: #c9b8e8;
-  --danger: #be123c;
-  --highlight: #fde047;
+  --bg-deep: var(--color-white-soft);
+  --bg-mid: var(--color-purple-100-light);
+  --panel: var(--color-purple-150);
+  --panel-edge: var(--color-purple-650);
+  --panel-light: var(--color-purple-550);
+  --text: var(--color-purple-925);
+  --text-dim: var(--color-purple-700);
+  --hero: var(--color-green-400);
+  --hero-dark: var(--color-green-950);
+  --enemy: var(--color-yellow-400);
+  --enemy-dark: var(--color-amber-800);
+  --hp-bg: var(--color-purple-250);
+  --danger: var(--color-rose-700);
+  --highlight: var(--color-yellow-300);
   --gold: var(--panel-edge);
   --dialog: #e0d4f8;
-  --cmd-bg: #d4c4f0;
-  --cmd-hover: #c4b0e8;
-  --cmd-border: #a78bdb;
-  --scrollbar-track: #ebe3f8;
-  --scrollbar-thumb: #8b6fc4;
-  --scrollbar-thumb-hover: #7c5cbf;
-  --scrollbar-border: #c4a8f0;
+  --cmd-bg: var(--color-purple-200);
+  --cmd-hover: var(--color-purple-350);
+  --cmd-border: var(--color-purple-500);
+  --scrollbar-track: var(--color-purple-100-light);
+  --scrollbar-thumb: var(--color-purple-600);
+  --scrollbar-thumb-hover: var(--color-purple-650);
+  --scrollbar-border: var(--color-purple-300);
   --overlay-scrim: rgba(248, 240, 255, 0.92);
   --overlay-scrim-gameover: rgba(235, 227, 248, 0.9);
   --overlay-scrim-victory: rgba(235, 227, 248, 0.72);
@@ -160,15 +218,15 @@ html[data-theme="light"] {
   --battle-foe-text: var(--foe-accent-dark, var(--enemy-dark));
   --records-label: var(--text-dim);
   --records-value: var(--enemy-dark);
-  --heading-accent: #5a3d8a;
-  --confirm-ok-text: #14532d;
+  --heading-accent: var(--color-purple-700);
+  --confirm-ok-text: var(--color-green-900);
   --confirm-danger-title-text: var(--danger);
   --confirm-danger-ok-text: var(--danger);
   --new-run-text: var(--cmd-heal-text);
   --new-run-border: var(--hero);
-  --new-run-hover-text: #14532d;
+  --new-run-hover-text: var(--color-green-900);
   --new-run-hover-bg: rgba(34, 197, 94, 0.14);
-  --setup-start-text: #5a3d8a;
+  --setup-start-text: var(--color-purple-700);
   --setup-start-border: var(--panel-edge);
   --setup-select-border: var(--panel-edge);
   --setup-select-ring: var(--panel-light);
@@ -180,26 +238,26 @@ html[data-theme="light"] {
   --setup-control-border-focus: var(--panel-edge);
   --title-shadow-color: var(--panel-light);
   --title-shadow-glow: none;
-  --cmd-attack-text: #881337;
-  --cmd-attack-hover-border: #fb7185;
-  --cmd-heal-text: #14532d;
-  --cmd-heal-hover-border: #4ade80;
-  --cmd-dance-text: #1e40af;
-  --cmd-dance-hover-border: #60a5fa;
-  --cmd-run-text: #b85c00;
-  --cmd-run-hover-border: #f97316;
-  --confirm-danger-text: #fecaca;
-  --confirm-danger-shadow: #be123c;
+  --cmd-attack-text: var(--color-rose-900);
+  --cmd-attack-hover-border: var(--color-rose-400);
+  --cmd-heal-text: var(--color-green-900);
+  --cmd-heal-hover-border: var(--color-green-400);
+  --cmd-dance-text: var(--color-blue-800);
+  --cmd-dance-hover-border: var(--color-blue-400);
+  --cmd-run-text: var(--color-orange-700);
+  --cmd-run-hover-border: var(--color-orange-500);
+  --confirm-danger-text: var(--color-rose-200);
+  --confirm-danger-shadow: var(--color-rose-700);
   --meta-danger-hover-text: var(--danger);
   --meta-danger-hover-bg: rgba(190, 18, 60, 0.18);
   --meta-btn-bg: var(--cmd-bg);
   --meta-btn-border: var(--cmd-border);
   --meta-btn-hover-bg: var(--cmd-hover);
   --teach-popup-text: var(--text);
-  --teach-popup-border: #fde047;
+  --teach-popup-border: var(--color-yellow-300);
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 36%, var(--cmd-bg));
   --teach-popup-shadow: 0 4px 16px rgba(90, 61, 138, 0.18), 0 0 12px rgba(253, 224, 71, 0.35);
-  --hint-flash-border: #fde047;
+  --hint-flash-border: var(--color-yellow-300);
   --hint-flash-bg: color-mix(in srgb, var(--highlight) 44%, var(--cmd-bg));
   --hint-flash-glow: rgba(253, 224, 71, 0.22);
   --hint-flash-glow-peak: rgba(253, 224, 71, 0.4);
@@ -211,15 +269,15 @@ html[data-theme="light"] {
   --setup-select-glow: rgba(253, 224, 71, 0.45);
   --hype-maxed-text: var(--panel-edge);
   --hype-maxed-glow: 0 0 8px rgba(253, 224, 71, 0.75);
-  --focus-ring: #fde047;
+  --focus-ring: var(--color-yellow-300);
   --hp-inset-shadow: var(--panel-edge);
   --hp-bar-depth: inset 0 1px 2px color-mix(in srgb, var(--panel-edge) 22%, transparent);
   --sprite-shadow: color-mix(in srgb, var(--panel-edge) 28%, transparent);
   --records-divider: rgba(124, 92, 191, 0.4);
-  --starfield-ellipse: #c4b0e8;
-  --damage-shadow: #fff;
+  --starfield-ellipse: var(--color-purple-350);
+  --damage-shadow: var(--color-white);
   --damage-pop-text: var(--danger);
-  --heal-pop-text: #14532d;
+  --heal-pop-text: var(--color-green-900);
   --game-over-accent: var(--danger);
   --victory-accent: var(--heading-accent);
   --victory-title-shadow: none;
@@ -233,11 +291,11 @@ html[data-theme="light"] {
   --restart-text: var(--enemy-dark);
   --restart-bg: color-mix(in srgb, var(--enemy-dark) 14%, var(--panel));
   --crt-line: rgba(26, 15, 46, 0.025);
-  --stage-floor-top: #ebe3f8;
-  --stage-floor-mid: #ddd0f5;
-  --stage-floor-bottom: #c4b0e8;
-  --stage-floor-shadow-mid: #b49ae8;
-  --stage-floor-shadow-deep: #9f7fd8;
+  --stage-floor-top: var(--color-purple-100-light);
+  --stage-floor-mid: var(--color-purple-150);
+  --stage-floor-bottom: var(--color-purple-350);
+  --stage-floor-shadow-mid: var(--color-purple-450);
+  --stage-floor-shadow-deep: var(--color-purple-550);
   --stage-vignette-color: rgba(90, 61, 138, 0.2);
   --meter-track-bg: var(--panel);
   --hype-track-bg: transparent;
@@ -310,7 +368,7 @@ html[data-theme="dark"] {
 html[data-theme="light"] .title {
   text-shadow:
     2px 2px 0 var(--title-shadow-color),
-    3px 3px 0 color-mix(in srgb, var(--title-shadow-color) 40%, #ffffff);
+    3px 3px 0 color-mix(in srgb, var(--title-shadow-color) 40%, var(--color-white));
 }
 
 *,
@@ -419,7 +477,7 @@ body.is-booting .game-shell {
 }
 
 .game-shell {
-  --foe-accent: #facc15;
+  --foe-accent: var(--color-yellow-400);
   position: relative;
   z-index: 1;
   max-width: 720px;
@@ -782,7 +840,7 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
   display: block;
   width: 100%;
   height: 100%;
-  background: var(--swatch-color, #4ade80);
+  background: var(--swatch-color, var(--color-green-400));
 }
 
 .setup-color-popup {
@@ -1085,7 +1143,7 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
   font-size: clamp(1.35rem, 5.5vw, 2.15rem);
   font-weight: bold;
   letter-spacing: 0.08em;
-  color: #facc15;
+  color: var(--color-yellow-400);
   text-shadow:
     2px 2px 0 var(--damage-shadow),
     0 0 12px rgba(250, 204, 21, 0.95),
@@ -1123,7 +1181,7 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
 .xp-fill {
   height: 100%;
   width: 0%;
-  background: var(--hero, #4ade80);
+  background: var(--hero, var(--color-green-400));
   transition: width 0.2s ease;
 }
 
@@ -1269,7 +1327,7 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
 #player-panel {
   --hero-panel-bg: rgba(22, 101, 52, 0.22);
   --hero-plate-bg: rgba(22, 101, 52, 0.92);
-  --hero-plate-text: #dcfce7;
+  --hero-plate-text: var(--color-green-100);
   --hero-hp-wrap-bg: rgba(22, 101, 52, 0.38);
   --hero-divider: rgba(74, 222, 128, 0.45);
 }
@@ -1280,11 +1338,11 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
 }
 
 .enemy-status {
-  --foe-accent: #facc15;
-  --foe-accent-dark: #854d0e;
+  --foe-accent: var(--color-yellow-400);
+  --foe-accent-dark: var(--color-amber-800);
   --foe-panel-bg: rgba(133, 77, 14, 0.2);
   --foe-plate-bg: rgba(133, 77, 14, 0.9);
-  --foe-plate-text: #fef9c3;
+  --foe-plate-text: var(--color-yellow-50);
   --foe-buff-bg: rgba(133, 77, 14, 0.55);
   --foe-hp-wrap-bg: rgba(133, 77, 14, 0.35);
   --foe-divider: rgba(250, 204, 21, 0.4);
@@ -1293,22 +1351,22 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
 }
 
 .enemy-status.foe-theme-green {
-  --foe-accent: #4ade80;
-  --foe-accent-dark: #166534;
+  --foe-accent: var(--color-green-400);
+  --foe-accent-dark: var(--color-green-950);
   --foe-panel-bg: rgba(22, 101, 52, 0.22);
   --foe-plate-bg: rgba(22, 101, 52, 0.92);
-  --foe-plate-text: #dcfce7;
+  --foe-plate-text: var(--color-green-100);
   --foe-buff-bg: rgba(22, 163, 74, 0.5);
   --foe-hp-wrap-bg: rgba(22, 101, 52, 0.38);
   --foe-divider: rgba(74, 222, 128, 0.45);
 }
 
 .enemy-status.foe-theme-rose {
-  --foe-accent: #fb7185;
-  --foe-accent-dark: #881337;
+  --foe-accent: var(--color-rose-400);
+  --foe-accent-dark: var(--color-rose-900);
   --foe-panel-bg: rgba(136, 19, 55, 0.22);
   --foe-plate-bg: rgba(136, 19, 55, 0.92);
-  --foe-plate-text: #ffe4e6;
+  --foe-plate-text: var(--color-rose-100);
   --foe-buff-bg: rgba(190, 18, 60, 0.5);
   --foe-hp-wrap-bg: rgba(136, 19, 55, 0.38);
   --foe-divider: rgba(251, 113, 133, 0.45);
@@ -1319,7 +1377,7 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
   --foe-accent-dark: #0c4a6e;
   --foe-panel-bg: rgba(12, 74, 110, 0.22);
   --foe-plate-bg: rgba(12, 74, 110, 0.92);
-  --foe-plate-text: #e0f2fe;
+  --foe-plate-text: var(--color-blue-100);
   --foe-buff-bg: rgba(3, 105, 161, 0.5);
   --foe-hp-wrap-bg: rgba(12, 74, 110, 0.38);
   --foe-divider: rgba(56, 189, 248, 0.45);
@@ -1330,7 +1388,7 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
   --foe-accent-dark: #9a3412;
   --foe-panel-bg: rgba(154, 52, 18, 0.22);
   --foe-plate-bg: rgba(154, 52, 18, 0.92);
-  --foe-plate-text: #ffedd5;
+  --foe-plate-text: var(--color-orange-100);
   --foe-buff-bg: rgba(194, 65, 12, 0.5);
   --foe-hp-wrap-bg: rgba(154, 52, 18, 0.38);
   --foe-divider: rgba(251, 146, 60, 0.45);
@@ -1349,8 +1407,8 @@ html[data-theme="light"] .confirm-overlay.confirm-danger .confirm-panel {
 
 html[data-theme="light"] .enemy-status {
   --foe-panel-bg: color-mix(in srgb, var(--foe-accent) 14%, var(--panel));
-  --foe-hp-wrap-bg: color-mix(in srgb, var(--foe-accent) 26%, #ffffff);
-  --foe-plate-bg: color-mix(in srgb, var(--foe-accent) 50%, #ffffff);
+  --foe-hp-wrap-bg: color-mix(in srgb, var(--foe-accent) 26%, var(--color-white));
+  --foe-plate-bg: color-mix(in srgb, var(--foe-accent) 50%, var(--color-white));
   --foe-plate-text: var(--foe-accent-dark);
 }
 
@@ -1373,8 +1431,8 @@ html[data-theme="light"] .player-hp {
     90deg,
     color-mix(in srgb, var(--hero-dark) 55%, var(--hero)),
     color-mix(in srgb, var(--hero-dark) 55%, var(--hero)) 4px,
-    color-mix(in srgb, var(--hero) 62%, #ffffff) 4px,
-    color-mix(in srgb, var(--hero) 62%, #ffffff) 8px
+    color-mix(in srgb, var(--hero) 62%, var(--color-white)) 4px,
+    color-mix(in srgb, var(--hero) 62%, var(--color-white)) 8px
   );
 }
 
@@ -1383,8 +1441,8 @@ html[data-theme="light"] .foe-hp {
     90deg,
     color-mix(in srgb, var(--foe-accent-dark) 55%, var(--foe-accent)),
     color-mix(in srgb, var(--foe-accent-dark) 55%, var(--foe-accent)) 4px,
-    color-mix(in srgb, var(--foe-accent) 62%, #ffffff) 4px,
-    color-mix(in srgb, var(--foe-accent) 62%, #ffffff) 8px
+    color-mix(in srgb, var(--foe-accent) 62%, var(--color-white)) 4px,
+    color-mix(in srgb, var(--foe-accent) 62%, var(--color-white)) 8px
   );
 }
 
@@ -1970,10 +2028,10 @@ html[data-theme="light"] .damage-pop.heal-pop {
 }
 
 html[data-theme="light"] .damage-pop.hype-pop {
-  color: #997300;
+  color: var(--color-yellow-700);
   text-shadow:
     2px 2px 0 var(--damage-shadow),
-    0 0 8px color-mix(in srgb, #997300 55%, transparent);
+    0 0 8px color-mix(in srgb, var(--color-yellow-700) 55%, transparent);
 }
 
 @keyframes damage-float {
