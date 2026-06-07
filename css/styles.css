@@ -40,9 +40,13 @@
   --records-label: var(--text-dim);
   --records-value: var(--gold);
   --heading-accent: var(--gold);
-  --confirm-ok-text: var(--hero);
+  --confirm-ok-text: var(--new-run-text);
   --confirm-danger-title-text: var(--danger);
-  --confirm-danger-ok-text: var(--confirm-danger-text);
+  --confirm-danger-ok-text: var(--danger);
+  --new-run-text: var(--hero);
+  --new-run-border: #86efac;
+  --new-run-hover-text: #cffafe;
+  --new-run-hover-bg: rgba(34, 197, 94, 0.22);
   --setup-start-text: var(--gold);
   --setup-start-border: var(--gold);
   --setup-select-border: var(--highlight);
@@ -156,6 +160,10 @@ html[data-theme="light"] {
   --confirm-ok-text: #14532d;
   --confirm-danger-title-text: var(--danger);
   --confirm-danger-ok-text: var(--danger);
+  --new-run-text: var(--cmd-heal-text);
+  --new-run-border: #86efac;
+  --new-run-hover-text: #14532d;
+  --new-run-hover-bg: rgba(34, 197, 94, 0.14);
   --setup-start-text: #5a3d8a;
   --setup-start-border: var(--panel-edge);
   --setup-select-border: var(--panel-edge);
@@ -2434,17 +2442,17 @@ html[data-theme="light"] .damage-pop.heal-pop {
 }
 
 .meta-btn-success {
-  color: var(--cmd-heal-text);
+  color: var(--new-run-text);
 }
 
 .meta-btn-success:hover {
-  color: #dcfce7;
-  border-color: #86efac;
-  background: rgba(34, 197, 94, 0.22);
+  color: var(--new-run-hover-text);
+  border-color: var(--new-run-border);
+  background: var(--new-run-hover-bg);
 }
 
 .meta-btn-danger {
-  color: var(--danger);
+  color: var(--confirm-danger-ok-text);
 }
 
 .meta-btn-danger:hover {
