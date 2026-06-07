@@ -35,6 +35,7 @@
   --color-orange-300: #fbbf7a;
   --color-orange-500: #f97316;
   --color-orange-700: #b85c00;
+  --color-orange-800: #704900;
   --color-purple-50: #fdf4ff;
   --color-purple-100: #e9d5ff;
   --color-purple-100-light: #ebe3f8;
@@ -221,7 +222,7 @@ html[data-theme="light"] {
   --heading-accent: var(--color-purple-700);
   --confirm-ok-text: var(--color-green-900);
   --confirm-danger-title-text: var(--danger);
-  --confirm-danger-ok-text: var(--danger);
+  --confirm-danger-ok-text: var(--color-rose-900);
   --new-run-text: var(--cmd-heal-text);
   --new-run-border: var(--hero);
   --new-run-hover-text: var(--color-green-900);
@@ -244,7 +245,7 @@ html[data-theme="light"] {
   --cmd-heal-hover-border: var(--cmd-heal-text);
   --cmd-dance-text: var(--color-blue-800);
   --cmd-dance-hover-border: var(--cmd-dance-text);
-  --cmd-run-text: var(--color-orange-700);
+  --cmd-run-text: var(--color-orange-800);
   --cmd-run-hover-border: var(--cmd-run-text);
   --confirm-danger-text: var(--color-rose-200);
   --confirm-danger-shadow: var(--color-rose-700);
