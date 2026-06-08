@@ -4,7 +4,7 @@ import {
   DEFAULT_HERO_COLOR_THEME,
   DEFAULT_HERO_EMOJI,
   DEFAULT_HERO_LABEL,
-  DEFAULT_PLAYER_NAME,
+  DEFAULT_HERO_NAME,
 } from "./constants.js";
 import type {
   BattleLogEntry,
@@ -19,7 +19,7 @@ import type {
 
 export const gameState = {
   player: {
-    name: DEFAULT_PLAYER_NAME,
+    name: DEFAULT_HERO_NAME,
     hp: 20,
     maxHp: 20,
     attack: 5,
