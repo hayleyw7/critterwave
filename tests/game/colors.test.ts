@@ -6,11 +6,11 @@ import { COLOR_THEME_IDS } from "../../src/lib/color-themes.js";
 import { foeColorConflictsWithHero } from "../../src/lib/game-logic.js";
 import {
   getAvailableFoeColorThemes,
-  foeColorConflictsWithHero as presentationFoeConflict,
+  foeColorConflictsWithHero as colorsFoeConflict,
 } from "../../src/game/colors.js";
 import { gameState } from "../../src/game/state.js";
 
-describe("presentation — foe color themes", () => {
+describe("colors — foe color themes", () => {
   beforeEach(() => {
     gameState.heroColorTheme = "green";
     gameState.lastFoeColorTheme = null;
@@ -18,7 +18,7 @@ describe("presentation — foe color themes", () => {
 
   it("matches game-logic conflict rules", () => {
     for (const theme of COLOR_THEME_IDS) {
-      expect(presentationFoeConflict(theme)).toBe(
+      expect(colorsFoeConflict(theme)).toBe(
         foeColorConflictsWithHero(gameState.heroColorTheme, theme)
       );
     }
@@ -26,7 +26,7 @@ describe("presentation — foe color themes", () => {
 
   it("excludes hero-conflicting themes from available options", () => {
     const options = getAvailableFoeColorThemes(false);
-    expect(options.every((theme) => !presentationFoeConflict(theme))).toBe(true);
+    expect(options.every((theme) => !colorsFoeConflict(theme))).toBe(true);
     expect(options.length).toBeGreaterThan(0);
   });
 

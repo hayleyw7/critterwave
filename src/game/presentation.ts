@@ -8,7 +8,6 @@ import { applyFoeColorTheme, applyHeroColorTheme } from "./colors.js";
 import { DANCE_ANIM_MS, DEATH_BEAT_MS, FOE_ENTRANCE_MS, FOE_POOF_MS, GOLD_FLASH_MS, HEAL_ANIM_MS, HP_TEACH_FLASH_MS, HYPE_METER_FLASH_MS, LEVEL_UP_NOTICE_MS, MOBILE_TEACH_LAYOUT_MQ, SETUP_NAME_TEACH_FLASH_MS, XP_FILL_BEAT_MS } from "./constants.js";
 import { el } from "./dom.js";
 import { getHeroColorThemeDefinition, readHeroNameFromSetup } from "./hero-setup.js";
-import { persistSetupDraft } from "./persistence.js";
 import { loadSave as loadSaveFromStorage, writeSaveJson, readPersistedFields, withSaveMeta as withSaveMetaForMode } from "./save-io.js";
 import { gameState } from "./state.js";
 import { getCampaignLength, getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";
@@ -108,7 +107,7 @@ export function syncHeroColorSwatchSelection(): void {
   }
 }
 
-export function buildHeroColorSwatches(): void {
+export function buildHeroColorSwatches(onDraftChange?: () => void): void {
   if (!el.heroColorSwatches) return;
   el.heroColorSwatches.replaceChildren();
   for (const theme of COLOR_THEMES) {
@@ -129,7 +128,7 @@ export function buildHeroColorSwatches(): void {
       syncHeroColorSwatchSelection();
       updateHeroColorTogglePreview();
       closeHeroColorPopup();
-      persistSetupDraft();
+      onDraftChange?.();
     });
     el.heroColorSwatches.appendChild(btn);
   }

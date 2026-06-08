@@ -82,7 +82,15 @@ css/
 assets/theme-boot.js    # applies saved light/dark before first paint
 src/
   game.ts               # thin entry — imports game/app init
-  game/                 # app, combat, presentation, persistence, …
+  game/
+    app.ts              # boot, setup, footer, confirm wiring
+    combat.ts           # turn actions, foe queue advances
+    presentation.ts     # render, animations, battle log, teach popups
+    persistence.ts      # snapshots, confirm dialog, page-exit flush
+    save-io.ts          # localStorage read/write (no DOM)
+    colors.ts           # hero/foe card color themes
+    hero-setup.ts       # setup name/color helpers
+    …                   # constants, data, dom, state, types, stats, foe-queue
   lib/                  # pure rules, combat hints, save validation
   data/                 # foe roster
   content/              # dance lines
@@ -105,7 +113,7 @@ e2e/                    # Playwright browser tests
 
 - **HTML:** edit files under `html/partials/`, then run `npm run build:html` (also runs on `npm run dev` via `predev`). `tests/html/build.test.ts` checks output against `scripts/index.html.bak`.
 - **CSS:** edit module files under `css/`, or regen from the monolith backup with `node scripts/split-css.mjs`. `tests/css/build.test.ts` checks hub imports and keyframe coverage.
-- **TypeScript:** edit `src/**/*.ts`, then `npm run build`. Game logic lives in `src/lib/`; DOM wiring and flows live in `src/game/`.
+- **TypeScript:** edit `src/**/*.ts`, then `npm run build`. Game logic lives in `src/lib/`; DOM wiring and flows live in `src/game/` (`save-io` for storage, `colors` / `hero-setup` for theme and setup helpers).
 
 ## Local play
 

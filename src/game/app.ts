@@ -8,6 +8,7 @@ import { resetGame, endGame, winCampaign, gameOverSummaryText, onAttack, onHeal,
 import { CAMPAIGN_WAVES, HELP_OPEN_KEY, SKIP_EXIT_FLUSH_KEY, STORAGE_KEY } from "./constants.js";
 import { FOES, HEROES } from "./data.js";
 import { el } from "./dom.js";
+import { bindHelpDialog, restoreHelpDialog } from "./app-help.js";
 import { applyHeroColorTheme } from "./colors.js";
 import { persist, persistStatsOnly, persistSetupDraft, loadSave, loadSnapshot, applySnapshot, setConfirmActions, bindConfirmDialog, bindPageExitPersist, restorePendingConfirmIfNeeded, withSaveMeta, presentConfirm } from "./persistence.js";
 import { resolveHeroColorTheme, resolveSavedHeroName, getHeroLabelForEmoji, readHeroNameFromSetup } from "./hero-setup.js";
@@ -342,7 +343,7 @@ export function showSetup(): void {
   buildHeroPicker();
   el.heroNameInput.value = save.heroName ?? "";
   gameState.pendingHeroColorTheme = resolveHeroColorTheme(save);
-  buildHeroColorSwatches();
+  buildHeroColorSwatches(persistSetupDraft);
   applyHeroColorTheme(gameState.pendingHeroColorTheme);
   updateSetupStartButton();
   el.setupOverlay.classList.remove("hidden");
