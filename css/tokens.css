@@ -127,6 +127,9 @@
   --teach-popup-border: var(--color-yellow-300);
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 44%, var(--cmd-bg));
   --teach-popup-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 0 12px rgba(253, 224, 71, 0.35);
+  --restart-text: var(--teach-popup-text);
+  --restart-border: var(--teach-popup-border);
+  --restart-bg: color-mix(in srgb, var(--teach-popup-border) 16%, var(--cmd-bg));
   --hint-flash-border: var(--color-yellow-300);
   --hint-flash-bg: color-mix(in srgb, var(--highlight) 60%, var(--cmd-bg));
   --hint-flash-glow: rgba(253, 224, 71, 0.55);
@@ -238,7 +241,8 @@ html[data-theme="light"] {
   --meta-btn-bg: var(--cmd-bg);
   --meta-btn-border: var(--cmd-border);
   --meta-btn-hover-bg: var(--cmd-hover);
-  --teach-popup-text: var(--text);
+  /* Light tints in dark popups → dark shades in same families on light popups */
+  --teach-popup-text: color-mix(in srgb, var(--highlight) 38%, var(--text));
   --teach-popup-border: var(--color-yellow-300);
   --teach-popup-bg: color-mix(in srgb, var(--highlight) 36%, var(--cmd-bg));
   --teach-popup-shadow: 0 4px 16px rgba(90, 61, 138, 0.18), 0 0 12px rgba(253, 224, 71, 0.35);
@@ -248,9 +252,9 @@ html[data-theme="light"] {
   --hint-flash-glow-peak: rgba(253, 224, 71, 0.4);
   --hint-flash-glow-radius: 6px;
   --hint-flash-glow-radius-peak: 12px;
-  --hint-flash-text: var(--text);
-  --hint-flash-heal-text: var(--text);
-  --hint-flash-dance-text: var(--text);
+  --hint-flash-text: var(--color-rose-900);
+  --hint-flash-heal-text: var(--teach-popup-text);
+  --hint-flash-dance-text: var(--color-purple-700);
   --setup-select-glow: rgba(253, 224, 71, 0.45);
   --hype-maxed-text: var(--panel-edge);
   --hype-maxed-glow: 0 0 8px rgba(253, 224, 71, 0.75);
@@ -272,9 +276,9 @@ html[data-theme="light"] {
   --end-log-marker: var(--text-dim);
   --end-log-scrollbar-track: var(--bg-mid);
   --end-log-scrollbar-thumb: var(--panel-edge);
-  --restart-border: var(--enemy-dark);
-  --restart-text: var(--enemy-dark);
-  --restart-bg: color-mix(in srgb, var(--enemy-dark) 14%, var(--panel));
+  --restart-text: var(--teach-popup-text);
+  --restart-border: var(--teach-popup-border);
+  --restart-bg: color-mix(in srgb, var(--teach-popup-text) 10%, var(--panel));
   --crt-line: rgba(26, 15, 46, 0.025);
   --stage-floor-top: var(--color-purple-100-light);
   --stage-floor-mid: var(--color-purple-150);

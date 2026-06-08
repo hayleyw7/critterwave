@@ -204,6 +204,7 @@ body.is-booting .game-shell {
   font-family: var(--font-ui);
   font-size: clamp(1.5rem, 4vw, 1.85rem);
   line-height: 1.2;
+  text-transform: uppercase;
   color: var(--heading-accent);
   text-shadow:
     2px 2px 0 var(--title-shadow-color),

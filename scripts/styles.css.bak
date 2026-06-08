@@ -205,6 +205,7 @@ body.is-booting .game-shell {
   font-family: var(--font-ui);
   font-size: clamp(1.5rem, 4vw, 1.85rem);
   line-height: 1.2;
+  text-transform: uppercase;
   color: var(--heading-accent);
   text-shadow:
     2px 2px 0 var(--title-shadow-color),
@@ -2079,8 +2080,9 @@ html[data-theme="light"] .damage-pop.hype-pop {
 }
 
 .cmd-restart {
-  border: 2px solid var(--highlight);
-  color: var(--highlight);
+  border: 2px solid var(--restart-border);
+  color: var(--restart-text);
+  background: var(--restart-bg);
   margin-top: 0.75rem;
   width: 100%;
   max-width: 220px;
@@ -2528,7 +2530,7 @@ html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart {
 html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart:hover:not(:disabled) {
   border-color: var(--restart-border);
   color: var(--restart-text);
-  background: color-mix(in srgb, var(--enemy-dark) 22%, var(--panel));
+  background: color-mix(in srgb, var(--restart-text) 22%, var(--panel));
   filter: none;
 }
 
