@@ -4,17 +4,33 @@ import { attackTeachText } from "../lib/combat-hints.js";
 import { HERO_PICKER_ORDER, isHeroEmojiHiddenInPicker, isMobileHeroPickerViewport, resolveHeroPickerEmoji } from "../lib/hero-groups.js";
 import { isDebugHost } from "../lib/save-validation.js";
 import { startVictoryCelebration, stopVictoryCelebration } from "../ui/victory-celebration.js";
+import { bindHelpDialog, restoreHelpDialog } from "./app-help.js";
+import {
+  clearLog,
+  logEndTitle,
+  logWaveStart,
+  revealBattleLog,
+} from "./battle-log.js";
 import { resetGame, endGame, winCampaign, gameOverSummaryText, onAttack, onHeal, onDance, onRun, canUseCombatActions, applyCombatGateState, combatGateState } from "./combat.js";
+import { applyHeroColorTheme } from "./colors.js";
 import { CAMPAIGN_WAVES, SKIP_EXIT_FLUSH_KEY, STORAGE_KEY } from "./constants.js";
 import { FOES, HEROES } from "./data.js";
 import { el } from "./dom.js";
-import { bindHelpDialog, restoreHelpDialog } from "./app-help.js";
-import { applyHeroColorTheme } from "./colors.js";
 import { persist, persistStatsOnly, persistSetupDraft, loadSave, loadSnapshot, applySnapshot, setConfirmActions, bindConfirmDialog, bindPageExitPersist, restorePendingConfirmIfNeeded, withSaveMeta, presentConfirm } from "./persistence.js";
 import { resolveHeroColorTheme, resolveSavedHeroName, getHeroLabelForEmoji, readHeroNameFromSetup } from "./hero-setup.js";
-import { initColorMode, toggleColorMode, bindSetupColorPicker, updateSetupStartButton, buildHeroColorSwatches, closeHeroColorPopup, render, renderRecords, bindCombatTeachPopupDismissal, bindFooterTeachPopupResize, logWaveStart, logEndTitle, revealBattleLog, clearLog, getSetupBlockers, showSetupBlockedHint, readHeroColorThemeFromSetup } from "./presentation.js";
+import { initColorMode, toggleColorMode, render, renderRecords } from "./presentation.js";
+import {
+  bindSetupColorPicker,
+  buildHeroColorSwatches,
+  closeHeroColorPopup,
+  getSetupBlockers,
+  readHeroColorThemeFromSetup,
+  showSetupBlockedHint,
+  updateSetupStartButton,
+} from "./setup-ui.js";
 import { gameState } from "./state.js";
 import { getCampaignLength } from "./stats.js";
+import { bindCombatTeachPopupDismissal, bindFooterTeachPopupResize } from "./teach-popups.js";
 import { type DebugCombatAction } from "./types.js";
 
 export function hasDebugWin(): boolean {

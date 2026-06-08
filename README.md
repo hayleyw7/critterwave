@@ -86,7 +86,13 @@ src/
     app.ts              # boot, setup, footer, confirm wiring
     app-help.ts         # help modal open/close/bind
     combat.ts           # turn actions, foe queue advances
-    presentation.ts     # render, animations, battle log, teach popups
+    presentation.ts     # render, theme toggle, re-exports for compat
+    battle-log.ts       # log lines, game-over log history
+    teach-popups.ts     # combat hint popups and glow classes
+    animations.ts       # combat visuals, damage pops, death/victory
+    setup-ui.ts         # hero setup screen and color picker
+    hype-ui.ts          # hype meters, teach flashes, dance buffs
+    ui-bars.ts          # shared HP/XP bar width helper
     persistence.ts      # snapshots, confirm dialog, page-exit flush
     save-io.ts          # localStorage read/write (no DOM)
     colors.ts           # hero/foe card color themes

@@ -11,39 +11,42 @@ import { buildFoeOrder, spawnFoeFromQueue, syncPlayerForCurrentWave } from "./fo
 import { persist, getSnapshot, loadSave, withSaveMeta } from "./persistence.js";
 import { applyFoeColorTheme, pickNextFoeColor } from "./colors.js";
 import {
-  render,
-  syncCombatHintClasses,
-  playFirstHealHpFlash,
-  playFirstPlayerDamageHpFlash,
-  playFirstAttackFoeHpFlash,
-  playFirstWaveVictoryHealHpFlash,
-  playHeroHeal,
-  playHeroDance,
-  playFoeDance,
-  playRunExit,
-  playFoeEntrance,
-  playFoeDefeat,
-  handlePlayerDeath,
-  showDamagePop,
+  clearLog,
+  logBattleLines,
+  logDanceLines,
+  logEndTitle,
+  logLine,
+  logWaveStart,
+  revealBattleLog,
+} from "./battle-log.js";
+import {
   briefClass,
   clearCombatAnimations,
   clearHitReact,
+  handlePlayerDeath,
+  playFoeDefeat,
+  playFoeDance,
+  playFoeEntrance,
+  playHeroDance,
+  playHeroHeal,
   playLevelUpNotice,
-  logLine,
-  logBattleLines,
-  logDanceLines,
-  logWaveStart,
-  logEndTitle,
-  clearLog,
-  revealBattleLog,
+  playRunExit,
   playXpBarFullBeat,
-  clearAllHype,
-  applyPlayerDanceBuff,
+  showDamagePop,
+} from "./animations.js";
+import {
   applyFoeDanceBuff,
-  applyPlayerHitHypeLoss,
   applyFoeHitHypeLoss,
-  formatFoeInText,
-} from "./presentation.js";
+  applyPlayerDanceBuff,
+  applyPlayerHitHypeLoss,
+  clearAllHype,
+  playFirstAttackFoeHpFlash,
+  playFirstHealHpFlash,
+  playFirstPlayerDamageHpFlash,
+  playFirstWaveVictoryHealHpFlash,
+} from "./hype-ui.js";
+import { formatFoeInText, render } from "./presentation.js";
+import { syncCombatHintClasses } from "./teach-popups.js";
 import { gameState } from "./state.js";
 import { getCampaignLength, getHealMax, getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";
 
