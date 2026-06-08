@@ -86,7 +86,8 @@ src/
     app.ts              # boot, setup, footer, confirm wiring
     app-help.ts         # help modal open/close/bind
     combat.ts           # turn actions, foe queue advances
-    presentation.ts     # render, theme toggle, re-exports for compat
+    presentation.ts     # render orchestration
+    theme.ts            # light/dark toggle and footer records
     battle-log.ts       # log lines, game-over log history
     teach-popups.ts     # combat hint popups and glow classes
     animations.ts       # combat visuals, damage pops, death/victory

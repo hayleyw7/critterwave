@@ -18,7 +18,8 @@ import { FOES, HEROES } from "./data.js";
 import { el } from "./dom.js";
 import { persist, persistStatsOnly, persistSetupDraft, loadSave, loadSnapshot, applySnapshot, setConfirmActions, bindConfirmDialog, bindPageExitPersist, restorePendingConfirmIfNeeded, withSaveMeta, presentConfirm } from "./persistence.js";
 import { resolveHeroColorTheme, resolveSavedHeroName, getHeroLabelForEmoji, readHeroNameFromSetup } from "./hero-setup.js";
-import { initColorMode, toggleColorMode, render, renderRecords } from "./presentation.js";
+import { initColorMode, toggleColorMode, renderRecords } from "./theme.js";
+import { render } from "./presentation.js";
 import {
   bindSetupColorPicker,
   buildHeroColorSwatches,

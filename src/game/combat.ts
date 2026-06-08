@@ -12,6 +12,7 @@ import { persist, getSnapshot, loadSave, withSaveMeta } from "./persistence.js";
 import { applyFoeColorTheme, pickNextFoeColor } from "./colors.js";
 import {
   clearLog,
+  formatFoeInText,
   logBattleLines,
   logDanceLines,
   logEndTitle,
@@ -45,7 +46,7 @@ import {
   playFirstPlayerDamageHpFlash,
   playFirstWaveVictoryHealHpFlash,
 } from "./hype-ui.js";
-import { formatFoeInText, render } from "./presentation.js";
+import { render } from "./presentation.js";
 import { syncCombatHintClasses } from "./teach-popups.js";
 import { gameState } from "./state.js";
 import { getCampaignLength, getHealMax, getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";

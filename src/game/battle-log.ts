@@ -5,11 +5,19 @@ import {
   type BattleActionLabel,
 } from "../lib/battle-log-dom.js";
 import { colorThemeSurfaces, getColorTheme } from "../lib/color-themes.js";
-import { playerLevelForWave, WAVES_PER_LEVEL } from "../lib/game-logic.js";
+import { formatFoeInText as formatFoeMessage, playerLevelForWave, WAVES_PER_LEVEL } from "../lib/game-logic.js";
 import { el } from "./dom.js";
 import { gameState } from "./state.js";
 import { getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";
 import type { BattleLogEntry } from "./types.js";
+
+export function foeDisplayName(): string {
+  return gameState.foe?.name ?? "foe";
+}
+
+export function formatFoeInText(template: string): string {
+  return formatFoeMessage(template, foeDisplayName());
+}
 
 export function rememberBattleLogEntry(
   lines: { text: string; kind: "info" | "player" | "foe" | "win" | "lose" }[],

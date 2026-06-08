@@ -1,6 +1,4 @@
-import { applyColorMode, parseColorMode, runColorModeTransition } from "../lib/color-mode.js";
 import {
-  formatFoeInText as formatFoeMessage,
   playerLevelForWave,
   xpProgressForDisplay,
   xpPercentForDisplay,
@@ -10,57 +8,11 @@ import { renderGameOverBattleLog } from "./battle-log.js";
 import { applyFoeColorTheme, applyHeroColorTheme } from "./colors.js";
 import { el } from "./dom.js";
 import { syncFirstHypeFlashes, renderHypeMeter } from "./hype-ui.js";
-import { loadSave as loadSaveFromStorage, readPersistedFields, withSaveMeta as withSaveMetaForMode, writeSaveJson } from "./save-io.js";
 import { gameState } from "./state.js";
 import { getCampaignLength, getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";
 import { syncCombatHintClasses } from "./teach-popups.js";
+import { renderRecords } from "./theme.js";
 import { setHpBar } from "./ui-bars.js";
-
-export function initColorMode(): void {
-  gameState.currentColorMode = parseColorMode(
-    loadSaveFromStorage(gameState.currentColorMode).colorMode
-  );
-  applyColorMode(gameState.currentColorMode);
-  updateThemeToggleUi();
-  applyHeroColorTheme(gameState.heroColorTheme);
-  applyFoeColorTheme(gameState.foeColorTheme);
-}
-
-export function updateThemeToggleUi(): void {
-  const isDark = gameState.currentColorMode === "dark";
-  const label = isDark ? "Switch to light mode" : "Switch to dark mode";
-  el.themeToggle.setAttribute("aria-pressed", isDark ? "false" : "true");
-  el.themeToggle.setAttribute("aria-label", label);
-  el.themeToggle.setAttribute("title", label);
-  el.themeToggleIcon.textContent = isDark ? "☀" : "☾";
-}
-
-export function toggleColorMode(): void {
-  el.footerMore.open = false;
-  const nextMode = gameState.currentColorMode === "dark" ? "light" : "dark";
-  gameState.currentColorMode = nextMode;
-  runColorModeTransition(() => {
-    applyColorMode(nextMode);
-    updateThemeToggleUi();
-    applyHeroColorTheme(gameState.heroColorTheme);
-    applyFoeColorTheme(gameState.foeColorTheme);
-  });
-  writeSaveJson(withSaveMetaForMode(readPersistedFields(), gameState.currentColorMode));
-}
-
-export function foeDisplayName(): string {
-  return gameState.foe?.name ?? "foe";
-}
-
-export function formatFoeInText(template: string): string {
-  return formatFoeMessage(template, foeDisplayName());
-}
-
-export function renderRecords(): void {
-  const save = loadSaveFromStorage(gameState.currentColorMode);
-  el.bestWave.textContent = String(save.bestWave);
-  el.runs.textContent = String(save.runsPlayed);
-}
 
 export function canBeDefeatedByNextHit(hp: number, incomingAttack: number): boolean {
   return hp > 0 && incomingAttack >= hp;
@@ -146,67 +98,3 @@ export function render(): void {
   syncCombatHintClasses();
   gameState.suppressTeachFlashesThisRender = false;
 }
-
-// Re-export slices so existing imports from presentation.js keep working.
-export {
-  appendDanceHypeSuffix,
-  clearLog,
-  danceHypeSuffix,
-  levelUpStatsText,
-  logBattleLines,
-  logDanceLines,
-  logEndTitle,
-  logLine,
-  logWaveStart,
-  rememberBattleLogEntry,
-  renderGameOverBattleLog,
-  resetBattleLogHistory,
-  revealBattleLog,
-} from "./battle-log.js";
-export {
-  briefClass,
-  clearCombatAnimations,
-  clearHitReact,
-  handlePlayerDeath,
-  pause,
-  playFoeDefeat,
-  playFoeDance,
-  playFoeEntrance,
-  playFoePoof,
-  playHeroDance,
-  playHeroHeal,
-  playLevelUpNotice,
-  playRunEntrance,
-  playRunExit,
-  playStageClass,
-  playXpBarFullBeat,
-  showDamagePop,
-  spritePopAnchor,
-} from "./animations.js";
-export {
-  applyFoeDanceBuff,
-  applyFoeHitHypeLoss,
-  applyPlayerDanceBuff,
-  applyPlayerHitHypeLoss,
-  clearAllHype,
-  playFirstAttackFoeHpFlash,
-  playFirstHealHpFlash,
-  playFirstPlayerDamageHpFlash,
-  playFirstWaveVictoryHealHpFlash,
-  syncFirstHypeFlashes,
-} from "./hype-ui.js";
-export {
-  bindCombatTeachPopupDismissal,
-  bindFooterTeachPopupResize,
-  syncCombatHintClasses,
-} from "./teach-popups.js";
-export {
-  bindSetupColorPicker,
-  buildHeroColorSwatches,
-  closeHeroColorPopup,
-  getSetupBlockers,
-  readHeroColorThemeFromSetup,
-  showSetupBlockedHint,
-  updateSetupStartButton,
-} from "./setup-ui.js";
-export { setHpBar } from "./ui-bars.js";
