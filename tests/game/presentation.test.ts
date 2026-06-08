@@ -5,9 +5,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { COLOR_THEME_IDS } from "../../src/lib/color-themes.js";
 import { foeColorConflictsWithHero } from "../../src/lib/game-logic.js";
 import {
-  foeColorConflictsWithHero as presentationFoeConflict,
   getAvailableFoeColorThemes,
-} from "../../src/game/presentation.js";
+  foeColorConflictsWithHero as presentationFoeConflict,
+} from "../../src/game/colors.js";
 import { gameState } from "../../src/game/state.js";
 
 describe("presentation — foe color themes", () => {

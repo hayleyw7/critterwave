@@ -1,26 +1,23 @@
 import { appendBattleActionMeta, appendBattleLine, setBattleLines, type BattleActionLabel } from "../lib/battle-log-dom.js";
 import { applyColorMode, parseColorMode, runColorModeTransition } from "../lib/color-mode.js";
-import { COLOR_THEMES, getColorTheme, colorThemeSurfaces, isColorThemeId, type ColorThemeSurfaces } from "../lib/color-themes.js";
+import { COLOR_THEMES, getColorTheme, colorThemeSurfaces } from "../lib/color-themes.js";
 import { tryCelebrateFirstFoeHype, tryCelebrateFirstPlayerHype, hypeMaxPresentation, shouldShowAttackHint, shouldShowDanceHint, shouldShowDanceTeachCopy, shouldShowHealHint, shouldShowHealTeachCopy, shouldShowRunHint, shouldShowRunTeachCopy } from "../lib/combat-hints.js";
-import { foeColorConflictsWithHero as heroFoeColorConflicts, formatFoeInText as formatFoeMessage, formatSetupBlockerMessage, getSetupBlockers as getSetupBlockersForInput, HYPE_MAX, applyHypeGain, hypeAfterTakingHit, clampHype, formatHypeLabel as formatHypeStatLabel, playerLevelForWave, WAVES_PER_LEVEL, xpProgressForDisplay, xpProgressForWave, xpPercentForDisplay, normalizeHeroName } from "../lib/game-logic.js";
-import { sanitizeSavedHeroName } from "../lib/save-validation.js";
+import { formatFoeInText as formatFoeMessage, formatSetupBlockerMessage, getSetupBlockers as getSetupBlockersForInput, HYPE_MAX, applyHypeGain, hypeAfterTakingHit, clampHype, formatHypeLabel as formatHypeStatLabel, playerLevelForWave, WAVES_PER_LEVEL, xpProgressForDisplay, xpProgressForWave, xpPercentForDisplay } from "../lib/game-logic.js";
 import { stopVictoryCelebration } from "../ui/victory-celebration.js";
-import { DANCE_ANIM_MS, DEATH_BEAT_MS, DEFAULT_HERO_COLOR_THEME, DEFAULT_HERO_LABEL, FOE_COLOR_THEMES, FOE_ENTRANCE_MS, FOE_POOF_MS, GOLD_FLASH_MS, HEAL_ANIM_MS, HP_TEACH_FLASH_MS, HYPE_METER_FLASH_MS, LEVEL_UP_NOTICE_MS, MOBILE_TEACH_LAYOUT_MQ, SETUP_NAME_TEACH_FLASH_MS, STORAGE_KEY, XP_FILL_BEAT_MS } from "./constants.js";
-import { HEROES } from "./data.js";
+import { applyFoeColorTheme, applyHeroColorTheme } from "./colors.js";
+import { DANCE_ANIM_MS, DEATH_BEAT_MS, FOE_ENTRANCE_MS, FOE_POOF_MS, GOLD_FLASH_MS, HEAL_ANIM_MS, HP_TEACH_FLASH_MS, HYPE_METER_FLASH_MS, LEVEL_UP_NOTICE_MS, MOBILE_TEACH_LAYOUT_MQ, SETUP_NAME_TEACH_FLASH_MS, XP_FILL_BEAT_MS } from "./constants.js";
 import { el } from "./dom.js";
-import { persistSetupDraft, loadSave, withSaveMeta, readPersistedFields } from "./persistence.js";
+import { getHeroColorThemeDefinition, readHeroNameFromSetup } from "./hero-setup.js";
+import { persistSetupDraft } from "./persistence.js";
+import { loadSave as loadSaveFromStorage, writeSaveJson, readPersistedFields, withSaveMeta as withSaveMetaForMode } from "./save-io.js";
 import { gameState } from "./state.js";
 import { getCampaignLength, getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";
-import { type BattleLogEntry, type CombatTeachPopupId, type FoeColorTheme, type HeroColorTheme, type SaveData } from "./types.js";
-
-let endGameHandler: (() => void) | null = null;
-
-export function registerEndGameHandler(handler: () => void): void {
-  endGameHandler = handler;
-}
+import { type BattleLogEntry, type CombatTeachPopupId, type HeroColorTheme } from "./types.js";
 
 export function initColorMode(): void {
-  gameState.currentColorMode = parseColorMode(loadSave().colorMode);
+  gameState.currentColorMode = parseColorMode(
+    loadSaveFromStorage(gameState.currentColorMode).colorMode
+  );
   applyColorMode(gameState.currentColorMode);
   updateThemeToggleUi();
   applyHeroColorTheme(gameState.heroColorTheme);
@@ -46,129 +43,7 @@ export function toggleColorMode(): void {
     applyHeroColorTheme(gameState.heroColorTheme);
     applyFoeColorTheme(gameState.foeColorTheme);
   });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(withSaveMeta(readPersistedFields())));
-}
-
-export function foeColorConflictsWithHero(theme: FoeColorTheme): boolean {
-  return heroFoeColorConflicts(gameState.heroColorTheme, theme);
-}
-
-export function getAvailableFoeColorThemes(excludeLast: boolean): FoeColorTheme[] {
-  let options = FOE_COLOR_THEMES.filter((theme) => !foeColorConflictsWithHero(theme));
-  if (excludeLast && gameState.lastFoeColorTheme !== null) {
-    const withoutLast = options.filter((theme) => theme !== gameState.lastFoeColorTheme);
-    if (withoutLast.length > 0) {
-      options = withoutLast;
-    }
-  }
-  return options;
-}
-
-export function pickNextFoeColor(): FoeColorTheme {
-  let options = getAvailableFoeColorThemes(true);
-  if (options.length === 0) {
-    options = getAvailableFoeColorThemes(false);
-  }
-  if (options.length === 0) {
-    options = FOE_COLOR_THEMES.filter((theme) => !foeColorConflictsWithHero(theme));
-  }
-  const picked = options[Math.floor(Math.random() * options.length)] ?? "amber";
-  gameState.lastFoeColorTheme = picked;
-  gameState.foeColorTheme = picked;
-  return picked;
-}
-
-export function ensureFoeColorDistinctFromHero(): void {
-  if (!foeColorConflictsWithHero(gameState.foeColorTheme)) return;
-  pickNextFoeColor();
-}
-
-export function applyFoeColorTheme(theme: FoeColorTheme): void {
-  const panel = el.foePanel.querySelector(".enemy-status") as HTMLElement | null;
-  if (!panel) return;
-  for (const name of FOE_COLOR_THEMES) {
-    panel.classList.remove(`foe-theme-${name}`);
-  }
-  panel.classList.add(`foe-theme-${theme}`);
-  const colors = colorThemeSurfaces(getColorTheme(theme), gameState.currentColorMode);
-  panel.style.setProperty("--foe-accent", colors.accent);
-  panel.style.setProperty("--foe-accent-dark", colors.dark);
-  panel.style.setProperty("--foe-panel-bg", colors.panelBg);
-  panel.style.setProperty("--foe-plate-bg", colors.plateBg);
-  panel.style.setProperty("--foe-plate-text", colors.plateText);
-  panel.style.setProperty("--foe-hp-wrap-bg", colors.hpWrapBg);
-  panel.style.setProperty("--foe-divider", colors.divider);
-  panel.style.setProperty("--foe-buff-bg", colors.buffBg);
-  applyCardHypeStatColors(panel, "foe", colors);
-  el.gameShell.style.setProperty("--foe-accent", colors.accent);
-  el.gameShell.style.setProperty("--foe-accent-dark", colors.dark);
-  el.gameShell.style.setProperty(
-    "--battle-foe-text",
-    gameState.currentColorMode === "dark" ? colors.accent : colors.plateText
-  );
-}
-
-
-export function getHeroLabelForEmoji(emoji: string): string {
-  return HEROES.find((h) => h.emoji === emoji)?.label ?? DEFAULT_HERO_LABEL;
-}
-
-export function resolveSavedHeroName(save: SaveData, emoji: string): string {
-  return sanitizeSavedHeroName(
-    save.heroName,
-    save.heroLabel,
-    getHeroLabelForEmoji(emoji)
-  );
-}
-
-export function readHeroNameFromSetup(): string {
-  return normalizeHeroName(el.heroNameInput.value);
-}
-
-export function isHeroColorTheme(value: string): value is HeroColorTheme {
-  return isColorThemeId(value);
-}
-
-export function getHeroColorThemeDefinition(theme: HeroColorTheme) {
-  return getColorTheme(theme);
-}
-
-export function resolveHeroColorTheme(save: SaveData): HeroColorTheme {
-  if (save.heroColorTheme && isHeroColorTheme(save.heroColorTheme)) {
-    return save.heroColorTheme;
-  }
-  return DEFAULT_HERO_COLOR_THEME;
-}
-
-export function applyCardHypeStatColors(
-  panel: HTMLElement,
-  varPrefix: "hero" | "foe",
-  colors: ColorThemeSurfaces
-): void {
-  panel.style.setProperty(
-    `--${varPrefix}-hype-text`,
-    `color-mix(in srgb, ${colors.accent} 55%, ${colors.dark})`
-  );
-}
-
-export function applyHeroColorTheme(theme: HeroColorTheme): void {
-  const colors = colorThemeSurfaces(getColorTheme(theme), gameState.currentColorMode);
-  gameState.heroColorTheme = theme;
-  el.playerPanel.style.setProperty("--hero", colors.accent);
-  el.playerPanel.style.setProperty("--hero-dark", colors.dark);
-  el.playerPanel.style.setProperty("--hero-panel-bg", colors.panelBg);
-  el.playerPanel.style.setProperty("--hero-plate-bg", colors.plateBg);
-  el.playerPanel.style.setProperty("--hero-plate-text", colors.plateText);
-  el.playerPanel.style.setProperty("--hero-hp-wrap-bg", colors.hpWrapBg);
-  el.playerPanel.style.setProperty("--hero-divider", colors.divider);
-  applyCardHypeStatColors(el.playerPanel, "hero", colors);
-  el.gameShell.style.setProperty("--hero", colors.accent);
-  el.gameShell.style.setProperty("--hero-dark", colors.dark);
-  el.gameShell.style.setProperty(
-    "--battle-hero-text",
-    gameState.currentColorMode === "dark" ? colors.accent : colors.plateText
-  );
-  el.xpFill.style.background = colors.accent;
+  writeSaveJson(withSaveMetaForMode(readPersistedFields(), gameState.currentColorMode));
 }
 
 export function updateHeroColorTogglePreview(): void {
@@ -402,7 +277,7 @@ export function formatFoeInText(template: string): string {
 }
 
 export function renderRecords(): void {
-  const save = loadSave();
+  const save = loadSaveFromStorage(gameState.currentColorMode);
   el.bestWave.textContent = String(save.bestWave);
   el.runs.textContent = String(save.runsPlayed);
 }
@@ -906,7 +781,6 @@ export async function handlePlayerDeath(): Promise<void> {
   await pause(420);
   el.playerPanel.classList.add("hero-death");
   await playStageClass("stage-death-vignette", DEATH_BEAT_MS);
-  endGameHandler?.();
 }
 
 export function spritePopAnchor(side: "hero" | "foe"): { left: string; top: string } {

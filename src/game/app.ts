@@ -8,8 +8,10 @@ import { resetGame, endGame, winCampaign, gameOverSummaryText, onAttack, onHeal,
 import { CAMPAIGN_WAVES, HELP_OPEN_KEY, SKIP_EXIT_FLUSH_KEY, STORAGE_KEY } from "./constants.js";
 import { FOES, HEROES } from "./data.js";
 import { el } from "./dom.js";
-import { persist, persistStatsOnly, persistSetupDraft, loadSave, loadSnapshot, applySnapshot, registerConfirmHandlers, bindConfirmDialog, bindPageExitPersist, restorePendingConfirmIfNeeded, withSaveMeta, presentConfirm } from "./persistence.js";
-import { initColorMode, toggleColorMode, applyHeroColorTheme, resolveHeroColorTheme, resolveSavedHeroName, getHeroLabelForEmoji, bindSetupColorPicker, updateSetupStartButton, buildHeroColorSwatches, closeHeroColorPopup, render, renderRecords, bindCombatTeachPopupDismissal, bindFooterTeachPopupResize, logWaveStart, logEndTitle, revealBattleLog, clearLog, getSetupBlockers, showSetupBlockedHint, readHeroNameFromSetup, readHeroColorThemeFromSetup, registerEndGameHandler } from "./presentation.js";
+import { applyHeroColorTheme } from "./colors.js";
+import { persist, persistStatsOnly, persistSetupDraft, loadSave, loadSnapshot, applySnapshot, setConfirmActions, bindConfirmDialog, bindPageExitPersist, restorePendingConfirmIfNeeded, withSaveMeta, presentConfirm } from "./persistence.js";
+import { resolveHeroColorTheme, resolveSavedHeroName, getHeroLabelForEmoji, readHeroNameFromSetup } from "./hero-setup.js";
+import { initColorMode, toggleColorMode, bindSetupColorPicker, updateSetupStartButton, buildHeroColorSwatches, closeHeroColorPopup, render, renderRecords, bindCombatTeachPopupDismissal, bindFooterTeachPopupResize, logWaveStart, logEndTitle, revealBattleLog, clearLog, getSetupBlockers, showSetupBlockedHint, readHeroColorThemeFromSetup } from "./presentation.js";
 import { gameState } from "./state.js";
 import { getCampaignLength } from "./stats.js";
 import { type DebugCombatAction } from "./types.js";
@@ -622,11 +624,10 @@ export function finishBoot(): void {
 }
 
 export async function init(): Promise<void> {
-  registerConfirmHandlers({
+  setConfirmActions({
     newRun: applyNewRun,
     clearData: applyClearData,
   });
-  registerEndGameHandler(endGame);
   try {
     sessionStorage.removeItem(SKIP_EXIT_FLUSH_KEY);
   } catch {

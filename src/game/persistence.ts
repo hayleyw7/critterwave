@@ -1,14 +1,32 @@
 import { isColorThemeId } from "../lib/color-themes.js";
 import { createCombatHintsState, combatHintsAfterMidRunRestore, combatHintsForSnapshot, maybeArmDanceHintForWave } from "../lib/combat-hints.js";
 import { HYPE_MAX, clampHype } from "../lib/game-logic.js";
-import { clampInt, parsePendingConfirm, parseSaveMeta, type PendingConfirmKind, sanitizeGamePhase, sanitizeHypeLevel, sanitizeIdList, sanitizeSnapshotFoe, sanitizeSnapshotPlayer, sanitizeTurn, sanitizeWave } from "../lib/save-validation.js";
-import { CAMPAIGN_WAVES, DEFAULT_HERO_EMOJI, PENDING_CONFIRM_OPTIONS, SKIP_EXIT_FLUSH_KEY, STORAGE_KEY } from "./constants.js";
+import { clampInt, type PendingConfirmKind, sanitizeGamePhase, sanitizeHypeLevel, sanitizeIdList, sanitizeSnapshotFoe, sanitizeSnapshotPlayer, sanitizeTurn, sanitizeWave } from "../lib/save-validation.js";
+import { applyFoeColorTheme, applyHeroColorTheme, ensureFoeColorDistinctFromHero } from "./colors.js";
+import { CAMPAIGN_WAVES, DEFAULT_HERO_EMOJI, PENDING_CONFIRM_OPTIONS, SKIP_EXIT_FLUSH_KEY } from "./constants.js";
 import { FOES_BY_ID, FOE_IDS, HERO_EMOJIS } from "./data.js";
 import { el } from "./dom.js";
 import { restoreFoeOrder, restoreFoeQueueState, normalizeFoeColorTheme, syncPlayerForCurrentWave, refreshFoeStatsPreservingHp } from "./foe-queue.js";
-import { applyHeroColorTheme, applyFoeColorTheme, getHeroLabelForEmoji, ensureFoeColorDistinctFromHero, isHeroColorTheme, readHeroNameFromSetup } from "./presentation.js";
+import { getHeroLabelForEmoji, isHeroColorTheme, readHeroNameFromSetup } from "./hero-setup.js";
+import {
+  getStorageRaw,
+  loadSave as loadSaveWithMode,
+  readPersistedFields,
+  withSaveMeta as withSaveMetaForMode,
+  writeSaveJson,
+} from "./save-io.js";
 import { gameState } from "./state.js";
 import { type BattleLogEntry, type ConfirmOptions, type GameSnapshot, type SaveData } from "./types.js";
+
+export { getStorageRaw, readPersistedFields };
+
+export function loadSave(): SaveData {
+  return loadSaveWithMode(gameState.currentColorMode);
+}
+
+export function withSaveMeta(fields: Record<string, unknown> = {}): Record<string, unknown> {
+  return withSaveMetaForMode(fields, gameState.currentColorMode);
+}
 
 export function sanitizeBattleLogHistory(raw: unknown): BattleLogEntry[] | undefined {
   if (!Array.isArray(raw)) return undefined;
@@ -93,7 +111,7 @@ export function persistPendingConfirm(kind: PendingConfirmKind | null): void {
   } else {
     delete fields.pendingConfirm;
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(withSaveMeta(fields)));
+  writeSaveJson(withSaveMeta(fields));
 }
 
 export function presentConfirm(
@@ -131,7 +149,7 @@ export function restorePendingConfirmIfNeeded(): void {
     return;
   }
   void presentConfirm(kind, () => {
-    confirmHandlers[kind]?.();
+    confirmActions[kind]?.();
   });
 }
 
@@ -177,68 +195,6 @@ export function bindConfirmDialog(): void {
       closeConfirm(false);
     }
   });
-}
-
-export function getStorageRaw(): string | null {
-  return localStorage.getItem(STORAGE_KEY);
-}
-
-export function loadSave(): SaveData {
-  try {
-    const raw = getStorageRaw();
-    if (!raw) {
-      return { bestWave: 0, runsPlayed: 0, colorMode: gameState.currentColorMode };
-    }
-    return parseSaveMeta(JSON.parse(raw) as unknown, {
-      allowedHeroEmojis: HERO_EMOJIS,
-      campaignWaves: CAMPAIGN_WAVES,
-    });
-  } catch {
-    return { bestWave: 0, runsPlayed: 0, colorMode: gameState.currentColorMode };
-  }
-}
-
-export function withSaveMeta(fields: Record<string, unknown> = {}): Record<string, unknown> {
-  const save = loadSave();
-  return {
-    bestWave: save.bestWave,
-    runsPlayed: save.runsPlayed,
-    colorMode: gameState.currentColorMode,
-    ...fields,
-  };
-}
-
-export function readPersistedFields(): Record<string, unknown> {
-  try {
-    const raw = getStorageRaw();
-    if (!raw) {
-      return {};
-    }
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    const fields: Record<string, unknown> = {};
-    if (typeof parsed.playerEmoji === "string") {
-      fields.playerEmoji = parsed.playerEmoji;
-    }
-    if (typeof parsed.heroName === "string") {
-      fields.heroName = parsed.heroName;
-    }
-    if (typeof parsed.heroColorTheme === "string") {
-      fields.heroColorTheme = parsed.heroColorTheme;
-    }
-    if (parsed.setupActive === true) {
-      fields.setupActive = true;
-    }
-    if (parsed.snapshot && typeof parsed.snapshot === "object") {
-      fields.snapshot = parsed.snapshot;
-    }
-    const pendingConfirm = parsePendingConfirm(parsed.pendingConfirm);
-    if (pendingConfirm) {
-      fields.pendingConfirm = pendingConfirm;
-    }
-    return fields;
-  } catch {
-    return {};
-  }
 }
 
 export function loadSnapshot(): GameSnapshot | null {
@@ -291,16 +247,13 @@ export function normalizeSnapshot(snap: GameSnapshot): GameSnapshot {
 }
 
 export function persistStatsOnly(): void {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(
-      withSaveMeta({
-        playerEmoji: gameState.player.emoji,
-        heroName: gameState.player.name,
-        heroColorTheme: gameState.heroColorTheme,
-        setupActive: false,
-      })
-    )
+  writeSaveJson(
+    withSaveMeta({
+      playerEmoji: gameState.player.emoji,
+      heroName: gameState.player.name,
+      heroColorTheme: gameState.heroColorTheme,
+      setupActive: false,
+    })
   );
 }
 
@@ -309,33 +262,27 @@ export function persistSetupDraft(): void {
     return;
   }
   const name = readHeroNameFromSetup();
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(
-      withSaveMeta({
-        playerEmoji: gameState.pendingHeroEmoji,
-        heroName: name || undefined,
-        heroColorTheme: gameState.pendingHeroColorTheme,
-        setupActive: true,
-      })
-    )
+  writeSaveJson(
+    withSaveMeta({
+      playerEmoji: gameState.pendingHeroEmoji,
+      heroName: name || undefined,
+      heroColorTheme: gameState.pendingHeroColorTheme,
+      setupActive: true,
+    })
   );
 }
 
 export function persist(snapshot?: GameSnapshot): void {
   const preserved = readPersistedFields();
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(
-      withSaveMeta({
-        ...preserved,
-        playerEmoji: gameState.player.emoji,
-        heroName: gameState.player.name,
-        heroColorTheme: gameState.heroColorTheme,
-        setupActive: !el.setupOverlay.classList.contains("hidden"),
-        snapshot: snapshot ?? getSnapshot(),
-      })
-    )
+  writeSaveJson(
+    withSaveMeta({
+      ...preserved,
+      playerEmoji: gameState.player.emoji,
+      heroName: gameState.player.name,
+      heroColorTheme: gameState.heroColorTheme,
+      setupActive: !el.setupOverlay.classList.contains("hidden"),
+      snapshot: snapshot ?? getSnapshot(),
+    })
   );
 }
 
@@ -447,12 +394,12 @@ export function applySnapshot(snapshot: GameSnapshot): void {
 
 export type ConfirmHandlerKey = "newRun" | "clearData";
 
-const confirmHandlers: Partial<Record<ConfirmHandlerKey, () => void>> = {};
+const confirmActions: Partial<Record<ConfirmHandlerKey, () => void>> = {};
 
-export function registerConfirmHandlers(
-  handlers: Partial<Record<ConfirmHandlerKey, () => void>>
+export function setConfirmActions(
+  actions: Partial<Record<ConfirmHandlerKey, () => void>>
 ): void {
-  Object.assign(confirmHandlers, handlers);
+  Object.assign(confirmActions, actions);
 }
 
 
