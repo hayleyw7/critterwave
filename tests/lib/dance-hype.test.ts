@@ -10,7 +10,7 @@ import {
   pickRandomDanceResponse,
   PLAYER_ONLY_DANCE_RESPONSES,
   resetDancePicker,
-} from "../src/content/dance-responses.js";
+} from "../../src/content/dance-responses.js";
 
 const NO_HYPE = DANCE_RESPONSES.filter(
   (r) => getPlayerHypeGain(r) === 0 && getFoeHypeGain(r) === 0

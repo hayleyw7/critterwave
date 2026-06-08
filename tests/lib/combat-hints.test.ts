@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hypeAfterCounterHit } from "../src/lib/game-logic.js";
+import { hypeAfterCounterHit } from "../../src/lib/game-logic.js";
 import {
   combatHintsAfterMidRunRestore,
   combatHintsForSnapshot,
@@ -38,7 +38,7 @@ import {
   shouldArmDanceHintForNewFoe,
   type CombatHintsState,
   type NewFoeDanceHintContext,
-} from "../src/lib/combat-hints.js";
+} from "../../src/lib/combat-hints.js";
 
 const fresh = () => createCombatHintsState();
 const combat = "combat" as const;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FOES } from "../src/data/foes-data.js";
+import { FOES } from "../../src/data/foes-data.js";
 import {
   assertHeroPickerOrderCovers,
   firstVisibleHeroPickerEmoji,
@@ -9,7 +9,7 @@ import {
   isMobileHeroPickerViewport,
   MOBILE_HIDDEN_PICKER_EMOJIS,
   resolveHeroPickerEmoji,
-} from "../src/lib/hero-groups.js";
+} from "../../src/lib/hero-groups.js";
 
 describe("HERO_PICKER_ORDER", () => {
   it("has no duplicate emojis", () => {

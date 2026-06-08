@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { escapeHtml } from "../src/lib/escape-html.js";
+import { escapeHtml } from "../../src/lib/escape-html.js";
 
 describe("escapeHtml", () => {
   it("escapes HTML metacharacters", () => {

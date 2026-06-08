@@ -9,7 +9,7 @@ import {
   runColorModeTransition,
   syncPwaManifest,
   themeColorForMode,
-} from "../src/lib/color-mode.js";
+} from "../../src/lib/color-mode.js";
 
 describe("parseColorMode", () => {
   it("defaults to dark for missing or invalid values", () => {

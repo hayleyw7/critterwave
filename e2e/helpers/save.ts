@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-import { STORAGE_KEY } from "./helpers.js";
+import { STORAGE_KEY } from "./index.js";
 
 const SKIP_EXIT_FLUSH_KEY = "critterwave-skip-exit-flush";
 

@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { STORAGE_KEY } from "./helpers.js";
+import { STORAGE_KEY } from "./index.js";
 
 type SavePayload = Record<string, unknown>;
 

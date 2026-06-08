@@ -11,7 +11,7 @@ import {
   resetCombatGate,
   shouldAwaitFoeCounter,
   tryLockCombat,
-} from "../src/lib/combat-gate.js";
+} from "../../src/lib/combat-gate.js";
 
 describe("combat gate", () => {
   it("allows actions only in combat when idle and alive with a foe", () => {

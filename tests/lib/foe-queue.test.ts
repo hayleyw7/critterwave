@@ -5,7 +5,7 @@ import {
   buildInitialFoeQueue,
   buildQueueCycleFromWave,
   makeFoeFromQueueHead,
-} from "../src/lib/game-logic.js";
+} from "../../src/lib/game-logic.js";
 
 const SAMPLE_FOES = [
   { id: "a", name: "Angry Ant", emoji: "🐜", baseHp: 10, baseAtk: 2 },

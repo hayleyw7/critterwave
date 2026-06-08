@@ -6,7 +6,7 @@ import {
   colorThemeSurfaces,
   getColorTheme,
   isColorThemeId,
-} from "../src/lib/color-themes.js";
+} from "../../src/lib/color-themes.js";
 
 describe("color themes", () => {
   it("lists every theme id exactly once", () => {

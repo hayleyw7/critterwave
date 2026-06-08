@@ -13,9 +13,9 @@ import {
   sanitizeSnapshotPlayer,
   sanitizeTurn,
   sanitizeWave,
-} from "../src/lib/save-validation.js";
-import { FOES } from "../src/data/foes-data.js";
-import { COLOR_THEME_IDS } from "../src/lib/color-themes.js";
+} from "../../src/lib/save-validation.js";
+import { FOES } from "../../src/data/foes-data.js";
+import { COLOR_THEME_IDS } from "../../src/lib/color-themes.js";
 
 const HERO_EMOJIS = new Set(FOES.slice(0, 8).map((foe) => foe.emoji));
 const FOES_BY_ID = new Map(FOES.map((foe) => [foe.id, foe]));

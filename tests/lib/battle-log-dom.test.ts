@@ -6,7 +6,7 @@ import {
   appendBattleHypeTail,
   appendBattleLine,
   setBattleLines,
-} from "../src/lib/battle-log-dom.js";
+} from "../../src/lib/battle-log-dom.js";
 
 describe("battle-log-dom", () => {
   it("renders battle lines with textContent (not HTML)", () => {

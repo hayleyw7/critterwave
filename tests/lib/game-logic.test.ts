@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FOES } from "../src/data/foes-data.js";
+import { FOES } from "../../src/data/foes-data.js";
 import {
   applyPlayerHealRoll,
   applyHypeGain,
@@ -58,7 +58,7 @@ import {
   shuffleArray,
   waveVictoryHealGain,
   WAVE_VICTORY_HEAL_RATIO,
-} from "../src/lib/game-logic.js";
+} from "../../src/lib/game-logic.js";
 
 const SAMPLE_FOES = [
   { id: "a", name: "Angry Ant", emoji: "🐜", baseHp: 8, baseAtk: 2 },
