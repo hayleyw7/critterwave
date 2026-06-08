@@ -26,25 +26,25 @@ function joinSections(sections) {
 
 /** @type {Record<string, number[][]>} */
 const modules = {
-  "base.css": [[2, 245]],
-  "persistence.css": [[247, 326]],
+  "base.css": [[2, 246]],
+  "persistence.css": [[248, 327]],
   "app.css": [
-    [328, 414],
-    [2096, 2251],
+    [329, 415],
+    [2098, 2253],
   ],
-  "setup.css": [[416, 739]],
+  "setup.css": [[417, 740]],
   "presentation.css": [
-    [741, 1735],
-    [2041, 2079],
+    [742, 1736],
+    [2042, 2080],
   ],
-  "combat.css": [[1737, 2039]],
+  "combat.css": [[1738, 2040]],
   "game-over.css": [
-    [2081, 2094],
-    [2253, 2569],
+    [2082, 2096],
+    [2255, 2571],
   ],
-  "utilities.css": [[2571, 2636]],
-  "animations.css": [[2638, 2847]],
-  "responsive.css": [[2849, 3070]],
+  "utilities.css": [[2573, 2638]],
+  "animations.css": [[2640, 2849]],
+  "responsive.css": [[2851, 3072]],
 };
 
 if (!fs.existsSync(backupPath)) {
