@@ -1,184 +1,17 @@
-import {
-  buildFoeOrder as buildFoeOrderForHero,
-  DEFEAT_VERBS,
-  foeColorConflictsWithHero as heroFoeColorConflicts,
-  formatFoeInText as formatFoeMessage,
-  formatSetupBlockerMessage,
-  getSetupBlockers as getSetupBlockersForInput,
-  HERO_NAME_MAX_LENGTH,
-  HYPE_ATTACK_PER_LEVEL,
-  HYPE_MAX,
-  applyPlayerHealRoll,
-  applyHypeGain,
-  hypeAfterTakingHit,
-  applyPlayerStatsForWave,
-  clampHype,
-  formatHypeLabel as formatHypeStatLabel,
-  healHpAfterWaveVictory,
-  hypeHeadroom,
-  isLevelBandFinale,
-  advanceFoeQueueAfterFlee,
-  advanceFoeQueueAfterVictory,
-  buildInitialFoeQueue,
-  buildQueueCycleFromWave,
-  makeFoeFromQueueHead,
-  makeFoeFromTemplate,
-  nextDefeatVerb as advanceDefeatVerb,
-  pickFoeFromOrder,
-  playerLevelForWave,
-  playerStatsForWave,
-  refreshWaveFoeFromTemplate,
-  WAVES_PER_LEVEL,
-  xpProgressForDisplay,
-  xpProgressForWave,
-  xpPercentForDisplay,
-  xpPercentForWave,
-  normalizeHeroName,
-  restoreFoeOrder as restoreFoeOrderForHero,
-  randomDamage,
-} from "../lib/game-logic.js";
-import {
-  formatDanceHypeTail,
-  getPlayerHypeGain,
-  getFoeHypeGain,
-  pickRandomDanceOpener,
-  pickRandomDanceResponse,
-  pickFirstDanceResponse,
-  resetDancePicker,
-} from "../content/dance-responses.js";
-import {
-  appendBattleActionMeta,
-  appendBattleLine,
-  setBattleLines,
-  type BattleActionLabel,
-} from "../lib/battle-log-dom.js";
-import {
-  clampInt,
-  isDebugHost,
-  parsePendingConfirm,
-  parseSaveMeta,
-  type PendingConfirmKind,
-  sanitizeGamePhase,
-  sanitizeHypeLevel,
-  sanitizeIdList,
-  sanitizeSavedHeroName,
-  sanitizeSnapshotFoe,
-  sanitizeSnapshotPlayer,
-  sanitizeTurn,
-  sanitizeWave,
-} from "../lib/save-validation.js";
-import {
-  HERO_PICKER_ORDER,
-  isHeroEmojiHiddenInPicker,
-  isMobileHeroPickerViewport,
-  resolveHeroPickerEmoji,
-} from "../lib/hero-groups.js";
-import {
-  COLOR_THEMES,
-  getColorTheme,
-  colorThemeSurfaces,
-  isColorThemeId,
-  type ColorThemeSurfaces,
-} from "../lib/color-themes.js";
-import {
-  applyColorMode,
-  parseColorMode,
-  runColorModeTransition,
-  type ColorMode,
-} from "../lib/color-mode.js";
-import {
-  beginAwaitingFoeResponse,
-  blockCombatForScreenEnd,
-  canUseCombatActions as canUseCombatActionsGate,
-  finishCombatAction as finishCombatActionGate,
-  foeFollowUpDelayMs,
-  FOE_FOLLOW_UP_DELAY_MS,
-  isFollowUpTimerStale,
-  resetCombatGate,
-  tryLockCombat as tryLockCombatGate,
-  type CombatGateState,
-} from "../lib/combat-gate.js";
-import {
-  createCombatHintsState,
-  combatHintsAfterMidRunRestore,
-  combatHintsForSnapshot,
-  attackTeachText,
-  deferDanceHintAfterRun,
-  maybeArmDanceHintForWave,
-  onNextFoeForHints,
-  onVictoryForHints,
-  recordAttackForHints,
-  recordDanceForHints,
-  recordHealForHints,
-  recordPlayerDamageForHints,
-  tryCelebrateFirstFoeHype,
-  tryCelebrateFirstPlayerHype,
-  tryCelebrateFirstWaveVictoryHeal,
-  hypeMaxPresentation,
-  recordRunForHints,
-  shouldShowAttackHint,
-  shouldShowDanceHint,
-  shouldShowDanceTeachCopy,
-  shouldShowHealHint,
-  shouldShowHealTeachCopy,
-  shouldShowRunHint,
-  shouldShowRunTeachCopy,
-  type CombatHintsState,
-} from "../lib/combat-hints.js";
-import {
-  startVictoryCelebration,
-  stopVictoryCelebration,
-} from "../ui/victory-celebration.js";
-import {
-  FOES,
-  FOES_BY_ID,
-  FOE_IDS,
-  HEROES,
-  HERO_EMOJIS,
-} from "./data.js";
+import { appendBattleActionMeta, appendBattleLine, setBattleLines, type BattleActionLabel } from "../lib/battle-log-dom.js";
+import { applyColorMode, parseColorMode, runColorModeTransition } from "../lib/color-mode.js";
+import { COLOR_THEMES, getColorTheme, colorThemeSurfaces, isColorThemeId, type ColorThemeSurfaces } from "../lib/color-themes.js";
+import { tryCelebrateFirstFoeHype, tryCelebrateFirstPlayerHype, hypeMaxPresentation, shouldShowAttackHint, shouldShowDanceHint, shouldShowDanceTeachCopy, shouldShowHealHint, shouldShowHealTeachCopy, shouldShowRunHint, shouldShowRunTeachCopy } from "../lib/combat-hints.js";
+import { foeColorConflictsWithHero as heroFoeColorConflicts, formatFoeInText as formatFoeMessage, formatSetupBlockerMessage, getSetupBlockers as getSetupBlockersForInput, HYPE_MAX, applyHypeGain, hypeAfterTakingHit, clampHype, formatHypeLabel as formatHypeStatLabel, playerLevelForWave, WAVES_PER_LEVEL, xpProgressForDisplay, xpProgressForWave, xpPercentForDisplay, normalizeHeroName } from "../lib/game-logic.js";
+import { sanitizeSavedHeroName } from "../lib/save-validation.js";
+import { stopVictoryCelebration } from "../ui/victory-celebration.js";
+import { DANCE_ANIM_MS, DEATH_BEAT_MS, DEFAULT_HERO_COLOR_THEME, DEFAULT_HERO_LABEL, FOE_COLOR_THEMES, FOE_ENTRANCE_MS, FOE_POOF_MS, GOLD_FLASH_MS, HEAL_ANIM_MS, HP_TEACH_FLASH_MS, HYPE_METER_FLASH_MS, LEVEL_UP_NOTICE_MS, MOBILE_TEACH_LAYOUT_MQ, SETUP_NAME_TEACH_FLASH_MS, STORAGE_KEY, XP_FILL_BEAT_MS } from "./constants.js";
+import { HEROES } from "./data.js";
 import { el } from "./dom.js";
-import {
-  CAMPAIGN_WAVES,
-  DANCE_ANIM_MS,
-  DEATH_BEAT_MS,
-  DEFAULT_HERO_COLOR_THEME,
-  DEFAULT_HERO_EMOJI,
-  DEFAULT_HERO_LABEL,
-  DEFAULT_PLAYER_NAME,
-  FOE_COLOR_THEMES,
-  FOE_ENTRANCE_MS,
-  FOE_POOF_MS,
-  GOLD_FLASH_MS,
-  HEAL_ANIM_MS,
-  HELP_OPEN_KEY,
-  HP_TEACH_FLASH_MS,
-  HYPE_METER_FLASH_MS,
-  LEVEL_UP_NOTICE_MS,
-  MOBILE_TEACH_LAYOUT_MQ,
-  PENDING_CONFIRM_OPTIONS,
-  SETUP_NAME_TEACH_FLASH_MS,
-  SKIP_EXIT_FLUSH_KEY,
-  STORAGE_KEY,
-  XP_FILL_BEAT_MS,
-} from "./constants.js";
-import type {
-  BattleLogEntry,
-  CombatTeachPopupId,
-  ConfirmOptions,
-  DebugCombatAction,
-  Enemy,
-  FoeColorTheme,
-  FoeTemplate,
-  GameSnapshot,
-  HeroColorTheme,
-  HeroOption,
-  Player,
-  SaveData,
-} from "./types.js";
-
+import { persistSetupDraft, loadSave, withSaveMeta, readPersistedFields } from "./persistence.js";
 import { gameState } from "./state.js";
-import { getCampaignLength, getHealMax, getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";
-import { persist, persistSetupDraft, loadSave, withSaveMeta, readPersistedFields } from "./persistence.js";
+import { getCampaignLength, getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";
+import { type BattleLogEntry, type CombatTeachPopupId, type FoeColorTheme, type HeroColorTheme, type SaveData } from "./types.js";
 
 let endGameHandler: (() => void) | null = null;
 
@@ -851,7 +684,6 @@ export function syncVisibleFooterTeachPopups(): void {
   }
 }
 
-// state.ts: gameState.footerTeachPopupResizeBound
 
 export function bindFooterTeachPopupResize(): void {
   if (gameState.footerTeachPopupResizeBound) {
@@ -1397,3 +1229,4 @@ export function clearLog(): void {
   el.battleText.textContent = "What will you do?";
   el.battleText.className = "battle-text battle-info";
 }
+

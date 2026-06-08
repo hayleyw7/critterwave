@@ -72,26 +72,40 @@ Stored under `critterwave-v6` in the browser:
 ## Project layout
 
 ```
-index.html          # entry page
-site.webmanifest    # PWA manifest (dark)
-site-light.webmanifest
-assets/theme-boot.js  # applies saved light/dark before first paint
-src/                # TypeScript source
-  game.ts           # main game
-  lib/              # rules, combat hints, color themes, save validation
-  data/             # foe roster
-  content/          # dance lines
-  ui/               # victory celebration
-js/                 # compiled output (npm run build — gitignored)
-dist/               # Pages deploy artifact (npm run build:site — gitignored)
-css/styles.css
-icons/              # favicons & PWA icons
-images/             # og-image.png (social preview)
-scripts/            # generate-foes, generate:og
-tests/              # Vitest unit tests
-e2e/                # Playwright browser tests
-.github/workflows/  # deploy + CI
+index.html              # assembled entry page (generated — see below)
+html/
+  index.template.html   # shell + partial placeholders
+  partials/             # setup, combat, app chrome, game-over, …
+css/
+  styles.css            # hub that @imports module CSS files
+  *.css                 # tokens, base, setup, presentation, combat, …
+assets/theme-boot.js    # applies saved light/dark before first paint
+src/
+  game.ts               # thin entry — imports game/app init
+  game/                 # app, combat, presentation, persistence, …
+  lib/                  # pure rules, combat hints, save validation
+  data/                 # foe roster
+  content/              # dance lines
+  ui/                   # victory celebration
+js/                     # compiled output (npm run build — gitignored)
+dist/                   # Pages deploy artifact (npm run build:site — gitignored)
+scripts/
+  build-html.mjs        # html/partials → index.html
+  split-css.mjs         # regen css modules from styles.css.bak oracle
+  build-site.mjs        # copy deployable files → dist/
+  generate-foes.mjs     # regenerate src/data/foes-data.ts
+icons/                  # favicons & PWA icons
+images/                 # og-image.png (social preview)
+tests/                  # Vitest unit tests (mirrors module names)
+e2e/                    # Playwright browser tests
+.github/workflows/      # deploy + CI
 ```
+
+### Editing HTML or CSS
+
+- **HTML:** edit files under `html/partials/`, then run `npm run build:html` (also runs on `npm run dev` via `predev`). `tests/html/build.test.ts` checks output against `scripts/index.html.bak`.
+- **CSS:** edit module files under `css/`, or regen from the monolith backup with `node scripts/split-css.mjs`. `tests/css/build.test.ts` checks hub imports and keyframe coverage.
+- **TypeScript:** edit `src/**/*.ts`, then `npm run build`. Game logic lives in `src/lib/`; DOM wiring and flows live in `src/game/`.
 
 ## Local play
 

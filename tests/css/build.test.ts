@@ -24,6 +24,14 @@ describe("css build pipeline", () => {
     }
   });
 
+  it("styles.css hub imports match CSS_MODULE_FILES order", () => {
+    const hub = readFileSync(join(root, "css/styles.css"), "utf8");
+    const imports = CSS_MODULE_FILES.filter((file) => file !== "styles.css").map(
+      (file) => `@import "${file}";`
+    );
+    expect(hub.trim().split("\n")).toEqual(imports);
+  });
+
   it("module files cover the monolith backup selectors and keyframes", () => {
     const backup = readFileSync(join(root, "scripts/styles.css.bak"), "utf8");
     const backupBody = backup.replace(/^@import "tokens\.css";\s*/, "");
