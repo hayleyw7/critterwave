@@ -1,10 +1,7 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { readCssBundle } from "./css-bundle.js";
 
-const cssPath = join(dirname(fileURLToPath(import.meta.url)), "../css/styles.css");
-const styles = readFileSync(cssPath, "utf8");
+const styles = readCssBundle();
 
 describe("teach flash presentation", () => {
   it("flashes hype bar and text in unison on first-hype and maxed flashes", () => {

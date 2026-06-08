@@ -5,9 +5,11 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { CSS_MODULE_FILES, readCssBundle } from "./css-bundle.js";
+
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const indexHtml = readFileSync(join(root, "index.html"), "utf8");
-const styles = readFileSync(join(root, "css/styles.css"), "utf8");
+const styles = readCssBundle();
 const deployYml = readFileSync(join(root, ".github/workflows/deploy.yml"), "utf8");
 const dependabotYml = readFileSync(join(root, ".github/dependabot.yml"), "utf8");
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
@@ -72,7 +74,7 @@ describe("security — build:site output", () => {
     for (const path of [
       "index.html",
       "css/styles.css",
-      "css/tokens.css",
+      ...CSS_MODULE_FILES.map((file) => `css/${file}`),
       "js/game.js",
       "fonts/VT323-Regular.ttf",
       "site.webmanifest",

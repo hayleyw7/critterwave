@@ -1,0 +1,27 @@
+        <div class="action-panel">
+          <div class="dialog-box">
+            <p class="battle-text" id="battle-text" role="status" aria-live="polite">
+              What will you do?
+            </p>
+          </div>
+
+          <nav class="command-menu" id="actions" aria-label="Combat actions">
+            <button type="button" data-action="attack" id="cmd-attack" class="cmd cmd-attack">
+              Attack
+            </button>
+            <button type="button" data-action="heal" id="cmd-heal" class="cmd cmd-heal">
+              Heal
+              <span
+                class="cmd-teach-popup cmd-teach-popup--align-end hidden"
+                id="cmd-heal-teach"
+                role="tooltip"
+              >Restore HP — foe will hit back.</span>
+            </button>
+            <button type="button" data-action="dance" id="cmd-dance" class="cmd cmd-dance">
+              Dance
+            </button>
+            <button type="button" data-action="run" id="cmd-run" class="cmd cmd-run">
+              Run
+            </button>
+          </nav>
+        </div>

@@ -1,0 +1,66 @@
+@media (prefers-reduced-motion: reduce) {
+  .victory-emoji {
+    animation: none !important;
+  }
+
+  .victory-trophy,
+  .game-over.game-victory .game-over-tag,
+  .game-over.game-victory .game-over-panel {
+    animation: none !important;
+  }
+
+  .command-menu .cmd.cmd-hint-flash {
+    animation: none;
+    border-color: var(--hint-flash-border) !important;
+    box-shadow: inset 0 0 0 2px var(--hint-flash-border);
+  }
+
+  .hype-stat-wrap.hype-first-dance-flash .hype-bar {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--highlight);
+  }
+
+  .hype-stat-wrap.hype-first-dance-flash .hype-stat {
+    animation: none;
+    color: var(--hype-maxed-text);
+    text-shadow: var(--hype-maxed-glow);
+  }
+
+  .hype-stat-wrap.hype-maxed-flash .hype-bar,
+  .hype-stat-wrap.hype-maxed-flash .hype-stat {
+    animation: none;
+  }
+
+  .hype-stat-wrap.hype-maxed .hype-bar {
+    box-shadow: 0 0 0 2px var(--hint-flash-border);
+    filter: brightness(1.15);
+  }
+
+  .hype-stat-wrap.hype-maxed .hype-stat {
+    color: var(--hype-maxed-text);
+    text-shadow: var(--hype-maxed-glow);
+  }
+
+  .hp-bar.hp-first-heal-flash,
+  .hp-bar.hp-first-damage-flash,
+  .hp-bar.hp-first-wave-heal-flash,
+  .hp-bar.hp-first-attack-flash {
+    animation: none;
+    outline: 2px solid var(--hint-flash-border);
+    outline-offset: 1px;
+    box-shadow:
+      inset 0 0 0 1px var(--hp-inset-shadow),
+      var(--hp-bar-depth),
+      0 0 8px 2px rgba(253, 224, 71, 0.75);
+  }
+
+  .setup-name-input.setup-name-teach-flash {
+    animation: none;
+    border-color: var(--setup-select-border);
+    box-shadow: 0 0 0 2px var(--setup-select-glow);
+  }
+}
+
+.hidden {
+  display: none !important;
+}

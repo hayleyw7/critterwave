@@ -1,0 +1,48 @@
+      <footer class="records-bar" aria-label="Lifetime stats and game options">
+        <div class="records-stats">
+          <span class="records-stat" aria-label="High Score">
+            <span class="records-stat-label records-stat-label--long">High Score</span>
+            <span class="records-stat-label records-stat-label--short" aria-hidden="true">Best</span>
+            <span class="records-stat-value" id="stat-best-wave">0</span>
+          </span>
+          <span class="records-stat" aria-label="Runs Played">
+            <span class="records-stat-label records-stat-label--long">Runs Played</span>
+            <span class="records-stat-label records-stat-label--short" aria-hidden="true">Runs</span>
+            <span class="records-stat-value" id="stat-runs">0</span>
+          </span>
+        </div>
+        <div class="meta-actions">
+          <button
+            type="button"
+            class="meta-btn meta-btn-icon"
+            id="help-btn"
+            aria-label="How to play"
+            title="How to play"
+          >?</button>
+          <button
+            type="button"
+            class="meta-btn meta-btn-icon theme-toggle"
+            id="theme-toggle"
+            aria-pressed="false"
+            aria-label="Switch to light mode"
+            title="Switch to light mode"
+          >
+            <span class="theme-toggle-icon" aria-hidden="true">☀</span>
+          </button>
+          <details class="meta-more" id="footer-more">
+            <summary
+              class="meta-btn meta-btn-icon meta-more-toggle"
+              role="button"
+              aria-label="More options"
+              title="More options"
+            >⋯</summary>
+            <div class="meta-menu">
+              <button type="button" class="meta-btn meta-btn-success" id="quit-btn">New Run</button>
+              <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
+                Clear Data
+              </button>
+            </div>
+          </details>
+        </div>
+      </footer>
+    </div>

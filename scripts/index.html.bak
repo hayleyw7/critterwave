@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none';"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      http-equiv="Permissions-Policy"
+      content="camera=(), microphone=(), geolocation=(), payment=()"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Critterwave</title>
+    <meta
+      name="description"
+      content="Choose your critter. Dance for foes. Survive 100 waves."
+    />
+    <meta property="og:title" content="Critterwave" />
+    <meta
+      property="og:description"
+      content="Choose your critter. Dance for foes. Survive 100 waves."
+    />
+    <meta property="og:image" content="images/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Critterwave" />
+    <meta
+      name="twitter:description"
+      content="Choose your critter. Dance for foes. Survive 100 waves."
+    />
+    <meta name="twitter:image" content="images/og-image.png" />
+    <meta name="theme-color" content="#0a0612" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+    <link rel="manifest" href="site.webmanifest" />
+    <script src="assets/theme-boot.js"></script>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body class="is-booting">
+    <div class="crt-overlay" aria-hidden="true"></div>
+
+    <div class="confirm-overlay hidden" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="confirm-panel" id="confirm-panel">
+        <h2 class="confirm-title" id="confirm-title"></h2>
+        <p class="confirm-message" id="confirm-message"></p>
+        <div class="confirm-actions">
+          <button type="button" class="cmd cmd-confirm-cancel" id="confirm-cancel">Cancel</button>
+          <button type="button" class="cmd cmd-confirm-ok" id="confirm-ok">Yes</button>
+        </div>
+      </div>
+    </div>
+    <div
+      class="help-overlay hidden"
+      id="help-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-title"
+    >
+      <div class="help-panel" id="help-panel">
+        <div class="help-header">
+          <h2 class="help-title" id="help-title">How to Play</h2>
+          <button type="button" class="meta-btn meta-btn-icon help-close" id="help-close" aria-label="Close help">
+            ×
+          </button>
+        </div>
+        <div class="help-copy">
+          <p class="help-goal">Defeat 100 waves of critters!</p>
+
+          <p class="help-section-title">STATS</p>
+          <ul class="help-list">
+            <li><span class="help-term">HP (Health):</span> How much damage you can take before losing.</li>
+            <li><span class="help-term">ATK (Attack):</span> How much damage your attacks deal.</li>
+            <li><span class="help-term">HYPE (Bonus):</span> Temporarily increases attack power.</li>
+          </ul>
+
+          <p class="help-section-title">ACTIONS</p>
+          <ul class="help-list">
+            <li><span class="help-term help-action-attack">Attack:</span> Deal damage. Foe attacks back.</li>
+            <li><span class="help-term help-action-heal">Heal:</span> Restore HP. Foe attacks back.</li>
+            <li><span class="help-term help-action-dance">Dance:</span> HYPE may increase for you, the foe, or both.</li>
+            <li><span class="help-term help-action-run">Run:</span> Escape the current foe, regain a little HP, lose HYPE, and face a new foe.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="character-setup hidden" id="character-setup">
+      <div class="setup-panel">
+        <div class="setup-fields">
+          <h2 class="setup-title mobile-stack">
+            <span class="mobile-stack-part">Which critter</span> <span class="mobile-stack-part">are you?</span>
+          </h2>
+          <p class="setup-subtitle" id="setup-subtitle"></p>
+          <div class="emoji-picker" id="hero-picker" role="listbox" aria-label="Which critter are you?"></div>
+        </div>
+        <div class="setup-footer">
+          <div class="setup-main-row">
+            <div class="setup-identity-row">
+              <div class="setup-name-field">
+                <label class="setup-field-label" for="hero-name-input">Name</label>
+                <input
+                  type="text"
+                  id="hero-name-input"
+                  class="setup-name-input"
+                  maxlength="16"
+                  autocomplete="nickname"
+                  spellcheck="false"
+                  placeholder="Up to 16 characters"
+                  aria-describedby="setup-hint"
+                  required
+                />
+              </div>
+              <div class="setup-color-field">
+                <span class="setup-field-label" id="hero-color-label">Color</span>
+                <button
+                  type="button"
+                  id="hero-color-toggle"
+                  class="setup-color-toggle"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-labelledby="hero-color-label"
+                >
+                  <span class="setup-color-toggle-swatch" aria-hidden="true"></span>
+                </button>
+                <div
+                  id="hero-color-popup"
+                  class="setup-color-popup hidden"
+                  role="listbox"
+                  aria-labelledby="hero-color-label"
+                >
+                  <div id="hero-color-swatches" class="setup-color-swatches"></div>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="cmd cmd-start" id="setup-start-btn">Fight!</button>
+          </div>
+        </div>
+        <p class="setup-hint" id="setup-hint" role="status" aria-live="polite" hidden></p>
+      </div>
+    </div>
+
+    <div class="game-shell">
+      <header class="title-bar">
+        <h1 class="title" aria-label="Critterwave">Critterwave</h1>
+      </header>
+
+      <div class="playfield">
+        <div class="hud">
+          <div class="hud-stats">
+            <div class="hud-progress">
+              <p class="hud-wave-line" id="wave-banner">Wave 1 / 100</p>
+              <p class="hud-turn-line">
+                Turn <span id="turn-label">1</span>
+              </p>
+            </div>
+          </div>
+          <div class="hud-xp-block">
+            <span class="hud-label">XP</span>
+            <div class="xp-bar-wrap" id="xp-bar-wrap">
+              <div
+                class="xp-bar"
+                id="xp-bar"
+                role="progressbar"
+                aria-label="Experience toward next level"
+                aria-valuemin="0"
+                aria-valuemax="10"
+                aria-valuenow="0"
+              >
+                <div class="xp-fill" id="xp-fill"></div>
+              </div>
+              <span class="xp-numbers" id="xp-text">10%</span>
+            </div>
+          </div>
+        </div>
+
+        <main class="arena" id="arena">
+        <div class="battle-stage" id="battle-stage">
+          <div class="stage-floor"></div>
+          <div class="stage-vignette"></div>
+
+          <section class="combatant hero-side" id="player-panel" aria-label="Player">
+            <div class="status-panel hero-status">
+              <div class="name-plate hero-plate">
+                <span class="name" id="hero-name"></span>
+              </div>
+              <div class="hp-wrap hero-hp-wrap">
+                <div class="hp-row">
+                  <span class="hp-tag hp-tag-hero">HP</span>
+                  <div
+                    class="hp-bar"
+                    role="progressbar"
+                    aria-label="Hero health"
+                    aria-valuemin="0"
+                    aria-valuemax="20"
+                    aria-valuenow="20"
+                  >
+                    <div class="hp-fill player-hp" id="player-hp-fill"></div>
+                  </div>
+                  <span class="hp-numbers" id="player-hp-text">20/20</span>
+                  <div class="stat-group">
+                    <div class="stat-left">
+                      <span class="stat-mini">LV <span id="player-level">1</span></span>
+                      <span class="stat-mini">ATK <span id="player-attack">5</span></span>
+                    </div>
+                    <div class="hype-stat-wrap" id="player-hype-wrap">
+                      <span class="stat-mini hype-stat" id="player-buff" aria-label="HYPE level">HYPE 0/5</span>
+                      <div
+                        class="hype-bar"
+                        id="player-hype-bar"
+                        role="progressbar"
+                        aria-label="HYPE meter"
+                        aria-valuemin="0"
+                        aria-valuemax="5"
+                        aria-valuenow="0"
+                      >
+                        <div class="hype-fill player-hype-fill" id="player-hype-fill"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="hero-level-up-layer"
+                id="hero-level-up-layer"
+                aria-hidden="true"
+              ></div>
+            </div>
+            <div class="sprite-wrap">
+              <div class="emoji-stack">
+                <span class="hit-mark hit-mark-hero" aria-hidden="true">💢</span>
+                <span class="heal-mark heal-mark-hero" aria-hidden="true">✨</span>
+                <span class="emoji-sprite hero-emoji" id="hero-emoji" role="img" aria-label="Hero"></span>
+              </div>
+            </div>
+          </section>
+
+          <div class="vs-badge" aria-hidden="true">VS</div>
+
+          <section class="combatant enemy-side" id="foe-panel" aria-label="Foe">
+            <div class="status-panel enemy-status">
+              <div class="name-plate enemy-plate">
+                <span class="name" id="foe-name">FOE</span>
+              </div>
+              <div class="hp-wrap enemy-hp-wrap">
+                <div class="hp-row">
+                  <span class="hp-tag hp-tag-enemy">HP</span>
+                  <div
+                    class="hp-bar"
+                    role="progressbar"
+                    aria-label="Foe health"
+                    aria-valuemin="0"
+                    aria-valuemax="12"
+                    aria-valuenow="12"
+                  >
+                    <div class="hp-fill foe-hp" id="foe-hp-fill"></div>
+                  </div>
+                  <span class="hp-numbers" id="foe-hp-text">12/12</span>
+                  <div class="stat-group">
+                    <div class="stat-left">
+                      <span class="stat-mini">LV <span id="foe-level">1</span></span>
+                      <span class="stat-mini">ATK <span id="foe-attack">3</span></span>
+                    </div>
+                    <div class="hype-stat-wrap" id="foe-hype-wrap">
+                      <span class="stat-mini hype-stat" id="foe-buff" aria-label="Foe HYPE level">HYPE 0/5</span>
+                      <div
+                        class="hype-bar"
+                        id="foe-hype-bar"
+                        role="progressbar"
+                        aria-label="Foe HYPE meter"
+                        aria-valuemin="0"
+                        aria-valuemax="5"
+                        aria-valuenow="0"
+                      >
+                        <div class="hype-fill foe-hype-fill" id="foe-hype-fill"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="sprite-wrap foe-sprite-wrap">
+              <div class="emoji-stack">
+                <span class="hit-mark hit-mark-foe" aria-hidden="true">💢</span>
+                <span class="emoji-sprite foe-emoji" id="foe-emoji" role="img" aria-label="Foe">👺</span>
+              </div>
+            </div>
+          </section>
+
+          <div class="damage-layer" id="damage-layer" aria-hidden="true"></div>
+        </div>
+
+        <div class="action-panel">
+          <div class="dialog-box">
+            <p class="battle-text" id="battle-text" role="status" aria-live="polite">
+              What will you do?
+            </p>
+          </div>
+
+          <nav class="command-menu" id="actions" aria-label="Combat actions">
+            <button type="button" data-action="attack" id="cmd-attack" class="cmd cmd-attack">
+              Attack
+            </button>
+            <button type="button" data-action="heal" id="cmd-heal" class="cmd cmd-heal">
+              Heal
+              <span
+                class="cmd-teach-popup cmd-teach-popup--align-end hidden"
+                id="cmd-heal-teach"
+                role="tooltip"
+              >Restore HP — foe will hit back.</span>
+            </button>
+            <button type="button" data-action="dance" id="cmd-dance" class="cmd cmd-dance">
+              Dance
+            </button>
+            <button type="button" data-action="run" id="cmd-run" class="cmd cmd-run">
+              Run
+            </button>
+          </nav>
+        </div>
+
+        <div class="game-over hidden" id="game-over">
+          <div
+            class="victory-emoji-layer hidden"
+            id="victory-emoji-layer"
+            aria-hidden="true"
+          ></div>
+          <div class="game-over-panel">
+            <p class="victory-trophy" id="victory-trophy" aria-hidden="true">🏆</p>
+            <p class="game-over-tag" id="game-over-tag">GAME OVER</p>
+            <p id="game-over-summary"></p>
+            <details class="game-over-log">
+              <summary>Battle Log</summary>
+              <ol class="game-over-log-list" id="game-over-battle-log"></ol>
+            </details>
+            <button type="button" class="cmd cmd-restart" id="restart-btn">
+              <span class="cmd-icon">↻</span>
+              <span class="cmd-label">Try Again?</span>
+            </button>
+          </div>
+        </div>
+        </main>
+      </div>
+
+      <div class="teach-popup-dock" id="teach-popup-dock" aria-hidden="true">
+        <span
+          class="cmd-teach-popup cmd-teach-popup--align-start cmd-teach-popup--dock-footer hidden"
+          id="cmd-dance-teach"
+          role="tooltip"
+        >Dance may add HYPE — makes hits stronger, for you and/or the foe.</span>
+        <span
+          class="cmd-teach-popup cmd-teach-popup--align-end cmd-teach-popup--dock-footer hidden"
+          id="cmd-run-teach"
+          role="tooltip"
+        >Run away — heal a little, face the next foe, and lose all HYPE.</span>
+      </div>
+
+      <footer class="records-bar" aria-label="Lifetime stats and game options">
+        <div class="records-stats">
+          <span class="records-stat" aria-label="High Score">
+            <span class="records-stat-label records-stat-label--long">High Score</span>
+            <span class="records-stat-label records-stat-label--short" aria-hidden="true">Best</span>
+            <span class="records-stat-value" id="stat-best-wave">0</span>
+          </span>
+          <span class="records-stat" aria-label="Runs Played">
+            <span class="records-stat-label records-stat-label--long">Runs Played</span>
+            <span class="records-stat-label records-stat-label--short" aria-hidden="true">Runs</span>
+            <span class="records-stat-value" id="stat-runs">0</span>
+          </span>
+        </div>
+        <div class="meta-actions">
+          <button
+            type="button"
+            class="meta-btn meta-btn-icon"
+            id="help-btn"
+            aria-label="How to play"
+            title="How to play"
+          >?</button>
+          <button
+            type="button"
+            class="meta-btn meta-btn-icon theme-toggle"
+            id="theme-toggle"
+            aria-pressed="false"
+            aria-label="Switch to light mode"
+            title="Switch to light mode"
+          >
+            <span class="theme-toggle-icon" aria-hidden="true">☀</span>
+          </button>
+          <details class="meta-more" id="footer-more">
+            <summary
+              class="meta-btn meta-btn-icon meta-more-toggle"
+              role="button"
+              aria-label="More options"
+              title="More options"
+            >⋯</summary>
+            <div class="meta-menu">
+              <button type="button" class="meta-btn meta-btn-success" id="quit-btn">New Run</button>
+              <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
+                Clear Data
+              </button>
+            </div>
+          </details>
+        </div>
+      </footer>
+    </div>
+
+    <script type="module" src="js/game.js"></script>
+  </body>
+</html>
