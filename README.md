@@ -84,6 +84,7 @@ src/
   game.ts               # thin entry — imports game/app init
   game/
     app.ts              # boot, setup, footer, confirm wiring
+    app-help.ts         # help modal open/close/bind
     combat.ts           # turn actions, foe queue advances
     presentation.ts     # render, animations, battle log, teach popups
     persistence.ts      # snapshots, confirm dialog, page-exit flush

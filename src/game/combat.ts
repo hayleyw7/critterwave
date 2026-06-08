@@ -10,7 +10,40 @@ import { el } from "./dom.js";
 import { buildFoeOrder, spawnFoeFromQueue, syncPlayerForCurrentWave } from "./foe-queue.js";
 import { persist, getSnapshot, loadSave, withSaveMeta } from "./persistence.js";
 import { applyFoeColorTheme, pickNextFoeColor } from "./colors.js";
-import { render, syncCombatHintClasses, playFirstHealHpFlash, playFirstPlayerDamageHpFlash, playFirstAttackFoeHpFlash, playFirstWaveVictoryHealHpFlash, playHeroHeal, playHeroDance, playFoeDance, playRunExit, playFoeEntrance, playFoeDefeat, handlePlayerDeath, showDamagePop, briefClass, clearCombatAnimations, clearHitReact, playLevelUpNotice, logLine, logBattleLines, logDanceLines, logWaveStart, logEndTitle, clearLog, revealBattleLog, playXpBarFullBeat, clearAllHype, applyPlayerDanceBuff, applyFoeDanceBuff, applyPlayerHitHypeLoss, applyFoeHitHypeLoss, formatFoeInText } from "./presentation.js";
+import {
+  render,
+  syncCombatHintClasses,
+  playFirstHealHpFlash,
+  playFirstPlayerDamageHpFlash,
+  playFirstAttackFoeHpFlash,
+  playFirstWaveVictoryHealHpFlash,
+  playHeroHeal,
+  playHeroDance,
+  playFoeDance,
+  playRunExit,
+  playFoeEntrance,
+  playFoeDefeat,
+  handlePlayerDeath,
+  showDamagePop,
+  briefClass,
+  clearCombatAnimations,
+  clearHitReact,
+  playLevelUpNotice,
+  logLine,
+  logBattleLines,
+  logDanceLines,
+  logWaveStart,
+  logEndTitle,
+  clearLog,
+  revealBattleLog,
+  playXpBarFullBeat,
+  clearAllHype,
+  applyPlayerDanceBuff,
+  applyFoeDanceBuff,
+  applyPlayerHitHypeLoss,
+  applyFoeHitHypeLoss,
+  formatFoeInText,
+} from "./presentation.js";
 import { gameState } from "./state.js";
 import { getCampaignLength, getHealMax, getEffectiveAttack, getEffectiveFoeAttack } from "./stats.js";
 
