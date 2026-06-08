@@ -72,6 +72,7 @@ describe("security — build:site output", () => {
     for (const path of [
       "index.html",
       "css/styles.css",
+      "css/tokens.css",
       "js/game.js",
       "fonts/VT323-Regular.ttf",
       "site.webmanifest",
