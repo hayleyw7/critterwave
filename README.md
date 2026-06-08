@@ -79,14 +79,18 @@ html/
 css/
   styles.css            # hub that @imports module CSS files
   *.css                 # tokens, base, setup, presentation, combat, …
-assets/theme-boot.js    # applies saved light/dark before first paint
+assets/theme-boot.js    # applies saved light/dark before first paint (v0.7 save, v6 fallback)
 src/
   game.ts               # thin entry — imports game/app init
   game/
     app.ts              # boot, setup, footer, confirm wiring
     app-help.ts         # help modal open/close/bind
     combat.ts           # turn actions, foe queue advances
-    presentation.ts     # render orchestration
+    presentation.ts     # main HUD render pass (panels, bars, game-over shell)
+    combat-mechanics.ts # pure combat math/helpers used by combat.ts
+    combat-gate.ts      # when combat actions are blocked (busy, confirms, end screens)
+    foe-queue.ts        # shuffled foe order and deferred spawns
+    runtime.ts          # shared combat busy / generation guards
     theme.ts            # light/dark toggle and footer records
     battle-log.ts       # log lines, game-over log history
     teach-popups.ts     # combat hint popups and glow classes
@@ -137,12 +141,14 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Tests
 
 ```bash
-npm test              # unit tests (Vitest) — game logic, combat hints, save validation, …
+npm test              # unit tests (Vitest) — game logic, combat hints, save validation, CSS/HTML build, …
 npm run test:watch    # unit tests in watch mode
-npm run test:e2e      # browser tests (Playwright) — combat hints, happy/sad paths, security
+npm run test:e2e      # browser tests (Playwright) — combat, persistence, security, …
 ```
 
 `npm run test:e2e` runs `playwright install chromium` automatically first. To install browsers manually: `npx playwright install chromium`.
+
+CI (`.github/workflows/test.yml`) runs unit + e2e tests on every push and pull request to `main`/`master`. Deploy (`.github/workflows/deploy.yml`) runs the same tests before `build:site`.
 
 ## GitHub Pages
 
@@ -157,7 +163,7 @@ Hosting is automated by [`.github/workflows/deploy.yml`](.github/workflows/deplo
 3. Under **Build and deployment → Source**, choose **GitHub Actions** (not “Deploy from a branch”).
 4. Push to `main` (or run the **Deploy to GitHub Pages** workflow manually under **Actions**).
 
-The workflow runs `npm ci`, `npm run build:site`, then publishes the `dist/` folder (a slim copy of the site for Pages).
+The workflow runs `npm ci`, `npm test`, `npm run test:e2e`, then `npm run build:site`, and publishes the `dist/` folder (a slim copy of the site for Pages).
 
 ### Your live URL
 
@@ -172,6 +178,8 @@ For a project repo named `critterwave`:
 ```bash
 npm install
 npm run build      # src/ → js/ (local dev)
+npm test
+npm run test:e2e
 npm run dev        # http://localhost:3000
 npm run build:site # optional: same as CI — builds js/ then copies to dist/
 ```
