@@ -17,8 +17,7 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - run: npm cache clean --force
-      - run: npm ci --prefer-online
+      - run: npm ci
       - run: npm run build
       - run: npm test
 
@@ -32,8 +31,7 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - run: npm cache clean --force
-      - run: npm ci --prefer-online
+      - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

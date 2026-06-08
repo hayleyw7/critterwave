@@ -4,6 +4,8 @@
     "module": "ES2020",
     "moduleResolution": "bundler",
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "lib": ["ES2020", "DOM"],
     "rootDir": "src",
     "outDir": "js"

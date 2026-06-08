@@ -1,0 +1,149 @@
+    <div class="game-shell">
+      <header class="title-bar">
+        <h1 class="title" aria-label="Critterwave">Critterwave</h1>
+      </header>
+
+      <div class="playfield">
+        <div class="hud">
+          <div class="hud-stats">
+            <div class="hud-progress">
+              <p class="hud-wave-line" id="wave-banner">Wave 1 / 100</p>
+              <p class="hud-turn-line">
+                Turn <span id="turn-label">1</span>
+              </p>
+            </div>
+          </div>
+          <div class="hud-xp-block">
+            <span class="hud-label">XP</span>
+            <div class="xp-bar-wrap" id="xp-bar-wrap">
+              <div
+                class="xp-bar"
+                id="xp-bar"
+                role="progressbar"
+                aria-label="Experience toward next level"
+                aria-valuemin="0"
+                aria-valuemax="10"
+                aria-valuenow="0"
+              >
+                <div class="xp-fill" id="xp-fill"></div>
+              </div>
+              <span class="xp-numbers" id="xp-text">10%</span>
+            </div>
+          </div>
+        </div>
+
+        <main class="arena" id="arena">
+        <div class="battle-stage" id="battle-stage">
+          <div class="stage-floor"></div>
+          <div class="stage-vignette"></div>
+
+          <section class="combatant hero-side" id="player-panel" aria-label="Player">
+            <div class="status-panel hero-status">
+              <div class="name-plate hero-plate">
+                <span class="name" id="hero-name"></span>
+              </div>
+              <div class="hp-wrap hero-hp-wrap">
+                <div class="hp-row">
+                  <span class="hp-tag hp-tag-hero">HP</span>
+                  <div
+                    class="hp-bar"
+                    role="progressbar"
+                    aria-label="Hero health"
+                    aria-valuemin="0"
+                    aria-valuemax="20"
+                    aria-valuenow="20"
+                  >
+                    <div class="hp-fill player-hp" id="player-hp-fill"></div>
+                  </div>
+                  <span class="hp-numbers" id="player-hp-text">20/20</span>
+                  <div class="stat-group">
+                    <div class="stat-left">
+                      <span class="stat-mini">LV <span id="player-level">1</span></span>
+                      <span class="stat-mini">ATK <span id="player-attack">5</span></span>
+                    </div>
+                    <div class="hype-stat-wrap" id="player-hype-wrap">
+                      <span class="stat-mini hype-stat" id="player-buff" aria-label="HYPE level">HYPE 0/5</span>
+                      <div
+                        class="hype-bar"
+                        id="player-hype-bar"
+                        role="progressbar"
+                        aria-label="HYPE meter"
+                        aria-valuemin="0"
+                        aria-valuemax="5"
+                        aria-valuenow="0"
+                      >
+                        <div class="hype-fill player-hype-fill" id="player-hype-fill"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="hero-level-up-layer"
+                id="hero-level-up-layer"
+                aria-hidden="true"
+              ></div>
+            </div>
+            <div class="sprite-wrap">
+              <div class="emoji-stack">
+                <span class="hit-mark hit-mark-hero" aria-hidden="true">💢</span>
+                <span class="heal-mark heal-mark-hero" aria-hidden="true">✨</span>
+                <span class="emoji-sprite hero-emoji" id="hero-emoji" role="img" aria-label="Hero"></span>
+              </div>
+            </div>
+          </section>
+
+          <div class="vs-badge" aria-hidden="true">VS</div>
+
+          <section class="combatant enemy-side" id="foe-panel" aria-label="Foe">
+            <div class="status-panel enemy-status">
+              <div class="name-plate enemy-plate">
+                <span class="name" id="foe-name">FOE</span>
+              </div>
+              <div class="hp-wrap enemy-hp-wrap">
+                <div class="hp-row">
+                  <span class="hp-tag hp-tag-enemy">HP</span>
+                  <div
+                    class="hp-bar"
+                    role="progressbar"
+                    aria-label="Foe health"
+                    aria-valuemin="0"
+                    aria-valuemax="12"
+                    aria-valuenow="12"
+                  >
+                    <div class="hp-fill foe-hp" id="foe-hp-fill"></div>
+                  </div>
+                  <span class="hp-numbers" id="foe-hp-text">12/12</span>
+                  <div class="stat-group">
+                    <div class="stat-left">
+                      <span class="stat-mini">LV <span id="foe-level">1</span></span>
+                      <span class="stat-mini">ATK <span id="foe-attack">3</span></span>
+                    </div>
+                    <div class="hype-stat-wrap" id="foe-hype-wrap">
+                      <span class="stat-mini hype-stat" id="foe-buff" aria-label="Foe HYPE level">HYPE 0/5</span>
+                      <div
+                        class="hype-bar"
+                        id="foe-hype-bar"
+                        role="progressbar"
+                        aria-label="Foe HYPE meter"
+                        aria-valuemin="0"
+                        aria-valuemax="5"
+                        aria-valuenow="0"
+                      >
+                        <div class="hype-fill foe-hype-fill" id="foe-hype-fill"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="sprite-wrap foe-sprite-wrap">
+              <div class="emoji-stack">
+                <span class="hit-mark hit-mark-foe" aria-hidden="true">💢</span>
+                <span class="emoji-sprite foe-emoji" id="foe-emoji" role="img" aria-label="Foe">👺</span>
+              </div>
+            </div>
+          </section>
+
+          <div class="damage-layer" id="damage-layer" aria-hidden="true"></div>
+        </div>

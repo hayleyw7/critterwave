@@ -1,0 +1,244 @@
+
+@font-face {
+  font-family: "VT323";
+  src: url("../fonts/VT323-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+/* Smooth light ↔ dark toggle (View Transition + property lerp on key surfaces) */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.45s;
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 2;
+  }
+
+  html.color-mode-changing :where(
+    body,
+    .crt-overlay,
+    .game-shell,
+    .setup-panel,
+    .playfield,
+    .battle-stage,
+    .stage-floor,
+    .hud,
+    .action-panel,
+    .dialog-box,
+    .confirm-overlay,
+    .confirm-panel,
+    .game-over,
+    .game-over-panel,
+    .meta-menu,
+    .meta-btn,
+    .cmd,
+    #player-panel,
+    .enemy-status,
+    .hp-wrap,
+    .hp-bar,
+    .hype-bar,
+    .records-bar,
+    .title,
+    .tagline,
+    #battle-text
+  ) {
+    transition:
+      background-color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      border-color 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      box-shadow 0.45s cubic-bezier(0.33, 1, 0.68, 1),
+      text-shadow 0.45s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  html.color-mode-changing :where(.emoji-sprite) {
+    transition: filter 0.45s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+}
+
+html[data-theme="light"] .title {
+  text-shadow:
+    2px 2px 0 var(--title-shadow-color),
+    3px 3px 0 color-mix(in srgb, var(--title-shadow-color) 40%, var(--color-white));
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 18px;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-ui);
+  font-size: 1.2rem;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  background: var(--bg-deep);
+  overflow-x: hidden;
+}
+
+/* Retro purple scrollbars (hero picker, game shell, etc.) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  box-shadow: inset 0 0 0 1px var(--scrollbar-border);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border: 2px solid var(--scrollbar-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+  border-color: var(--panel-light);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: var(--panel-light);
+  border-color: var(--highlight);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+
+/* Animated starfield */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(1px 1px at 10% 20%, #fff8 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 10%, #fff6 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 60%, #fff5 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 80%, #fff4 0%, transparent 100%),
+    radial-gradient(ellipse 120% 80% at 50% 100%, var(--starfield-ellipse) 0%, var(--bg-deep) 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html[data-theme="light"] body::before {
+  background:
+    radial-gradient(1px 1px at 10% 20%, #8b6fc466 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 10%, #7c5cbf55 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 60%, #9f7fd844 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 80%, #b49ae833 0%, transparent 100%),
+    radial-gradient(ellipse 120% 80% at 50% 100%, var(--starfield-ellipse) 0%, var(--bg-deep) 55%);
+  opacity: 0.9;
+}
+
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    var(--crt-line) 2px,
+    var(--crt-line) 4px
+  );
+  opacity: 0.35;
+}
+
+html[data-theme="light"] .crt-overlay {
+  opacity: 0.12;
+}
+
+body.is-booting .game-shell {
+  visibility: hidden;
+}
+
+.game-shell {
+  --foe-accent: var(--color-yellow-400);
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-3);
+  padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--space-3), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--space-3), env(safe-area-inset-right, 0px));
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+}
+
+.title-bar {
+  text-align: center;
+  padding: var(--space-2) 0 var(--space-1);
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  line-height: 1.2;
+  color: var(--heading-accent);
+  text-shadow:
+    2px 2px 0 var(--title-shadow-color),
+    0 0 20px var(--title-shadow-glow);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+@media (min-width: 769px) {
+  .title {
+    font-size: clamp(2.5rem, 3.5vw, 3.25rem);
+    letter-spacing: 0.1em;
+  }
+
+  .title-bar {
+    padding: var(--space-2) 0;
+  }
+}
+
+/* Phones & small tablets — large fight title, always one line. */
+@media (max-width: 768px) {
+  .title {
+    font-size: clamp(2rem, 11vw, 3.25rem);
+    letter-spacing: 0.1em;
+    line-height: 1.05;
+  }
+
+  .title-bar {
+    padding: var(--space-2) 0 var(--space-1);
+  }
+}
+
+.tagline {
+  margin: 0.1rem 0 0;
+  font-size: 1rem;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+}

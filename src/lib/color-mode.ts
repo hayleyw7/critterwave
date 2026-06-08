@@ -49,18 +49,19 @@ export function applyColorMode(mode: ColorMode): void {
   syncPwaManifest(mode);
 }
 
+const COLOR_MODE_TRANSITION_MS = 450;
+
 /** Cross-fades the page when toggling light/dark (skipped if reduced motion). */
 export function runColorModeTransition(update: () => void): void {
   const root = document.documentElement;
-  const startViewTransition = document.startViewTransition?.bind(document);
-  if (prefersReducedMotion() || !startViewTransition) {
+  if (prefersReducedMotion()) {
     update();
     return;
   }
 
   root.classList.add("color-mode-changing");
-  const transition = startViewTransition(update);
-  void transition.finished.finally(() => {
+  update();
+  window.setTimeout(() => {
     root.classList.remove("color-mode-changing");
-  });
+  }, COLOR_MODE_TRANSITION_MS);
 }

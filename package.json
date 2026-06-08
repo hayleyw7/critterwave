@@ -6,8 +6,9 @@
   "description": "Browser critter wave RPG",
   "scripts": {
     "build": "tsc",
-    "build:site": "npm run build && node scripts/build-site.mjs",
-    "predev": "npm run build",
+    "build:html": "node scripts/build-html.mjs",
+    "build:site": "npm run build && npm run build:html && node scripts/build-site.mjs",
+    "predev": "npm run build && npm run build:html",
     "generate-foes": "node scripts/generate-foes.mjs",
     "generate:og": "node scripts/generate-og-image.mjs",
     "dev": "npx --yes serve . -p 3000",
