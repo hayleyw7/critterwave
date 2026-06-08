@@ -1798,30 +1798,6 @@ html[data-theme="light"] .damage-pop.hype-pop {
   text-shadow: none;
 }
 
-.cmd-attack,
-.help-action-attack,
-.battle-action-attack {
-  color: var(--cmd-attack-text);
-}
-
-.cmd-heal,
-.help-action-heal,
-.battle-action-heal {
-  color: var(--cmd-heal-text);
-}
-
-.cmd-dance,
-.help-action-dance,
-.battle-action-dance {
-  color: var(--cmd-dance-text);
-}
-
-.cmd-run,
-.help-action-run,
-.battle-action-run {
-  color: var(--cmd-run-text);
-}
-
 .command-menu {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1848,6 +1824,43 @@ html[data-theme="light"] .damage-pop.hype-pop {
   justify-content: center;
   letter-spacing: 0.04em;
   transition: background 0.1s, filter 0.1s, border-color 0.1s;
+}
+
+/* Command labels — after .cmd base color so variant text colors win on menu buttons. */
+.command-menu .cmd.cmd-attack {
+  color: var(--cmd-attack-text);
+}
+
+.command-menu .cmd.cmd-heal {
+  color: var(--cmd-heal-text);
+}
+
+.command-menu .cmd.cmd-dance {
+  color: var(--cmd-dance-text);
+}
+
+.command-menu .cmd.cmd-run {
+  color: var(--cmd-run-text);
+}
+
+.help-action-attack,
+.battle-action-attack {
+  color: var(--cmd-attack-text);
+}
+
+.help-action-heal,
+.battle-action-heal {
+  color: var(--cmd-heal-text);
+}
+
+.help-action-dance,
+.battle-action-dance {
+  color: var(--cmd-dance-text);
+}
+
+.help-action-run,
+.battle-action-run {
+  color: var(--cmd-run-text);
 }
 
 .command-menu .cmd:nth-child(odd) {
