@@ -172,7 +172,6 @@ import type {
   GameSnapshot,
   HeroColorTheme,
   HeroOption,
-  LegacySnapshot,
   Player,
   SaveData,
 } from "./types.js";
@@ -423,7 +422,7 @@ export function loadSnapshot(): GameSnapshot | null {
   try {
     const raw = getStorageRaw();
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { snapshot?: LegacySnapshot };
+    const parsed = JSON.parse(raw) as { snapshot?: GameSnapshot };
     const snap = parsed.snapshot;
     if (!snap) return null;
     return normalizeSnapshot(snap);
@@ -432,9 +431,8 @@ export function loadSnapshot(): GameSnapshot | null {
   }
 }
 
-export function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
+export function normalizeSnapshot(snap: GameSnapshot): GameSnapshot {
   const snapWave = sanitizeWave(snap.wave, CAMPAIGN_WAVES);
-  const legacyFoe = snap.foe ?? snap.goblin;
   const playerEmoji =
     typeof snap.player?.emoji === "string" ? snap.player.emoji : DEFAULT_HERO_EMOJI;
   const snapPlayer = sanitizeSnapshotPlayer(
@@ -444,8 +442,8 @@ export function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
     DEFAULT_HERO_EMOJI,
     getHeroLabelForEmoji(playerEmoji)
   );
-  const foeNormalized = legacyFoe
-    ? sanitizeSnapshotFoe(legacyFoe, snapWave, FOES_BY_ID)
+  const foeNormalized = snap.foe
+    ? sanitizeSnapshotFoe(snap.foe, snapWave, FOES_BY_ID)
     : null;
 
   return {
@@ -455,7 +453,7 @@ export function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
     wave: snapWave,
     phase: sanitizeGamePhase(snap.phase),
     hypeLevel: sanitizeHypeLevel(snap.hypeLevel),
-    foeHypeLevel: sanitizeHypeLevel(snap.foeHypeLevel ?? snap.goblinHypeLevel),
+    foeHypeLevel: sanitizeHypeLevel(snap.foeHypeLevel),
     foeOrderIds: sanitizeIdList(snap.foeOrderIds, FOE_IDS),
     foeColorTheme: snap.foeColorTheme,
     heroColorTheme:

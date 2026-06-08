@@ -97,10 +97,5 @@ export type ConfirmOptions = {
   danger?: boolean;
 };
 
-export type LegacySnapshot = GameSnapshot & {
-  goblin?: Enemy | null;
-  goblinHypeLevel?: number;
-};
-
 export type CombatTeachPopupId = "cmd-heal-teach" | "cmd-dance-teach" | "cmd-run-teach";
 export type DebugCombatAction = "attack" | "heal" | "dance" | "run";

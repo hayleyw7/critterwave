@@ -12,14 +12,15 @@ import {
   withSaveMeta,
 } from "../../src/game/persistence.js";
 import { gameState } from "../../src/game/state.js";
+import type { GameSnapshot } from "../../src/game/types.js";
 
 describe("persistence — normalizeSnapshot", () => {
-  it("reads legacy goblin fields into normalized foe and hype", () => {
+  it("normalizes foe and hype fields from snapshot data", () => {
     const snap = normalizeSnapshot({
       wave: 2,
       turn: 3,
       player: { name: "Test", hp: 15, maxHp: 20, attack: 5, emoji: "🐱" },
-      goblin: {
+      foe: {
         id: "ghoulish-gob",
         name: "Ghoulish Gob",
         emoji: "👺",
@@ -28,9 +29,9 @@ describe("persistence — normalizeSnapshot", () => {
         attack: 4,
         level: 1,
       },
-      goblinHypeLevel: 2,
+      foeHypeLevel: 2,
       hypeLevel: 1,
-    });
+    } as GameSnapshot);
 
     expect(snap.foe?.id).toBe("ghoulish-gob");
     expect(snap.foeHypeLevel).toBe(2);

@@ -87,7 +87,6 @@ dist/               # Pages deploy artifact (npm run build:site — gitignored)
 css/styles.css
 icons/              # favicons & PWA icons
 images/             # og-image.png (social preview)
-assets/goblins/     # legacy placeholder art
 scripts/            # generate-foes, generate:og
 tests/              # Vitest unit tests
 e2e/                # Playwright browser tests

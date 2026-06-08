@@ -55,8 +55,8 @@ export function preprocessShadowLocals(body) {
     if (foeHypeResult.flashFirstHype)`
     )
     .replace(
-      /function normalizeSnapshot\(snap: LegacySnapshot\): GameSnapshot \{\s*\n\s*const wave = sanitizeWave\(snap\.wave, CAMPAIGN_WAVES\);/,
-      `function normalizeSnapshot(snap: LegacySnapshot): GameSnapshot {
+      /function normalizeSnapshot\(snap: GameSnapshot\): GameSnapshot \{\s*\n\s*const wave = sanitizeWave\(snap\.wave, CAMPAIGN_WAVES\);/,
+      `function normalizeSnapshot(snap: GameSnapshot): GameSnapshot {
   const snapWave = sanitizeWave(snap.wave, CAMPAIGN_WAVES);`
     )
     .replace(

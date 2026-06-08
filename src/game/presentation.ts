@@ -172,7 +172,6 @@ import type {
   GameSnapshot,
   HeroColorTheme,
   HeroOption,
-  LegacySnapshot,
   Player,
   SaveData,
 } from "./types.js";
