@@ -17,6 +17,7 @@ import { CAMPAIGN_WAVES, SKIP_EXIT_FLUSH_KEY, STORAGE_KEY } from "./constants.js
 import { FOES, HEROES } from "./data.js";
 import { el } from "./dom.js";
 import { persist, persistStatsOnly, persistSetupDraft, loadSave, loadSnapshot, applySnapshot, setConfirmActions, bindConfirmDialog, bindPageExitPersist, restorePendingConfirmIfNeeded, withSaveMeta, presentConfirm } from "./persistence.js";
+import { migrateLegacyStorageKey } from "./save-io.js";
 import { resolveHeroColorTheme, resolveSavedHeroName, getHeroLabelForEmoji, readHeroNameFromSetup } from "./hero-setup.js";
 import { initColorMode, toggleColorMode, renderRecords } from "./theme.js";
 import { render } from "./presentation.js";
@@ -574,6 +575,7 @@ export function finishBoot(): void {
 }
 
 export async function init(): Promise<void> {
+  migrateLegacyStorageKey();
   setConfirmActions({
     newRun: applyNewRun,
     clearData: applyClearData,

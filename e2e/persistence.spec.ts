@@ -162,3 +162,25 @@ test.describe("combat hints — save persistence", () => {
     await expect(page.locator("#cmd-dance")).toHaveAttribute("data-combat-hint", "off");
   });
 });
+
+test.describe("persistence — storage key migration", () => {
+  test("migrates legacy v6 save to v0.7 on boot", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      localStorage.clear();
+      localStorage.setItem(
+        "critterwave-v6",
+        JSON.stringify({ bestWave: 8, runsPlayed: 2, colorMode: "dark" })
+      );
+    });
+    await page.reload();
+
+    const keys = await page.evaluate(() => ({
+      current: localStorage.getItem("critterwave-v0.7"),
+      legacy: localStorage.getItem("critterwave-v6"),
+    }));
+    expect(keys.current).toContain('"bestWave":8');
+    expect(keys.legacy).toBeNull();
+    await expect(page.locator("#stat-best-wave")).toHaveText("8");
+  });
+});

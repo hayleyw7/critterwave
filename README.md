@@ -61,7 +61,7 @@ Highlighted buttons use an **outline pulse only** — button colors stay the sam
 
 ## What gets saved
 
-Stored under `critterwave-v6` in the browser:
+Stored under `critterwave-v0.7` in the browser (migrates automatically from `critterwave-v6`):
 
 - **High score** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
 - **Runs played** — how many runs you’ve finished (game over or full win)
@@ -96,6 +96,7 @@ src/
     ui-bars.ts          # shared HP/XP bar width helper
     persistence.ts      # snapshots, confirm dialog, page-exit flush
     save-io.ts          # localStorage read/write (no DOM)
+    storage-keys.ts     # save key + legacy keys for migration
     colors.ts           # hero/foe card color themes
     hero-setup.ts       # setup name/color helpers
     …                   # constants, data, dom, state, types, stats, foe-queue

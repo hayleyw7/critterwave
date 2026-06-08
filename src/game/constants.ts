@@ -3,7 +3,7 @@ import { COLOR_THEME_IDS, DEFAULT_COLOR_THEME } from "../lib/color-themes.js";
 import type { HeroColorTheme } from "./types.js";
 
 export const HYPE_METER_FLASH_MS = 450 * 3 + 50;
-export const STORAGE_KEY = "critterwave-v6";
+export { LEGACY_STORAGE_KEYS, STORAGE_KEY } from "./storage-keys.js";
 export const CAMPAIGN_WAVES = CAMPAIGN_WAVE_COUNT;
 export const FOE_POOF_MS = 450;
 export const FOE_ENTRANCE_MS = 550;

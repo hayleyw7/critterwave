@@ -1,10 +1,19 @@
 import { expect, type Page } from "@playwright/test";
+import { LEGACY_STORAGE_KEYS, STORAGE_KEY } from "../../src/game/storage-keys.js";
 
-export const STORAGE_KEY = "critterwave-v6";
+export { LEGACY_STORAGE_KEYS, STORAGE_KEY };
 
 export async function clearSave(page: Page): Promise<void> {
   await page.goto("/");
-  await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);
+  await page.evaluate(
+    ({ key, legacyKeys }) => {
+      localStorage.removeItem(key);
+      for (const legacyKey of legacyKeys) {
+        localStorage.removeItem(legacyKey);
+      }
+    },
+    { key: STORAGE_KEY, legacyKeys: [...LEGACY_STORAGE_KEYS] }
+  );
   await page.reload();
 }
 

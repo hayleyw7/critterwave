@@ -1,14 +1,31 @@
 import type { ColorMode } from "../lib/color-mode.js";
 import { parsePendingConfirm, parseSaveMeta } from "../lib/save-validation.js";
-import { CAMPAIGN_WAVES, STORAGE_KEY } from "./constants.js";
+import { CAMPAIGN_WAVES, LEGACY_STORAGE_KEYS, STORAGE_KEY } from "./constants.js";
 import { HERO_EMOJIS } from "./data.js";
 import type { SaveData } from "./types.js";
 
+export function migrateLegacyStorageKey(): void {
+  if (localStorage.getItem(STORAGE_KEY)) {
+    return;
+  }
+
+  for (const legacyKey of LEGACY_STORAGE_KEYS) {
+    const raw = localStorage.getItem(legacyKey);
+    if (raw) {
+      localStorage.setItem(STORAGE_KEY, raw);
+      localStorage.removeItem(legacyKey);
+      return;
+    }
+  }
+}
+
 export function getStorageRaw(): string | null {
+  migrateLegacyStorageKey();
   return localStorage.getItem(STORAGE_KEY);
 }
 
 export function writeSaveJson(data: Record<string, unknown>): void {
+  migrateLegacyStorageKey();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 

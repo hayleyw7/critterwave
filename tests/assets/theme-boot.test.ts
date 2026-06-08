@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
-import { STORAGE_KEY } from "../../src/game/constants.js";
+import { LEGACY_STORAGE_KEYS, STORAGE_KEY } from "../../src/game/storage-keys.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -51,5 +51,15 @@ describe("assets/theme-boot.js", () => {
     localStorage.setItem(STORAGE_KEY, "{not-json");
     runThemeBoot();
     expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("reads light mode from legacy v6 save before game.js migrates the key", () => {
+    const legacyKey = LEGACY_STORAGE_KEYS[0]!;
+    localStorage.setItem(
+      legacyKey,
+      JSON.stringify({ bestWave: 0, runsPlayed: 0, colorMode: "light" })
+    );
+    runThemeBoot();
+    expect(document.documentElement.dataset.theme).toBe("light");
   });
 });

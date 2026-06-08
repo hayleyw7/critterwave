@@ -4,7 +4,7 @@
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
-import { STORAGE_KEY } from "../../src/game/constants.js";
+import { STORAGE_KEY } from "../../src/game/storage-keys.js";
 import {
   normalizeSnapshot,
   readPersistedFields,
@@ -163,7 +163,7 @@ const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("persistence — project paths", () => {
   it("uses the expected storage key constant", () => {
-    expect(STORAGE_KEY).toBe("critterwave-v6");
+    expect(STORAGE_KEY).toBe("critterwave-v0.7");
     expect(projectRoot).toContain("critterwave");
   });
 });
