@@ -36,3 +36,26 @@ describe("css/combat.css — teach keyframes", () => {
     expect(styles).toContain(".command-menu .cmd.cmd-hint-flash");
   });
 });
+
+describe("css/combat.css — command button text colors", () => {
+  const styles = readCssModule("combat.css");
+
+  const cmdBaseColorIndex = styles.indexOf(".cmd {");
+  const attackColorRule = ".command-menu .cmd.cmd-attack";
+  const attackColorIndex = styles.indexOf(attackColorRule);
+
+  it("sets per-action text colors on menu buttons after the base .cmd color rule", () => {
+    expect(cmdBaseColorIndex).toBeGreaterThanOrEqual(0);
+    expect(attackColorIndex).toBeGreaterThan(cmdBaseColorIndex);
+    expect(styles.indexOf(`${attackColorRule} {\n  color: var(--cmd-attack-text);`)).toBeGreaterThan(
+      cmdBaseColorIndex
+    );
+    expect(styles).toContain(".command-menu .cmd.cmd-heal {\n  color: var(--cmd-heal-text);");
+    expect(styles).toContain(".command-menu .cmd.cmd-dance {\n  color: var(--cmd-dance-text);");
+    expect(styles).toContain(".command-menu .cmd.cmd-run {\n  color: var(--cmd-run-text);");
+  });
+
+  it("does not rely on single-class .cmd-attack rules that lose to .cmd { color }", () => {
+    expect(styles).not.toMatch(/^\s*\.cmd-attack,\s*$/m);
+  });
+});

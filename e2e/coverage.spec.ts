@@ -47,6 +47,31 @@ test.describe("app — theme on setup", () => {
   });
 });
 
+test.describe("combat — command button text colors", () => {
+  test("each action button uses its themed text color, not generic dialog text", async ({
+    page,
+  }) => {
+    await startFreshRun(page);
+    const { attack, heal, dance, run, dialogText } = await page.evaluate(() => {
+      const colorOf = (id: string) =>
+        getComputedStyle(document.getElementById(id)!).color;
+      return {
+        attack: colorOf("cmd-attack"),
+        heal: colorOf("cmd-heal"),
+        dance: colorOf("cmd-dance"),
+        run: colorOf("cmd-run"),
+        dialogText: getComputedStyle(document.querySelector(".dialog-box")!).color,
+      };
+    });
+
+    expect(attack).not.toBe(dialogText);
+    expect(heal).not.toBe(dialogText);
+    expect(dance).not.toBe(dialogText);
+    expect(run).not.toBe(dialogText);
+    expect(new Set([attack, heal, dance, run]).size).toBe(4);
+  });
+});
+
 test.describe("app — help action colors", () => {
   test("help modal action terms use combat command color classes", async ({ page }) => {
     await startFreshRun(page);
