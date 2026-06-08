@@ -165,7 +165,6 @@ export const DOM_IDS_BY_PARTIAL: Record<(typeof HTML_PARTIAL_FILES)[number], rea
   "game-over.html": [
     "game-over",
     "victory-emoji-layer",
-    "victory-trophy",
     "game-over-tag",
     "game-over-summary",
     "game-over-battle-log",

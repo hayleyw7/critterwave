@@ -29,4 +29,13 @@ describe("html assembly", () => {
       }
     }
   });
+
+  it("maps every required dom id to exactly one partial", () => {
+    const mapped = HTML_PARTIAL_FILES.flatMap((partial) => DOM_IDS_BY_PARTIAL[partial]);
+    expect(mapped).toHaveLength(REQUIRED_DOM_IDS.length);
+    expect(new Set(mapped).size).toBe(REQUIRED_DOM_IDS.length);
+    for (const id of REQUIRED_DOM_IDS) {
+      expect(mapped, `missing mapping for #${id}`).toContain(id);
+    }
+  });
 });

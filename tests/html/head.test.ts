@@ -35,4 +35,11 @@ describe("html assembly — script entry", () => {
     expect(html).toContain('<script type="module" src="js/game.js">');
     expect(html).not.toMatch(/<script[^>]*src=["']https?:/);
   });
+
+  it("loads theme-boot as a same-origin classic script before the module entry", () => {
+    const html = readFileSync(join(root, "index.html"), "utf8");
+    expect(html).toContain('<script src="assets/theme-boot.js"></script>');
+    expect(html).toContain("script-src 'self'");
+    expect(html.indexOf("theme-boot.js")).toBeLessThan(html.indexOf('src="js/game.js"'));
+  });
 });

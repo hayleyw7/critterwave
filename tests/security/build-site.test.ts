@@ -28,7 +28,11 @@ describe("security — build:site output", () => {
     expect(existsSync(join(dist, "src"))).toBe(false);
     expect(existsSync(join(dist, "tests"))).toBe(false);
     expect(existsSync(join(dist, "e2e"))).toBe(false);
+    expect(existsSync(join(dist, "html"))).toBe(false);
+    expect(existsSync(join(dist, "scripts"))).toBe(false);
     expect(existsSync(join(dist, "package.json"))).toBe(false);
+    expect(existsSync(join(dist, "scripts/index.html.bak"))).toBe(false);
+    expect(existsSync(join(dist, "scripts/styles.css.bak"))).toBe(false);
 
     const distIndex = readFileSync(join(dist, "index.html"), "utf8");
     expect(distIndex).toContain("Content-Security-Policy");

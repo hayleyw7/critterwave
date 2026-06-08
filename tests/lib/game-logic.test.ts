@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FOES } from "../../src/data/foes-data.js";
+import { COLOR_THEME_IDS } from "../../src/lib/color-themes.js";
 import {
   applyPlayerHealRoll,
   applyHypeGain,
@@ -391,6 +392,14 @@ describe("foe color conflicts", () => {
     expect(foeColorConflictsWithHero("green", "amber")).toBe(false);
     expect(foeColorConflictsWithHero("rose", "rose")).toBe(true);
     expect(foeColorConflictsWithHero("sky", "amber")).toBe(false);
+  });
+
+  it("matches across every hero and foe theme pair", () => {
+    for (const hero of COLOR_THEME_IDS) {
+      for (const foe of COLOR_THEME_IDS) {
+        expect(foeColorConflictsWithHero(hero, foe)).toBe(hero === foe);
+      }
+    }
   });
 });
 
