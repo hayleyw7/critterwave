@@ -4,7 +4,7 @@ Choose your critter. Dance for foes. Survive **100 waves**.
 
 A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, and beat the campaign.
 
-**Play online:** [https://hayleyw7.github.io/critterwave/](https://hayleyw7.github.io/critterwave/)
+**Play online:** [https://bunhouse.itch.io/critterwave](https://bunhouse.itch.io/critterwave)
 
 Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages → **GitHub Actions**).
 
