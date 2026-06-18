@@ -26,12 +26,12 @@ A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, a
 
 ## Controls
 
-| Action | Button | Notes |
-|--------|--------|--------|
-| Attack | ⚔️ | Foe may counterattack; counter damage drops 1 HYPE |
-| Heal | 💚 | Random **1–heal max** (up to **7** at Lv 1, +1/level); foe may counterattack; does not build HYPE |
-| Dance | 🕺 | Random reactions; HYPE for you and/or foe when granted; +1 ATK per HYPE |
-| Run | 🏃 | Flee this foe — same heal roll as **Heal**, same wave, next foe, lose all HYPE; **not on wave 100** |
+| Action | Notes |
+|--------|--------|
+| Attack | Foe may counterattack; counter damage drops 1 HYPE |
+| Heal | Random **1–heal max** (up to **7** at Lv 1, +1/level); foe may counterattack; does not build HYPE |
+| Dance | Random reactions; HYPE for you and/or foe when granted; +1 ATK per HYPE |
+| Run | Flee this foe — same heal roll as **Heal**, same wave, next foe, lose all HYPE; **not on wave 100** |
 
 ## Combat hints
 
