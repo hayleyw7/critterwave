@@ -6,8 +6,6 @@ A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, a
 
 **Play online:** [https://bunhouse.itch.io/critterwave](https://bunhouse.itch.io/critterwave)
 
-Deploy or update hosting via [GitHub Pages](#github-pages) (Settings → Pages → **GitHub Actions**).
-
 ## Features
 
 - Turn-based combat in the browser — no install
@@ -122,12 +120,6 @@ e2e/                    # Playwright browser tests
 .github/workflows/      # deploy + CI
 ```
 
-### Editing HTML or CSS
-
-- **HTML:** edit files under `html/partials/`, then run `npm run build:html` (also runs on `npm run dev` via `predev`). `tests/html/build.test.ts` checks output against `scripts/index.html.bak`.
-- **CSS:** edit module files under `css/`, or regen from the monolith backup with `node scripts/split-css.mjs`. `tests/css/build.test.ts` checks hub imports and keyframe coverage.
-- **TypeScript:** edit `src/**/*.ts`, then `npm run build`. Game logic lives in `src/lib/`; DOM wiring and flows live in `src/game/` (`save-io` for storage, `colors` / `hero-setup` for theme and setup helpers).
-
 ## Local play
 
 ```bash
@@ -137,57 +129,3 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
-
-## Tests
-
-```bash
-npm test              # unit tests (Vitest) — game logic, combat hints, save validation, CSS/HTML build, …
-npm run test:watch    # unit tests in watch mode
-npm run test:e2e      # browser tests (Playwright) — combat, persistence, security, …
-```
-
-`npm run test:e2e` runs `playwright install chromium` automatically first. To install browsers manually: `npx playwright install chromium`.
-
-CI (`.github/workflows/test.yml`) runs unit + e2e tests on every push and pull request to `main`/`master`. Deploy (`.github/workflows/deploy.yml`) runs the same tests before `build:site`.
-
-## GitHub Pages
-
-This project uses **plain TypeScript** (`tsc`) — no bundler. `npm run build` compiles `src/**/*.ts` → `js/`; the browser loads `js/game.js` from `index.html`.
-
-Hosting is automated by [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
-
-### One-time setup on GitHub
-
-1. Push the repo to GitHub (e.g. `hayleyw7/critterwave`).
-2. Open the repo on GitHub → **Settings** → **Pages**.
-3. Under **Build and deployment → Source**, choose **GitHub Actions** (not “Deploy from a branch”).
-4. Push to `main` (or run the **Deploy to GitHub Pages** workflow manually under **Actions**).
-
-The workflow runs `npm ci`, `npm test`, `npm run test:e2e`, then `npm run build:site`, and publishes the `dist/` folder (a slim copy of the site for Pages).
-
-### Your live URL
-
-For a project repo named `critterwave`:
-
-**https://hayleyw7.github.io/critterwave/**
-
-(Replace username/repo if yours differ.)
-
-### Local check before you push
-
-```bash
-npm install
-npm run build      # src/ → js/ (local dev)
-npm test
-npm run test:e2e
-npm run dev        # http://localhost:3000
-npm run build:site # optional: same as CI — builds js/ then copies to dist/
-```
-
-### What *not* to do (common bad advice)
-
-- **No Vite/Webpack required** — `tsc` is enough for this app.
-- **No `gh-pages` branch** — the Actions workflow deploys for you.
-- **Don’t deploy the repo root to Pages** — local dev serves from the root (`js/` at repo root); CI publishes `dist/` from `build:site`.
-
-After the first successful deploy, link previews may need absolute image URLs (`og:image`) — use your full Pages URL + `/images/og-image.png` if Discord/iMessage show a broken preview.
