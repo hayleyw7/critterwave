@@ -1,3 +1,3 @@
-export const STORAGE_KEY = "critterwave-v0.7";
+export const STORAGE_KEY = "critterwave-v1.0";
 /** Older localStorage keys migrated to STORAGE_KEY on first read. */
-export const LEGACY_STORAGE_KEYS = ["critterwave-v6"] as const;
+export const LEGACY_STORAGE_KEYS = ["critterwave-v0.7", "critterwave-v6"] as const;

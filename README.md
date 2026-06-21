@@ -1,4 +1,4 @@
-# Critterwave
+# Critterwave v1.0
 
 Choose your critter. Dance for foes. Survive **100 waves**.
 
@@ -9,10 +9,10 @@ A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, a
 ## Features
 
 - Turn-based combat in the browser — no install
-- **100 waves** to win; **117** hand-picked alliterative foes (critters and fantasy creatures)
+- **100 waves** to win; **101** hand-picked alliterative foes (critters and fantasy creatures)
 - **Levels 1–10** — classic RPG pacing: stay Lv 1 for waves 1–10, level up at **11, 21, 31…**; HP, ATK, and max heal grow with you
 - Foe **LV** varies around yours — easier critters fight below your level, tougher ones above (same rules from wave 1)
-- Pick any roster emoji as your hero, name them, and choose a **card color**
+- Pick any roster emoji as your hero, name them, and choose a **card color** — the setup grid only shows **full rows** (column count follows your window width)
 - **Light and dark themes** — footer toggle (persists in this browser); tuned contrast for HUD, battle log, damage pops, and footer stats; browser and PWA install chrome follow the active theme
 - **Heal** (1–**7** HP at Lv 1, **+1** max per level) on your turn — main way to recover HP; foe may counterattack; does not build HYPE
 - **Dance** for random foe reactions — HYPE for you and/or the foe when the line grants it, or neither (max **5 HYPE** each; **+1 ATK per HYPE**)
@@ -59,7 +59,7 @@ Highlighted buttons use an **outline pulse only** — button colors stay the sam
 
 ## What gets saved
 
-Stored under `critterwave-v0.7` in the browser (migrates automatically from `critterwave-v6`):
+Stored under `critterwave-v1.0` in the browser (migrates automatically from `critterwave-v0.7` and `critterwave-v6`):
 
 - **High score** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
 - **Runs played** — how many runs you’ve finished (game over or full win)
@@ -77,7 +77,7 @@ html/
 css/
   styles.css            # hub that @imports module CSS files
   *.css                 # tokens, base, setup, presentation, combat, …
-assets/theme-boot.js    # applies saved light/dark before first paint (v0.7 save, v6 fallback)
+assets/theme-boot.js    # applies saved light/dark before first paint (v1.0 save, legacy fallback)
 src/
   game.ts               # thin entry — imports game/app init
   game/

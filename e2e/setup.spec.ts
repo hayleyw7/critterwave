@@ -16,20 +16,46 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
     expect(save?.setupActive).toBeFalsy();
   });
 
-  test("hides devil emoji in hero picker on mobile only", async ({ page }) => {
+  test("hides devil emoji in hero picker on mobile and fills complete rows", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await clearSave(page);
     await expect(
       page.getByRole("heading", { name: "Which critter are you?" })
     ).toBeVisible();
     await expect(page.locator('.emoji-pick[data-emoji="😈"]')).toHaveCount(0);
+    await expect(
+      page.evaluate(() => {
+        const cells = [...document.querySelectorAll(".emoji-pick")] as HTMLElement[];
+        const firstTop = cells[0]?.offsetTop ?? 0;
+        let columns = 0;
+        for (const cell of cells) {
+          if (cell.offsetTop > firstTop) break;
+          columns++;
+        }
+        columns = Math.max(1, columns);
+        return cells.length > 0 && cells.length % columns === 0;
+      })
+    ).resolves.toBe(true);
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.reload();
     await expect(
       page.getByRole("heading", { name: "Which critter are you?" })
     ).toBeVisible();
-    await expect(page.locator('.emoji-pick[data-emoji="😈"]')).toHaveCount(1);
+    await expect(page.locator('.emoji-pick[data-emoji="😈"]')).toHaveCount(0);
+    await expect(
+      page.evaluate(() => {
+        const cells = [...document.querySelectorAll(".emoji-pick")] as HTMLElement[];
+        const firstTop = cells[0]?.offsetTop ?? 0;
+        let columns = 0;
+        for (const cell of cells) {
+          if (cell.offsetTop > firstTop) break;
+          columns++;
+        }
+        columns = Math.max(1, columns);
+        return cells.length > 0 && cells.length % columns === 0;
+      })
+    ).resolves.toBe(true);
   });
 
   test("cannot start without a name", async ({ page }) => {

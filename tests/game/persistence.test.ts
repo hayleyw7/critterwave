@@ -163,7 +163,7 @@ const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 describe("persistence — project paths", () => {
   it("uses the expected storage key constant", () => {
-    expect(STORAGE_KEY).toBe("critterwave-v0.7");
+    expect(STORAGE_KEY).toBe("critterwave-v1.0");
     expect(projectRoot).toContain("critterwave");
   });
 });

@@ -1,7 +1,7 @@
 import { setBattleLines } from "../lib/battle-log-dom.js";
 import { blockCombatForScreenEnd } from "../lib/combat-gate.js";
 import { attackTeachText } from "../lib/combat-hints.js";
-import { HERO_PICKER_ORDER, isHeroEmojiHiddenInPicker, isMobileHeroPickerViewport, resolveHeroPickerEmoji } from "../lib/hero-groups.js";
+import { HERO_PICKER_ORDER, heroPickerEmojisForViewport, isMobileHeroPickerViewport, measureHeroPickerColumnCount, resolveHeroPickerEmoji, trimHeroPickerEmojisToFullRows, estimateHeroPickerColumnCount } from "../lib/hero-groups.js";
 import { isDebugHost } from "../lib/save-validation.js";
 import { startVictoryCelebration, stopVictoryCelebration } from "../ui/victory-celebration.js";
 import { bindHelpDialog, restoreHelpDialog } from "./app-help.js";
@@ -303,7 +303,91 @@ export function applyHeroChoice(emoji: string, label: string): void {
 }
 
 export function resolvePickerHeroEmoji(emoji: string): string {
-  return resolveHeroPickerEmoji(emoji, HERO_PICKER_ORDER, isMobileHeroPickerViewport());
+  const mobile = isMobileHeroPickerViewport();
+  const remPx =
+    typeof window !== "undefined"
+      ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      : 16;
+  const columns = estimateHeroPickerColumnCount(
+    getHeroPickerContainerWidth(),
+    remPx
+  );
+  return resolveHeroPickerEmoji(emoji, HERO_PICKER_ORDER, mobile, columns);
+}
+
+function getHeroPickerContainerWidth(): number {
+  const width = el.heroPicker.clientWidth;
+  if (width > 0) {
+    return width;
+  }
+  if (typeof window === "undefined") {
+    return 0;
+  }
+  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const panelWidth = Math.min(window.innerWidth - 2 * 1.25 * remPx, 720);
+  return panelWidth - 2 * 1.25 * remPx;
+}
+
+function trimHeroPickerGridToFullRows(
+  grid: HTMLElement,
+  candidates: readonly string[],
+  columns: number
+): string[] {
+  const trimmed = trimHeroPickerEmojisToFullRows(candidates, columns);
+  const trimmedSet = new Set(trimmed);
+  for (const btn of [...grid.querySelectorAll<HTMLButtonElement>(".emoji-pick")]) {
+    if (!trimmedSet.has(btn.dataset.emoji ?? "")) {
+      btn.remove();
+    }
+  }
+  return trimmed;
+}
+
+function heroPickerHasPartialRow(grid: HTMLElement): boolean {
+  const count = grid.querySelectorAll(".emoji-pick").length;
+  if (count === 0) {
+    return false;
+  }
+  const columns = measureHeroPickerColumnCount(grid);
+  return count % columns !== 0;
+}
+
+function syncPendingHeroAfterPickerTrim(trimmed: readonly string[]): void {
+  if (trimmed.includes(gameState.pendingHeroEmoji)) {
+    return;
+  }
+  const next = trimmed[0];
+  if (!next) {
+    return;
+  }
+  gameState.pendingHeroEmoji = next;
+  gameState.pendingHeroLabel = getHeroLabelForEmoji(next);
+  for (const btn of el.heroPicker.querySelectorAll<HTMLButtonElement>(".emoji-pick")) {
+    btn.classList.toggle("selected", btn.dataset.emoji === next);
+  }
+}
+
+let heroPickerViewportListener: (() => void) | null = null;
+
+function bindHeroPickerViewportListener(): void {
+  if (heroPickerViewportListener || typeof window === "undefined") {
+    return;
+  }
+  heroPickerViewportListener = () => {
+    if (!el.gameShell.classList.contains("setup-active")) {
+      return;
+    }
+    buildHeroPicker();
+  };
+  window.addEventListener("resize", heroPickerViewportListener);
+}
+
+function unbindHeroPickerViewportListener(): void {
+  if (!heroPickerViewportListener || typeof window === "undefined") {
+    return;
+  }
+  window.removeEventListener("resize", heroPickerViewportListener);
+  heroPickerViewportListener = null;
 }
 
 export function buildHeroPicker(): void {
@@ -312,9 +396,20 @@ export function buildHeroPicker(): void {
   const grid = document.createElement("div");
   grid.className = "emoji-picker-grid";
   const mobile = isMobileHeroPickerViewport();
+  const candidates = heroPickerEmojisForViewport(HERO_PICKER_ORDER, mobile);
+
+  el.heroPicker.appendChild(grid);
+  void grid.offsetHeight;
+  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  let columns = measureHeroPickerColumnCount(grid);
+  if (columns <= 1 && grid.clientWidth > 0) {
+    columns = estimateHeroPickerColumnCount(grid.clientWidth, remPx);
+  }
+  let trimmed = trimHeroPickerEmojisToFullRows(candidates, columns);
+  const trimmedSet = new Set(trimmed);
 
   for (const hero of HEROES) {
-    if (isHeroEmojiHiddenInPicker(hero.emoji, mobile)) {
+    if (!trimmedSet.has(hero.emoji)) {
       continue;
     }
     const btn = document.createElement("button");
@@ -344,7 +439,19 @@ export function buildHeroPicker(): void {
       grid.appendChild(btn);
   }
 
-  el.heroPicker.appendChild(grid);
+  syncPendingHeroAfterPickerTrim(trimmed);
+
+  requestAnimationFrame(() => {
+    if (!grid.isConnected || !el.gameShell.classList.contains("setup-active")) {
+      return;
+    }
+    if (!heroPickerHasPartialRow(grid)) {
+      return;
+    }
+    const actualColumns = measureHeroPickerColumnCount(grid);
+    trimmed = trimHeroPickerGridToFullRows(grid, candidates, actualColumns);
+    syncPendingHeroAfterPickerTrim(trimmed);
+  });
 }
 
 export function updateSetupSubtitle(): void {
@@ -359,6 +466,7 @@ export function showSetup(): void {
   gameState.setupHintForced = false;
   updateSetupSubtitle();
   buildHeroPicker();
+  bindHeroPickerViewportListener();
   el.heroNameInput.value = save.heroName ?? "";
   gameState.pendingHeroColorTheme = resolveHeroColorTheme(save);
   buildHeroColorSwatches(persistSetupDraft);
@@ -371,6 +479,7 @@ export function showSetup(): void {
 
 export function hideSetup(): void {
   closeHeroColorPopup();
+  unbindHeroPickerViewportListener();
   el.setupOverlay.classList.add("hidden");
   el.gameShell.classList.remove("setup-active");
 }

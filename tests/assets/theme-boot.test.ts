@@ -53,8 +53,18 @@ describe("assets/theme-boot.js", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
   });
 
-  it("reads light mode from legacy v6 save before game.js migrates the key", () => {
+  it("reads light mode from legacy v0.7 save before game.js migrates the key", () => {
     const legacyKey = LEGACY_STORAGE_KEYS[0]!;
+    localStorage.setItem(
+      legacyKey,
+      JSON.stringify({ bestWave: 0, runsPlayed: 0, colorMode: "light" })
+    );
+    runThemeBoot();
+    expect(document.documentElement.dataset.theme).toBe("light");
+  });
+
+  it("reads light mode from legacy v6 save before game.js migrates the key", () => {
+    const legacyKey = LEGACY_STORAGE_KEYS[1]!;
     localStorage.setItem(
       legacyKey,
       JSON.stringify({ bestWave: 0, runsPlayed: 0, colorMode: "light" })
