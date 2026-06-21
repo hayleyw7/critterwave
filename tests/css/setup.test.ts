@@ -8,4 +8,9 @@ describe("css/setup.css", () => {
     expect(setup).toContain(".setup-name-input.setup-name-teach-flash");
     expect(setup).toContain("@keyframes setup-name-teach-pulse");
   });
+
+  it("uses auto-fill columns for the hero picker grid", () => {
+    expect(setup).toContain(".emoji-picker-grid");
+    expect(setup).toContain("grid-template-columns: repeat(auto-fill, 3.5rem);");
+  });
 });

@@ -31,7 +31,7 @@ describe("battle-log — formatFoeInText", () => {
     gameState.foe = {
       id: "test-foe",
       name: "Rotten Roach",
-      emoji: "🪳",
+      emoji: "🐜",
       hp: 10,
       maxHp: 10,
       attack: 3,

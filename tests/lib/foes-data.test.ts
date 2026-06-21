@@ -58,6 +58,6 @@ describe("foes roster", () => {
   });
 
   it("has a large roster for campaign variety", () => {
-    expect(FOES.length).toBeGreaterThanOrEqual(100);
+    expect(FOES.length).toBe(101);
   });
 });

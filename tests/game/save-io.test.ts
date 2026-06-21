@@ -17,13 +17,13 @@ describe("save-io — storage key migration", () => {
     localStorage.clear();
   });
 
-  it("uses critterwave-v0.7 as the current storage key", () => {
-    expect(STORAGE_KEY).toBe("critterwave-v0.7");
-    expect(LEGACY_STORAGE_KEYS).toEqual(["critterwave-v6"]);
+  it("uses critterwave-v1.0 as the current storage key", () => {
+    expect(STORAGE_KEY).toBe("critterwave-v1.0");
+    expect(LEGACY_STORAGE_KEYS).toEqual(["critterwave-v0.7", "critterwave-v6"]);
   });
 
-  it("migrates legacy v6 save data to v0.7 and removes the old key", () => {
-    const legacyKey = LEGACY_STORAGE_KEYS[0]!;
+  it("migrates legacy v6 save data to v1.0 and removes the old key", () => {
+    const legacyKey = LEGACY_STORAGE_KEYS[1]!;
     const payload = JSON.stringify({
       bestWave: 12,
       runsPlayed: 3,
@@ -38,7 +38,23 @@ describe("save-io — storage key migration", () => {
     expect(localStorage.getItem(legacyKey)).toBeNull();
   });
 
-  it("does not overwrite an existing v0.7 save when legacy data is present", () => {
+  it("migrates legacy v0.7 save data to v1.0 and removes the old key", () => {
+    const legacyKey = LEGACY_STORAGE_KEYS[0]!;
+    const payload = JSON.stringify({
+      bestWave: 21,
+      runsPlayed: 5,
+      colorMode: "dark",
+      heroName: "Sam",
+    });
+    localStorage.setItem(legacyKey, payload);
+
+    migrateLegacyStorageKey();
+
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(payload);
+    expect(localStorage.getItem(legacyKey)).toBeNull();
+  });
+
+  it("does not overwrite an existing v1.0 save when legacy data is present", () => {
     const legacyKey = LEGACY_STORAGE_KEYS[0]!;
     localStorage.setItem(
       STORAGE_KEY,
@@ -56,7 +72,7 @@ describe("save-io — storage key migration", () => {
   });
 
   it("migrates on first read through getStorageRaw", () => {
-    const legacyKey = LEGACY_STORAGE_KEYS[0]!;
+    const legacyKey = LEGACY_STORAGE_KEYS[1]!;
     localStorage.setItem(
       legacyKey,
       JSON.stringify({ bestWave: 4, runsPlayed: 2, colorMode: "dark" })

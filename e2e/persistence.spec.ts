@@ -164,7 +164,7 @@ test.describe("combat hints — save persistence", () => {
 });
 
 test.describe("persistence — storage key migration", () => {
-  test("migrates legacy v6 save to v0.7 on boot", async ({ page }) => {
+  test("migrates legacy v6 save to v1.0 on boot", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.clear();
@@ -176,7 +176,7 @@ test.describe("persistence — storage key migration", () => {
     await page.reload();
 
     const keys = await page.evaluate(() => ({
-      current: localStorage.getItem("critterwave-v0.7"),
+      current: localStorage.getItem("critterwave-v1.0"),
       legacy: localStorage.getItem("critterwave-v6"),
     }));
     expect(keys.current).toContain('"bestWave":8');
