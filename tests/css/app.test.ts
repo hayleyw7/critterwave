@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { readCssModule } from "./bundle.js";
 
 describe("css/app.css — footer", () => {
+  it("dims sound menu buttons when a channel is off", () => {
+    const app = readCssModule("app.css");
+    expect(app).toContain(".meta-menu-toggle.sound-level-off");
+  });
+
   it("uses compact one-line footer labels on narrow or short viewports", () => {
     const responsive = readCssModule("responsive.css");
     expect(responsive).toMatch(

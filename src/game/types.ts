@@ -1,6 +1,7 @@
 import type { ColorThemeId } from "../lib/color-themes.js";
 import type { ColorMode } from "../lib/color-mode.js";
 import type { PendingConfirmKind } from "../lib/save-validation.js";
+import type { SoundChannelLevel } from "../lib/sound-volume-preset.js";
 import type { CombatHintsState } from "../lib/combat-hints.js";
 
 export type Player = {
@@ -43,6 +44,13 @@ export type SaveData = {
   bestWave: number;
   runsPlayed: number;
   colorMode?: ColorMode;
+  soundMuted?: boolean;
+  musicLevel?: SoundChannelLevel;
+  sfxLevel?: SoundChannelLevel;
+  /** @deprecated Use musicLevel === "off". */
+  musicMuted?: boolean;
+  /** @deprecated Use sfxLevel === "off". */
+  sfxMuted?: boolean;
   playerEmoji?: string;
   /** Custom display name chosen by the player. */
   heroName?: string;

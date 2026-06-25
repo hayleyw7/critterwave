@@ -4,6 +4,7 @@ import { beginAwaitingFoeResponse, blockCombatForScreenEnd, canUseCombatActions 
 import { createCombatHintsState, deferDanceHintAfterRun, maybeArmDanceHintForWave, onNextFoeForHints, onVictoryForHints, recordAttackForHints, recordDanceForHints, recordHealForHints, recordPlayerDamageForHints, tryCelebrateFirstWaveVictoryHeal, recordRunForHints } from "../lib/combat-hints.js";
 import { DEFEAT_VERBS, applyPlayerHealRoll, healHpAfterWaveVictory, hypeHeadroom, isLevelBandFinale, advanceFoeQueueAfterFlee, advanceFoeQueueAfterVictory, buildInitialFoeQueue, nextDefeatVerb as advanceDefeatVerb, playerLevelForWave, randomDamage } from "../lib/game-logic.js";
 import { startVictoryCelebration, stopVictoryCelebration } from "../ui/victory-celebration.js";
+import { sfxFoeDance, sfxGameOver, sfxHeroDance, sfxHit, sfxHypeGain, sfxVictoryFanfare, syncBgmForPhase } from "./audio.js";
 import { CAMPAIGN_WAVES, STORAGE_KEY } from "./constants.js";
 import { FOES } from "./data.js";
 import { el } from "./dom.js";
@@ -351,6 +352,8 @@ export function updateRecordsOnVictory(): void {
 
 export function endGame(): void {
   stopVictoryCelebration(el.victoryEmojiLayer);
+  sfxGameOver();
+  syncBgmForPhase("gameover");
   applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
   gameState.phase = "gameover";
   clearAllHype();
@@ -363,6 +366,8 @@ export function endGame(): void {
 export function winCampaign(): void {
   applyCombatGateState(blockCombatForScreenEnd(combatGateState()));
   gameState.phase = "victory";
+  sfxVictoryFanfare();
+  syncBgmForPhase("victory");
   clearAllHype();
   logEndTitle(`YOU WIN!`);
   updateRecordsOnVictory();
@@ -413,6 +418,7 @@ export function playHitExchange(
   briefClass(attackerStack, lungeClass, ms);
   briefClass(victimStack, hitClass, ms);
   briefClass(victimMark, fatal ? "hit-mark-active-kill" : "hit-mark-active", ms);
+  sfxHit(fatal);
 }
 
 export function applyFoeCounterAttack(): number | null {
@@ -464,7 +470,12 @@ export function scheduleFoeCounterHitVisuals(hit: number, generation: number): v
 
 export function scheduleFoeDanceFollowUp(
   generation: number,
-  opts: { foeDances: boolean; foeGain: number; foeCapped: boolean }
+  opts: {
+    foeDances: boolean;
+    foeGain: number;
+    foeJoins: boolean;
+    bothHype: boolean;
+  }
 ): void {
   const delay = foeFollowUpDelayMs(opts.foeDances);
   window.setTimeout(() => {
@@ -474,6 +485,14 @@ export function scheduleFoeDanceFollowUp(
     }
     if (opts.foeDances) {
       playFoeDance();
+      if (opts.bothHype || opts.foeJoins) {
+        sfxFoeDance("join");
+      } else if (opts.foeGain > 0) {
+        sfxFoeDance("powerUp");
+      }
+    }
+    if (opts.foeGain > 0 && !opts.bothHype) {
+      sfxHypeGain("foe");
     }
     if (opts.foeGain > 0) {
       showDamagePop("foe", "HYPE", "hype");
@@ -662,7 +681,28 @@ export function onDance(): void {
     turnOverride: actionTurn,
   });
 
-  const foeDances = joins || attemptedFoeGain > 0;
+  const bothHype = actualPlayerGain > 0 && actualFoeGain > 0;
+  const playerOnly = actualPlayerGain > 0 && actualFoeGain === 0;
+  const foeOnly = actualPlayerGain === 0 && actualFoeGain > 0;
+  const maxedOnly =
+    actualPlayerGain === 0 && actualFoeGain === 0 && (playerCapped || foeCapped);
+
+  if (playerOnly || bothHype) {
+    // Hype sting carries the moment — skip overlapping hero dance riff.
+  } else if (maxedOnly) {
+    sfxHypeGain("maxed");
+  } else if (foeOnly) {
+    sfxHeroDance("setup");
+  } else {
+    sfxHeroDance("solo");
+  }
+
+  if (bothHype) {
+    sfxHypeGain("both");
+  } else if (playerOnly) {
+    sfxHypeGain("player");
+  }
+
   if (tail) {
     if (actualPlayerGain > 0) {
       showDamagePop("hero", "HYPE", "hype");
@@ -673,9 +713,10 @@ export function onDance(): void {
   render();
   persist();
   scheduleFoeDanceFollowUp(generation, {
-    foeDances,
+    foeDances: joins || attemptedFoeGain > 0,
     foeGain: actualFoeGain,
-    foeCapped,
+    foeJoins: joins,
+    bothHype,
   });
 }
 
@@ -722,5 +763,6 @@ export function resetGame(): void {
   el.gameOver.classList.add("hidden");
   clearLog();
   startWave();
+  syncBgmForPhase("combat");
 }
 

@@ -49,6 +49,35 @@ export function readPersistedFields(): Record<string, unknown> {
     if (parsed.setupActive === true) {
       fields.setupActive = true;
     }
+    if (parsed.soundMuted === true) {
+      fields.soundMuted = true;
+    }
+    if (parsed.musicMuted === true) {
+      fields.musicMuted = true;
+    }
+    if (parsed.sfxMuted === true) {
+      fields.sfxMuted = true;
+    }
+    const musicLevel =
+      parsed.musicLevel === "high" ||
+      parsed.musicLevel === "med" ||
+      parsed.musicLevel === "low" ||
+      parsed.musicLevel === "off"
+        ? parsed.musicLevel
+        : undefined;
+    if (musicLevel) {
+      fields.musicLevel = musicLevel;
+    }
+    const sfxLevel =
+      parsed.sfxLevel === "high" ||
+      parsed.sfxLevel === "med" ||
+      parsed.sfxLevel === "low" ||
+      parsed.sfxLevel === "off"
+        ? parsed.sfxLevel
+        : undefined;
+    if (sfxLevel) {
+      fields.sfxLevel = sfxLevel;
+    }
     if (parsed.snapshot && typeof parsed.snapshot === "object") {
       fields.snapshot = parsed.snapshot;
     }

@@ -29,13 +29,37 @@
           >
             <span class="theme-toggle-icon" aria-hidden="true">☀</span>
           </button>
+          <details class="meta-more" id="footer-sound">
+            <summary
+              class="meta-btn meta-btn-icon sound-menu-toggle"
+              role="button"
+              aria-label="Sound options"
+              title="Sound options"
+            >
+              <span class="sound-menu-toggle-icon" aria-hidden="true">♪</span>
+            </summary>
+            <div class="meta-menu">
+              <button
+                type="button"
+                class="meta-btn meta-menu-toggle"
+                id="music-level-btn"
+                aria-pressed="true"
+              >Music: Med</button>
+              <button
+                type="button"
+                class="meta-btn meta-menu-toggle"
+                id="sfx-level-btn"
+                aria-pressed="true"
+              >SFX: Med</button>
+            </div>
+          </details>
           <details class="meta-more" id="footer-more">
             <summary
               class="meta-btn meta-btn-icon meta-more-toggle"
               role="button"
-              aria-label="More options"
-              title="More options"
-            >⋯</summary>
+              aria-label="Game options"
+              title="Game options"
+            >⚙</summary>
             <div class="meta-menu">
               <button type="button" class="meta-btn meta-btn-success" id="quit-btn">New Run</button>
               <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
