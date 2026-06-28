@@ -81,8 +81,7 @@ test.describe("combat hints — button glow", () => {
   test("run glows at lethal hp and hides heal hint", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
-      player: { hp: 3, maxHp: 20 },
-      foe: { attack: 5 },
+      player: { hp: 1, maxHp: 20 },
       combatHints: {
         dismissedAttackHint: true,
         dismissedDanceHint: true,
@@ -131,8 +130,7 @@ test.describe("combat hints — button glow", () => {
   test("clicking outside a teach popup closes only the popup", async ({ page }) => {
     await startFreshRun(page);
     await patchSaveSnapshot(page, {
-      player: { hp: 3, maxHp: 20 },
-      foe: { attack: 5 },
+      player: { hp: 1, maxHp: 20 },
       combatHints: {
         dismissedAttackHint: true,
         dismissedDanceHint: true,
