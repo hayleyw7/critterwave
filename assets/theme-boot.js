@@ -1,6 +1,6 @@
 (function () {
-  var key = "critterwave-v1.0";
-  var legacyKeys = ["critterwave-v0.7", "critterwave-v6"];
+  var key = "critterwave-v1.1";
+  var legacyKeys = ["critterwave-v1.0", "critterwave-v0.7", "critterwave-v6"];
   var raw = localStorage.getItem(key);
   if (!raw) {
     for (var i = 0; i < legacyKeys.length; i++) {

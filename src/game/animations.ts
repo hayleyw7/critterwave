@@ -9,6 +9,7 @@ import {
   LEVEL_UP_NOTICE_MS,
   XP_FILL_BEAT_MS,
 } from "./constants.js";
+import { sfxDeath, sfxEntrance, sfxFlee, sfxFoeDefeated, sfxHeal, sfxLevelUp } from "./audio.js";
 import { el } from "./dom.js";
 import { gameState } from "./state.js";
 import { setHpBar } from "./ui-bars.js";
@@ -73,6 +74,7 @@ export function clearHitReact(panel: HTMLElement): void {
 }
 
 export function playHeroHeal(): Promise<void> {
+  sfxHeal();
   if (gameState.debugInstantTransitions) {
     return Promise.resolve();
   }
@@ -96,6 +98,7 @@ export function playFoeDance(): void {
 }
 
 export async function playRunExit(): Promise<void> {
+  sfxFlee();
   await playFoePoof();
 }
 
@@ -107,6 +110,7 @@ export function playFoeEntrance(): void {
   if (gameState.debugInstantTransitions) {
     return;
   }
+  sfxEntrance();
   el.foePanel.classList.remove("foe-sprite-hidden");
   briefClass(el.foePanel, "foe-enter", FOE_ENTRANCE_MS);
 }
@@ -131,6 +135,7 @@ export async function playFoeDefeat(isFinal: boolean): Promise<void> {
   if (gameState.debugInstantTransitions) {
     return;
   }
+  sfxFoeDefeated(isFinal);
   if (isFinal) {
     await Promise.all([playFoePoof(), playStageClass("stage-flash-gold", GOLD_FLASH_MS)]);
     briefClass(el.playerPanel, "hero-victory-wobble", 450);
@@ -142,6 +147,7 @@ export async function playFoeDefeat(isFinal: boolean): Promise<void> {
 
 export async function handlePlayerDeath(): Promise<void> {
   await pause(420);
+  sfxDeath();
   el.playerPanel.classList.add("hero-death");
   await playStageClass("stage-death-vignette", DEATH_BEAT_MS);
 }
@@ -185,6 +191,7 @@ export function showDamagePop(
 }
 
 export function playLevelUpNotice(level: number): Promise<void> {
+  sfxLevelUp();
   if (gameState.debugInstantTransitions) {
     return Promise.resolve();
   }

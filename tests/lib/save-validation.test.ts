@@ -56,6 +56,11 @@ describe("parseSaveMeta", () => {
       bestWave: 0,
       runsPlayed: 0,
       colorMode: "dark",
+      soundMuted: false,
+      musicLevel: "high",
+      sfxLevel: "high",
+      musicMuted: false,
+      sfxMuted: false,
       setupActive: false,
     });
   });
@@ -124,6 +129,26 @@ describe("parseSaveMeta", () => {
     );
     expect(meta.heroName).toBeUndefined();
     expect(meta.heroLabel).toBeUndefined();
+  });
+
+  it("parses per-channel sound levels from save", () => {
+    expect(
+      parseSaveMeta({ musicLevel: "high", sfxLevel: "low" }, { allowedHeroEmojis: HERO_EMOJIS })
+    ).toMatchObject({
+      musicLevel: "high",
+      sfxLevel: "low",
+      musicMuted: false,
+      sfxMuted: false,
+    });
+    expect(
+      parseSaveMeta({ musicLevel: "off" }, { allowedHeroEmojis: HERO_EMOJIS }).musicMuted
+    ).toBe(true);
+    expect(
+      parseSaveMeta({ soundVolumePreset: "low" }, { allowedHeroEmojis: HERO_EMOJIS })
+    ).toMatchObject({
+      musicLevel: "low",
+      sfxLevel: "low",
+    });
   });
 
   it("parses color mode from save", () => {

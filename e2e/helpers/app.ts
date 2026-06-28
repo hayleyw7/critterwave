@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
 export async function openMoreOptions(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "More options" }).click();
+  await page.getByRole("button", { name: "Game options" }).click();
 }
 
 export async function clickFooterMenuButton(

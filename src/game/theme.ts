@@ -1,3 +1,4 @@
+import { closeFooterDropdowns } from "./audio.js";
 import { applyColorMode, parseColorMode, runColorModeTransition } from "../lib/color-mode.js";
 import { applyFoeColorTheme, applyHeroColorTheme } from "./colors.js";
 import { el } from "./dom.js";
@@ -24,7 +25,7 @@ export function updateThemeToggleUi(): void {
 }
 
 export function toggleColorMode(): void {
-  el.footerMore.open = false;
+  closeFooterDropdowns();
   const nextMode = gameState.currentColorMode === "dark" ? "light" : "dark";
   gameState.currentColorMode = nextMode;
   runColorModeTransition(() => {

@@ -7,11 +7,17 @@ import { describe, expect, it } from "vitest";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
+function normalizeGameScriptSrc(html: string): string {
+  return html.replace(/js\/game\.js\?v=\d+/g, "js/game.js");
+}
+
 describe("html build pipeline", () => {
   it("build-html output matches the monolith backup", () => {
     execSync("node scripts/build-html.mjs", { cwd: root, stdio: "pipe" });
-    const built = readFileSync(join(root, "index.html"), "utf8");
-    const backup = readFileSync(join(root, "scripts/index.html.bak"), "utf8");
+    const built = normalizeGameScriptSrc(readFileSync(join(root, "index.html"), "utf8"));
+    const backup = normalizeGameScriptSrc(
+      readFileSync(join(root, "scripts/index.html.bak"), "utf8")
+    );
     expect(built).toBe(backup);
   });
 });

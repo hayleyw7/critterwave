@@ -32,7 +32,7 @@ describe("html/partials/head.html — security headers", () => {
 describe("html assembly — script entry", () => {
   it("loads only same-origin script module", () => {
     const html = readFileSync(join(root, "index.html"), "utf8");
-    expect(html).toContain('<script type="module" src="js/game.js">');
+    expect(html).toMatch(/<script type="module" src="js\/game\.js(?:\?v=\d+)?">/);
     expect(html).not.toMatch(/<script[^>]*src=["']https?:/);
   });
 
@@ -40,6 +40,6 @@ describe("html assembly — script entry", () => {
     const html = readFileSync(join(root, "index.html"), "utf8");
     expect(html).toContain('<script src="assets/theme-boot.js"></script>');
     expect(html).toContain("script-src 'self'");
-    expect(html.indexOf("theme-boot.js")).toBeLessThan(html.indexOf('src="js/game.js"'));
+    expect(html.indexOf("theme-boot.js")).toBeLessThan(html.search(/src="js\/game\.js/));
   });
 });

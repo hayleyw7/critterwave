@@ -30,7 +30,7 @@ const modules = {
   "persistence.css": [[248, 327]],
   "app.css": [
     [329, 415],
-    [2098, 2253],
+    [2098, 2257],
   ],
   "setup.css": [[417, 740]],
   "presentation.css": [
@@ -40,11 +40,11 @@ const modules = {
   "combat.css": [[1738, 2040]],
   "game-over.css": [
     [2082, 2096],
-    [2255, 2571],
+    [2259, 2575],
   ],
-  "utilities.css": [[2573, 2638]],
-  "animations.css": [[2640, 2849]],
-  "responsive.css": [[2851, 3072]],
+  "utilities.css": [[2577, 2642]],
+  "animations.css": [[2644, 2853]],
+  "responsive.css": [[2855, 3076]],
 };
 
 if (!fs.existsSync(backupPath)) {

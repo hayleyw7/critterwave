@@ -17,7 +17,7 @@ import { clickFooterMenuButton, openMoreOptions } from "./helpers/app.js";
     await expect(page.getByText("Runs", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "How to play" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Switch to light mode" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "More options" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Game options" })).toBeVisible();
     await openMoreOptions(page);
     await expect(page.getByRole("button", { name: "New Run" })).toBeVisible();
     await page.keyboard.press("Escape");
@@ -72,17 +72,38 @@ import { clickFooterMenuButton, openMoreOptions } from "./helpers/app.js";
   });
 
 test.describe("ui labels", () => {
+  test("sound controls cycle high, low, and off", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "Sound options" }).click();
+
+    const music = page.locator("#music-level-btn");
+    const sfx = page.locator("#sfx-level-btn");
+    await expect(music).toHaveText("Music: High");
+    await music.click();
+    await expect(music).toHaveText("Music: Low");
+    await music.click();
+    await expect(music).toHaveText("Music: Off");
+    await music.click();
+    await expect(music).toHaveText("Music: High");
+
+    await expect(sfx).toHaveText("SFX: High");
+    await sfx.click();
+    await expect(sfx).toHaveText("SFX: Low");
+    await sfx.click();
+    await expect(sfx).toHaveText("SFX: Off");
+  });
+
   test("shows high score and new run labels", async ({ page }) => {
     await startFreshRun(page);
     await expect(page.getByText("High Score", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "More options" }).click();
+    await page.getByRole("button", { name: "Game options" }).click();
     await expect(page.getByRole("button", { name: "New Run" })).toBeVisible();
   });
 
   test("shows title case footer and restart labels", async ({ page }) => {
     await startFreshRun(page);
     await expect(page.getByText("Runs Played")).toBeVisible();
-    await expect(page.getByRole("button", { name: "More options" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Game options" })).toBeVisible();
     await patchSaveSnapshot(page, {
       player: { hp: 1, maxHp: 20 },
       foe: { attack: 20 },

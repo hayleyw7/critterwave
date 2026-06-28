@@ -1,4 +1,9 @@
 import { parseColorMode, type ColorMode } from "./color-mode.js";
+import {
+  resolveMusicLevelFromSave,
+  resolveSfxLevelFromSave,
+  type SoundChannelLevel,
+} from "./sound-volume-preset.js";
 import { isColorThemeId, type ColorThemeId } from "./color-themes.js";
 import {
   CAMPAIGN_WAVE_COUNT,
@@ -37,6 +42,13 @@ export type ParsedSaveMeta = {
   bestWave: number;
   runsPlayed: number;
   colorMode: ColorMode;
+  soundMuted: boolean;
+  musicLevel: SoundChannelLevel;
+  sfxLevel: SoundChannelLevel;
+  /** @deprecated Derived from musicLevel === "off". */
+  musicMuted: boolean;
+  /** @deprecated Derived from sfxLevel === "off". */
+  sfxMuted: boolean;
   playerEmoji?: string;
   heroName?: string;
   heroLabel?: string;
@@ -52,7 +64,17 @@ export function parseSaveMeta(
   const campaignWaves = options.campaignWaves ?? CAMPAIGN_WAVE_COUNT;
   const p = parseSaveRecord(raw);
   if (!p) {
-    return { bestWave: 0, runsPlayed: 0, colorMode: "dark", setupActive: false };
+    return {
+      bestWave: 0,
+      runsPlayed: 0,
+      colorMode: "dark",
+      soundMuted: false,
+      musicLevel: "high",
+      sfxLevel: "high",
+      musicMuted: false,
+      sfxMuted: false,
+      setupActive: false,
+    };
   }
 
   const playerEmoji =
@@ -74,10 +96,29 @@ export function parseSaveMeta(
       ? normalizeHeroName(p.heroLabel) || undefined
       : undefined;
 
+  const legacyMuted = p.soundMuted === true;
+  const musicLevel = resolveMusicLevelFromSave({
+    musicLevel: p.musicLevel,
+    musicMuted: p.musicMuted === true,
+    soundMuted: legacyMuted,
+    soundVolumePreset: p.soundVolumePreset,
+  });
+  const sfxLevel = resolveSfxLevelFromSave({
+    sfxLevel: p.sfxLevel,
+    sfxMuted: p.sfxMuted === true,
+    soundMuted: legacyMuted,
+    soundVolumePreset: p.soundVolumePreset,
+  });
+
   return {
     bestWave: clampInt(p.bestWave, 0, campaignWaves, 0),
     runsPlayed: clampInt(p.runsPlayed, 0, 999_999, 0),
     colorMode: parseColorMode(p.colorMode),
+    soundMuted: legacyMuted,
+    musicLevel,
+    sfxLevel,
+    musicMuted: musicLevel === "off",
+    sfxMuted: sfxLevel === "off",
     playerEmoji,
     heroName,
     heroLabel,

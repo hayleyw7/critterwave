@@ -5,11 +5,30 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
 
   test("new run returns to hero setup", async ({ page }) => {
     await startFreshRun(page);
+    await page.evaluate((key) => {
+      const save = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, unknown>;
+      save.musicLevel = "low";
+      save.sfxLevel = "off";
+      localStorage.setItem(key, JSON.stringify(save));
+    }, STORAGE_KEY);
     await clickFooterMenuButton(page, "New Run");
     await page.locator("#confirm-ok").click();
     await expect(
       page.getByRole("heading", { name: "Which critter are you?" })
     ).toBeVisible();
+    const save = JSON.parse(
+      (await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)) ?? "{}"
+    ) as { musicLevel?: string; sfxLevel?: string };
+    expect(save).toMatchObject({ musicLevel: "low", sfxLevel: "off" });
+    await page.reload();
+    await expect(page.locator("#music-level-btn")).toHaveAttribute(
+      "aria-label",
+      /Music volume Low/
+    );
+    await expect(page.locator("#sfx-level-btn")).toHaveAttribute(
+      "aria-label",
+      /Sound effects volume Off/
+    );
   });
 
   test("new run confirm survives reload", async ({ page }) => {
@@ -80,6 +99,12 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
 
   test("clear data resets to setup", async ({ page }) => {
     await startFreshRun(page);
+    await page.evaluate((key) => {
+      const save = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, unknown>;
+      save.musicLevel = "low";
+      save.sfxLevel = "off";
+      localStorage.setItem(key, JSON.stringify(save));
+    }, STORAGE_KEY);
     await clickFooterMenuButton(page, "Clear Data");
     await page.locator("#confirm-ok").click();
     await expect(
@@ -88,9 +113,25 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
 
     const save = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
     expect(save).toBeTruthy();
-    const parsed = JSON.parse(save!) as { bestWave?: number; runsPlayed?: number };
+    const parsed = JSON.parse(save!) as {
+      bestWave?: number;
+      runsPlayed?: number;
+      musicLevel?: string;
+      sfxLevel?: string;
+    };
     expect(parsed.bestWave).toBe(0);
     expect(parsed.runsPlayed).toBe(0);
+    expect(parsed.musicLevel).toBe("low");
+    expect(parsed.sfxLevel).toBe("off");
+    await page.reload();
+    await expect(page.locator("#music-level-btn")).toHaveAttribute(
+      "aria-label",
+      /Music volume Low/
+    );
+    await expect(page.locator("#sfx-level-btn")).toHaveAttribute(
+      "aria-label",
+      /Sound effects volume Off/
+    );
   });
 
   test("restores mid-run save after reload", async ({ page }) => {
@@ -164,7 +205,7 @@ test.describe("combat hints — save persistence", () => {
 });
 
 test.describe("persistence — storage key migration", () => {
-  test("migrates legacy v6 save to v1.0 on boot", async ({ page }) => {
+  test("migrates legacy v6 save to v1.1 on boot", async ({ page }) => {
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.clear();
@@ -176,7 +217,7 @@ test.describe("persistence — storage key migration", () => {
     await page.reload();
 
     const keys = await page.evaluate(() => ({
-      current: localStorage.getItem("critterwave-v1.0"),
+      current: localStorage.getItem("critterwave-v1.1"),
       legacy: localStorage.getItem("critterwave-v6"),
     }));
     expect(keys.current).toContain('"bestWave":8');

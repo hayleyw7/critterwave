@@ -17,7 +17,7 @@ describe("html assembly", () => {
 
   it("loads the module entry and stylesheet hub", () => {
     const html = readAssembledHtml();
-    expect(html).toContain('<script type="module" src="js/game.js">');
+    expect(html).toMatch(/<script type="module" src="js\/game\.js(?:\?v=\d+)?">/);
     expect(html).toContain('<link rel="stylesheet" href="css/styles.css" />');
   });
 

@@ -223,6 +223,10 @@
   transition: none;
 }
 
+.meta-menu-toggle.sound-level-off {
+  color: var(--text-dim);
+}
+
 .meta-btn-success {
   color: var(--new-run-text);
 }

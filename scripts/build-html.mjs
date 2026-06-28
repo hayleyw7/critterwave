@@ -27,5 +27,17 @@ if (!fs.existsSync(templatePath)) {
 }
 
 const template = fs.readFileSync(templatePath, "utf8");
-const output = resolveIncludes(template);
+let output = resolveIncludes(template);
+output = injectGameScriptCacheBust(output);
 fs.writeFileSync(outputPath, output);
+
+function injectGameScriptCacheBust(html) {
+  const gameJsPath = path.join(root, "js/game.js");
+  const version = fs.existsSync(gameJsPath)
+    ? Math.floor(fs.statSync(gameJsPath).mtimeMs)
+    : Date.now();
+  return html.replace(
+    /src="js\/game\.js(?:\?v=\d+)?"/,
+    `src="js/game.js?v=${version}"`
+  );
+}

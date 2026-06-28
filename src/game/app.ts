@@ -20,6 +20,15 @@ import { persist, persistStatsOnly, persistSetupDraft, loadSave, loadSnapshot, a
 import { migrateLegacyStorageKey } from "./save-io.js";
 import { resolveHeroColorTheme, resolveSavedHeroName, getHeroLabelForEmoji, readHeroNameFromSetup } from "./hero-setup.js";
 import { initColorMode, toggleColorMode, renderRecords } from "./theme.js";
+import {
+  closeFooterDropdowns,
+  initAudioFromSave,
+  sfxUiClick,
+  syncBgmForPhase,
+  cycleMusicLevel,
+  cycleSfxLevel,
+  unlockAudio,
+} from "./audio.js";
 import { render } from "./presentation.js";
 import {
   bindSetupColorPicker,
@@ -459,6 +468,7 @@ export function updateSetupSubtitle(): void {
 }
 
 export function showSetup(): void {
+  syncBgmForPhase("setup");
   const save = loadSave();
   closeHeroColorPopup();
   gameState.pendingHeroEmoji = resolvePickerHeroEmoji(save.playerEmoji ?? gameState.player.emoji);
@@ -537,13 +547,41 @@ export async function resetStats(): Promise<void> {
 }
 
 export function bindActions(): void {
+  let unlockAttempt: Promise<boolean> | null = null;
+  const removeAudioUnlockListeners = () => {
+    document.removeEventListener("pointerdown", unlockOnFirstInteraction, true);
+    document.removeEventListener("click", unlockOnFirstInteraction, true);
+    document.removeEventListener("keydown", unlockOnFirstInteraction, true);
+  };
+  const unlockOnFirstInteraction = () => {
+    if (unlockAttempt) {
+      return;
+    }
+    unlockAttempt = unlockAudio();
+    void unlockAttempt.then((didUnlock) => {
+      unlockAttempt = null;
+      if (didUnlock) {
+        removeAudioUnlockListeners();
+      }
+    });
+  };
+  document.addEventListener("pointerdown", unlockOnFirstInteraction, {
+    capture: true,
+  });
+  document.addEventListener("click", unlockOnFirstInteraction, { capture: true });
+  document.addEventListener("keydown", unlockOnFirstInteraction, {
+    capture: true,
+  });
+
   el.actions.addEventListener("click", (event) => {
+    void unlockAudio();
     const target = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-action]");
     if (!target) return;
 
     const action = target.dataset.action;
     if (!canUseCombatActions()) return;
 
+    sfxUiClick();
     switch (action) {
       case "attack":
         onAttack();
@@ -577,6 +615,16 @@ export function bindActions(): void {
     toggleColorMode();
   });
 
+  el.musicLevelBtn.addEventListener("click", () => {
+    void unlockAudio();
+    cycleMusicLevel();
+  });
+
+  el.sfxLevelBtn.addEventListener("click", () => {
+    void unlockAudio();
+    cycleSfxLevel();
+  });
+
   el.heroNameInput.addEventListener("input", () => {
     updateSetupStartButton();
     persistSetupDraft();
@@ -584,42 +632,60 @@ export function bindActions(): void {
   bindSetupColorPicker();
 
   el.setupStartBtn.addEventListener("click", () => {
-    if (!confirmHeroAndStart()) {
-      return;
-    }
-    if (!gameState.foe) {
-      void beginGame();
-    } else {
-      render();
-      persist();
-    }
+    void (async () => {
+      await unlockAudio();
+      if (!confirmHeroAndStart()) {
+        return;
+      }
+      if (!gameState.foe) {
+        await beginGame();
+      } else {
+        render();
+        persist();
+      }
+    })();
   });
 }
 
 export function closeFooterMore(): void {
-  el.footerMore.open = false;
+  closeFooterDropdowns();
 }
 
 export function bindFooterMoreMenu(): void {
+  el.footerMore.addEventListener("toggle", () => {
+    if (el.footerMore.open) {
+      el.footerSound.open = false;
+    }
+  });
+
+  el.footerSound.addEventListener("toggle", () => {
+    if (el.footerSound.open) {
+      el.footerMore.open = false;
+    }
+  });
+
   document.addEventListener("click", (event) => {
-    if (!el.footerMore.open) {
-      return;
-    }
     const target = event.target;
-    if (target instanceof Node && el.footerMore.contains(target)) {
+    if (!(target instanceof Node)) {
       return;
     }
-    closeFooterMore();
+    if (el.footerMore.open && !el.footerMore.contains(target)) {
+      el.footerMore.open = false;
+    }
+    if (el.footerSound.open && !el.footerSound.contains(target)) {
+      el.footerSound.open = false;
+    }
   });
 
   document.addEventListener("keydown", (event) => {
-    if (!el.footerMore.open) {
+    if (event.key !== "Escape") {
       return;
     }
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeFooterMore();
+    if (!el.footerMore.open && !el.footerSound.open) {
+      return;
     }
+    event.preventDefault();
+    closeFooterDropdowns();
   });
 }
 
@@ -648,6 +714,7 @@ export async function beginGame(): Promise<void> {
     revealBattleLog();
     render();
     persist();
+    syncBgmForPhase("combat");
     return;
   }
 
@@ -670,6 +737,7 @@ export async function beginGame(): Promise<void> {
       }
       el.gameOverSummary.textContent = gameOverSummaryText(snapshot.wave);
     }
+    syncBgmForPhase(snapshot.phase);
     render();
     return;
   }
@@ -696,6 +764,14 @@ export async function init(): Promise<void> {
   }
 
   initColorMode();
+  const save = loadSave();
+  initAudioFromSave({
+    musicLevel: save.musicLevel,
+    sfxLevel: save.sfxLevel,
+    musicMuted: save.musicMuted,
+    sfxMuted: save.sfxMuted,
+    soundMuted: save.soundMuted,
+  });
   updateSetupSubtitle();
   bindConfirmDialog();
   bindHelpDialog();
@@ -713,7 +789,6 @@ export async function init(): Promise<void> {
     return;
   }
 
-  const save = loadSave();
   if (save.setupActive) {
     showSetup();
     finishBoot();
@@ -740,4 +815,3 @@ export async function init(): Promise<void> {
   restorePendingConfirmIfNeeded();
   maybeRunDebugWin();
 }
-

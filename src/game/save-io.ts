@@ -1,5 +1,6 @@
 import type { ColorMode } from "../lib/color-mode.js";
 import { parsePendingConfirm, parseSaveMeta } from "../lib/save-validation.js";
+import { parseSoundChannelLevel } from "../lib/sound-volume-preset.js";
 import { CAMPAIGN_WAVES, LEGACY_STORAGE_KEYS, STORAGE_KEY } from "./constants.js";
 import { HERO_EMOJIS } from "./data.js";
 import type { SaveData } from "./types.js";
@@ -49,6 +50,23 @@ export function readPersistedFields(): Record<string, unknown> {
     if (parsed.setupActive === true) {
       fields.setupActive = true;
     }
+    if (parsed.soundMuted === true) {
+      fields.soundMuted = true;
+    }
+    if (parsed.musicMuted === true) {
+      fields.musicMuted = true;
+    }
+    if (parsed.sfxMuted === true) {
+      fields.sfxMuted = true;
+    }
+    const musicLevel = parseSoundChannelLevel(parsed.musicLevel);
+    if (musicLevel) {
+      fields.musicLevel = musicLevel;
+    }
+    const sfxLevel = parseSoundChannelLevel(parsed.sfxLevel);
+    if (sfxLevel) {
+      fields.sfxLevel = sfxLevel;
+    }
     if (parsed.snapshot && typeof parsed.snapshot === "object") {
       fields.snapshot = parsed.snapshot;
     }
@@ -86,6 +104,8 @@ export function withSaveMeta(
     bestWave: save.bestWave,
     runsPlayed: save.runsPlayed,
     colorMode,
+    musicLevel: save.musicLevel,
+    sfxLevel: save.sfxLevel,
     ...fields,
   };
 }
