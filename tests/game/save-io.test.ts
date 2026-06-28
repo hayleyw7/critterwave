@@ -17,13 +17,17 @@ describe("save-io — storage key migration", () => {
     localStorage.clear();
   });
 
-  it("uses critterwave-v1.0 as the current storage key", () => {
-    expect(STORAGE_KEY).toBe("critterwave-v1.0");
-    expect(LEGACY_STORAGE_KEYS).toEqual(["critterwave-v0.7", "critterwave-v6"]);
+  it("uses critterwave-v1.1 as the current storage key", () => {
+    expect(STORAGE_KEY).toBe("critterwave-v1.1");
+    expect(LEGACY_STORAGE_KEYS).toEqual([
+      "critterwave-v1.0",
+      "critterwave-v0.7",
+      "critterwave-v6",
+    ]);
   });
 
-  it("migrates legacy v6 save data to v1.0 and removes the old key", () => {
-    const legacyKey = LEGACY_STORAGE_KEYS[1]!;
+  it("migrates legacy v1.0 save data to v1.1 and removes the old key", () => {
+    const legacyKey = LEGACY_STORAGE_KEYS[0]!;
     const payload = JSON.stringify({
       bestWave: 12,
       runsPlayed: 3,
@@ -38,8 +42,8 @@ describe("save-io — storage key migration", () => {
     expect(localStorage.getItem(legacyKey)).toBeNull();
   });
 
-  it("migrates legacy v0.7 save data to v1.0 and removes the old key", () => {
-    const legacyKey = LEGACY_STORAGE_KEYS[0]!;
+  it("migrates legacy v6 save data to v1.1 and removes the old key", () => {
+    const legacyKey = LEGACY_STORAGE_KEYS[2]!;
     const payload = JSON.stringify({
       bestWave: 21,
       runsPlayed: 5,
@@ -54,7 +58,7 @@ describe("save-io — storage key migration", () => {
     expect(localStorage.getItem(legacyKey)).toBeNull();
   });
 
-  it("does not overwrite an existing v1.0 save when legacy data is present", () => {
+  it("does not overwrite an existing v1.1 save when legacy data is present", () => {
     const legacyKey = LEGACY_STORAGE_KEYS[0]!;
     localStorage.setItem(
       STORAGE_KEY,

@@ -1,4 +1,4 @@
-# Critterwave v1.0
+# Critterwave v1.1
 
 Choose your critter. Dance for foes. Survive **100 waves**.
 
@@ -20,6 +20,7 @@ A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, a
 - **Partial heal after each wave victory** — regain **30%** of missing max HP (rounded up); sparkle + floating heal number when you actually gained HP; wave 1 start and beating all 100 waves still fully top you up
 - Shuffled foe order each run
 - **Scores persist** in this browser (high score, runs played)
+- Procedural **music and sound effects** with separate High / Med / Low / Off controls
 - **Combat hints** on early fights — see [Combat hints](#combat-hints) below
 - **Mid-run save** — refresh and your fight continues (with a “restored” message)
 - Retro **CRT scanlines** — subtle in both light and dark mode
@@ -54,16 +55,18 @@ Highlighted buttons use an **outline pulse only** — button colors stay the sam
 | **High Score** | Highest wave you’ve reached this browser (updates on game over or full win). |
 | **Runs Played** | How many runs you’ve finished (game over or victory). |
 | **Light / Dark** | Switches palette (including foe card accents), `theme-color`, and PWA manifest; persists in this browser. |
+| **Sound options** | Sets music and sound effects independently to High, Med, Low, or Off; persists in this browser. |
 | **New Run** | New hero and fresh run. High score and runs played are kept. Confirm dialog restores if you refresh mid-prompt. |
 | **Clear Data** | Deletes your critter and all saved history on this browser. Confirm dialog restores if you refresh mid-prompt. |
 
 ## What gets saved
 
-Stored under `critterwave-v1.0` in the browser (migrates automatically from `critterwave-v0.7` and `critterwave-v6`):
+Stored under `critterwave-v1.1` in the browser (migrates automatically from `critterwave-v1.0`, `critterwave-v0.7`, and `critterwave-v6`):
 
 - **High score** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
 - **Runs played** — how many runs you’ve finished (game over or full win)
 - **Light / dark** — `colorMode` for the footer theme toggle
+- **Audio levels** — independent music and sound-effect levels
 - **Hero** — emoji, name, and card color from your last run
 - **Active run** — HP, your hype and foe hype, current foe, wave, turn, combat-hint progress, shuffled foe order, and any open **New Run** / **Clear Data** confirm (until game over or victory)
 
@@ -77,12 +80,13 @@ html/
 css/
   styles.css            # hub that @imports module CSS files
   *.css                 # tokens, base, setup, presentation, combat, …
-assets/theme-boot.js    # applies saved light/dark before first paint (v1.0 save, legacy fallback)
+assets/theme-boot.js    # applies saved light/dark before first paint (v1.1 save, legacy fallback)
 src/
   game.ts               # thin entry — imports game/app init
   game/
     app.ts              # boot, setup, footer, confirm wiring
     app-help.ts         # help modal open/close/bind
+    audio.ts            # procedural music, sound effects, and channel levels
     combat.ts           # turn actions, foe queue advances
     presentation.ts     # main HUD render pass (panels, bars, game-over shell)
     combat-mechanics.ts # pure combat math/helpers used by combat.ts
