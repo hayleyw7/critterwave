@@ -1,5 +1,6 @@
 import type { ColorMode } from "../lib/color-mode.js";
 import { parsePendingConfirm, parseSaveMeta } from "../lib/save-validation.js";
+import { parseSoundChannelLevel } from "../lib/sound-volume-preset.js";
 import { CAMPAIGN_WAVES, LEGACY_STORAGE_KEYS, STORAGE_KEY } from "./constants.js";
 import { HERO_EMOJIS } from "./data.js";
 import type { SaveData } from "./types.js";
@@ -58,23 +59,11 @@ export function readPersistedFields(): Record<string, unknown> {
     if (parsed.sfxMuted === true) {
       fields.sfxMuted = true;
     }
-    const musicLevel =
-      parsed.musicLevel === "high" ||
-      parsed.musicLevel === "med" ||
-      parsed.musicLevel === "low" ||
-      parsed.musicLevel === "off"
-        ? parsed.musicLevel
-        : undefined;
+    const musicLevel = parseSoundChannelLevel(parsed.musicLevel);
     if (musicLevel) {
       fields.musicLevel = musicLevel;
     }
-    const sfxLevel =
-      parsed.sfxLevel === "high" ||
-      parsed.sfxLevel === "med" ||
-      parsed.sfxLevel === "low" ||
-      parsed.sfxLevel === "off"
-        ? parsed.sfxLevel
-        : undefined;
+    const sfxLevel = parseSoundChannelLevel(parsed.sfxLevel);
     if (sfxLevel) {
       fields.sfxLevel = sfxLevel;
     }
@@ -115,6 +104,8 @@ export function withSaveMeta(
     bestWave: save.bestWave,
     runsPlayed: save.runsPlayed,
     colorMode,
+    musicLevel: save.musicLevel,
+    sfxLevel: save.sfxLevel,
     ...fields,
   };
 }

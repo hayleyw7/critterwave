@@ -547,6 +547,32 @@ export async function resetStats(): Promise<void> {
 }
 
 export function bindActions(): void {
+  let unlockAttempt: Promise<boolean> | null = null;
+  const removeAudioUnlockListeners = () => {
+    document.removeEventListener("pointerdown", unlockOnFirstInteraction, true);
+    document.removeEventListener("click", unlockOnFirstInteraction, true);
+    document.removeEventListener("keydown", unlockOnFirstInteraction, true);
+  };
+  const unlockOnFirstInteraction = () => {
+    if (unlockAttempt) {
+      return;
+    }
+    unlockAttempt = unlockAudio();
+    void unlockAttempt.then((didUnlock) => {
+      unlockAttempt = null;
+      if (didUnlock) {
+        removeAudioUnlockListeners();
+      }
+    });
+  };
+  document.addEventListener("pointerdown", unlockOnFirstInteraction, {
+    capture: true,
+  });
+  document.addEventListener("click", unlockOnFirstInteraction, { capture: true });
+  document.addEventListener("keydown", unlockOnFirstInteraction, {
+    capture: true,
+  });
+
   el.actions.addEventListener("click", (event) => {
     void unlockAudio();
     const target = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-action]");
@@ -789,4 +815,3 @@ export async function init(): Promise<void> {
   restorePendingConfirmIfNeeded();
   maybeRunDebugWin();
 }
-

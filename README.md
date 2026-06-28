@@ -20,7 +20,7 @@ A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, a
 - **Partial heal after each wave victory** — regain **30%** of missing max HP (rounded up); sparkle + floating heal number when you actually gained HP; wave 1 start and beating all 100 waves still fully top you up
 - Shuffled foe order each run
 - **Scores persist** in this browser (high score, runs played)
-- Procedural **music and sound effects** with separate High / Med / Low / Off controls
+- Procedural **music and sound effects** with separate High / Low / Off controls
 - **Combat hints** on early fights — see [Combat hints](#combat-hints) below
 - **Mid-run save** — refresh and your fight continues (with a “restored” message)
 - Retro **CRT scanlines** — subtle in both light and dark mode
@@ -55,7 +55,7 @@ Highlighted buttons use an **outline pulse only** — button colors stay the sam
 | **High Score** | Highest wave you’ve reached this browser (updates on game over or full win). |
 | **Runs Played** | How many runs you’ve finished (game over or victory). |
 | **Light / Dark** | Switches palette (including foe card accents), `theme-color`, and PWA manifest; persists in this browser. |
-| **Sound options** | Sets music and sound effects independently to High, Med, Low, or Off; persists in this browser. |
+| **Sound options** | Sets music and sound effects independently to High, Low, or Off; persists in this browser. |
 | **New Run** | New hero and fresh run. High score and runs played are kept. Confirm dialog restores if you refresh mid-prompt. |
 | **Clear Data** | Deletes your critter and all saved history on this browser. Confirm dialog restores if you refresh mid-prompt. |
 

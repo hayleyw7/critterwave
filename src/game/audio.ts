@@ -153,8 +153,8 @@ let bgmBassHighpass: BiquadFilterNode | null = null;
 let bgmWetDelay: DelayNode | null = null;
 let bgmWetGain: GainNode | null = null;
 let sfxGain: GainNode | null = null;
-let musicLevel: SoundChannelLevel = "med";
-let sfxLevel: SoundChannelLevel = "med";
+let musicLevel: SoundChannelLevel = "high";
+let sfxLevel: SoundChannelLevel = "high";
 let unlocked = false;
 let currentTrack: BgmTrack = "none";
 let bgmStep = 0;
@@ -626,20 +626,24 @@ export function initAudioFromSave(opts?: {
   updateAudioToggleUi();
 }
 
-export async function unlockAudio(): Promise<void> {
+export async function unlockAudio(): Promise<boolean> {
   if (!ensureGraph() || !audioContext) {
-    return;
+    return false;
   }
   if (audioContext.state === "suspended") {
     try {
       await audioContext.resume();
     } catch {
-      return;
+      return false;
     }
+  }
+  if (audioContext.state !== "running") {
+    return false;
   }
   unlocked = true;
   applyGainLevels();
   syncBgmForPhase(gameState.phase);
+  return true;
 }
 
 export function closeFooterDropdowns(): void {

@@ -1,18 +1,20 @@
-export type SoundChannelLevel = "high" | "med" | "low" | "off";
+export type SoundChannelLevel = "high" | "low" | "off";
 
 /** @deprecated Legacy global preset — use per-channel levels. */
 export type SoundVolumePreset = "low" | "med" | "high";
 
 export const SOUND_CHANNEL_LEVEL_CYCLE: readonly SoundChannelLevel[] = [
   "high",
-  "med",
   "low",
   "off",
 ];
 
 export function parseSoundChannelLevel(value: unknown): SoundChannelLevel | undefined {
-  if (value === "high" || value === "med" || value === "low" || value === "off") {
+  if (value === "high" || value === "low" || value === "off") {
     return value;
+  }
+  if (value === "med") {
+    return "high";
   }
   return undefined;
 }
@@ -21,7 +23,11 @@ export function parseSoundVolumePreset(value: unknown): SoundVolumePreset {
   if (value === "low" || value === "med" || value === "high") {
     return value;
   }
-  return "med";
+  return "high";
+}
+
+function channelLevelFromLegacyPreset(value: unknown): SoundChannelLevel {
+  return parseSoundVolumePreset(value) === "low" ? "low" : "high";
 }
 
 export function nextChannelLevel(current: SoundChannelLevel): SoundChannelLevel {
@@ -47,18 +53,14 @@ export function channelLevelMultiplier(
   if (channel === "music") {
     switch (level) {
       case "low":
-        return 0.4;
-      case "med":
-        return 0.75;
+        return 0.56;
       case "high":
-        return 1;
+        return 1.4;
     }
   }
   switch (level) {
     case "low":
       return 0.65;
-    case "med":
-      return 0.9;
     case "high":
       return 1;
   }
@@ -77,7 +79,7 @@ export function resolveMusicLevelFromSave(fields: {
   if (fields.musicMuted === true || fields.soundMuted === true) {
     return "off";
   }
-  return parseSoundVolumePreset(fields.soundVolumePreset);
+  return channelLevelFromLegacyPreset(fields.soundVolumePreset);
 }
 
 export function resolveSfxLevelFromSave(fields: {
@@ -93,20 +95,21 @@ export function resolveSfxLevelFromSave(fields: {
   if (fields.sfxMuted === true || fields.soundMuted === true) {
     return "off";
   }
-  return parseSoundVolumePreset(fields.soundVolumePreset);
+  return channelLevelFromLegacyPreset(fields.soundVolumePreset);
 }
 
 /** @deprecated Use channelLevelMultiplier per channel. */
 export function soundVolumePresetMultipliers(
   preset: SoundVolumePreset
 ): { music: number; sfx: number } {
+  const level = channelLevelFromLegacyPreset(preset);
   return {
-    music: channelLevelMultiplier(preset, "music"),
-    sfx: channelLevelMultiplier(preset, "sfx"),
+    music: channelLevelMultiplier(level, "music"),
+    sfx: channelLevelMultiplier(level, "sfx"),
   };
 }
 
 /** @deprecated Use channelLevelLabel. */
 export function soundVolumePresetLabel(preset: SoundVolumePreset): string {
-  return channelLevelLabel(preset);
+  return channelLevelLabel(channelLevelFromLegacyPreset(preset));
 }

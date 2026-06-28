@@ -72,6 +72,27 @@ import { clickFooterMenuButton, openMoreOptions } from "./helpers/app.js";
   });
 
 test.describe("ui labels", () => {
+  test("sound controls cycle high, low, and off", async ({ page }) => {
+    await startFreshRun(page);
+    await page.getByRole("button", { name: "Sound options" }).click();
+
+    const music = page.locator("#music-level-btn");
+    const sfx = page.locator("#sfx-level-btn");
+    await expect(music).toHaveText("Music: High");
+    await music.click();
+    await expect(music).toHaveText("Music: Low");
+    await music.click();
+    await expect(music).toHaveText("Music: Off");
+    await music.click();
+    await expect(music).toHaveText("Music: High");
+
+    await expect(sfx).toHaveText("SFX: High");
+    await sfx.click();
+    await expect(sfx).toHaveText("SFX: Low");
+    await sfx.click();
+    await expect(sfx).toHaveText("SFX: Off");
+  });
+
   test("shows high score and new run labels", async ({ page }) => {
     await startFreshRun(page);
     await expect(page.getByText("High Score", { exact: true })).toBeVisible();

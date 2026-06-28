@@ -13,11 +13,11 @@ describe("sound channel level", () => {
     expect(parseSoundChannelLevel(undefined)).toBeUndefined();
     expect(parseSoundChannelLevel("loud")).toBeUndefined();
     expect(parseSoundChannelLevel("high")).toBe("high");
+    expect(parseSoundChannelLevel("med")).toBe("high");
   });
 
-  it("cycles high → med → low → off → high", () => {
-    expect(nextChannelLevel("high")).toBe("med");
-    expect(nextChannelLevel("med")).toBe("low");
+  it("cycles high → low → off → high", () => {
+    expect(nextChannelLevel("high")).toBe("low");
     expect(nextChannelLevel("low")).toBe("off");
     expect(nextChannelLevel("off")).toBe("high");
   });
@@ -27,6 +27,8 @@ describe("sound channel level", () => {
       channelLevelMultiplier("low", "sfx")
     );
     expect(channelLevelMultiplier("off", "music")).toBe(0);
+    expect(channelLevelMultiplier("low", "music")).toBe(0.56);
+    expect(channelLevelMultiplier("high", "music")).toBe(1.4);
     expect(channelLevelMultiplier("high", "sfx")).toBe(1);
   });
 
@@ -36,9 +38,13 @@ describe("sound channel level", () => {
   });
 
   it("migrates legacy mute and global preset fields", () => {
+    expect(resolveMusicLevelFromSave({})).toBe("high");
+    expect(resolveSfxLevelFromSave({})).toBe("high");
     expect(resolveMusicLevelFromSave({ musicMuted: true })).toBe("off");
     expect(resolveSfxLevelFromSave({ sfxMuted: true })).toBe("off");
     expect(resolveMusicLevelFromSave({ soundVolumePreset: "low" })).toBe("low");
+    expect(resolveMusicLevelFromSave({ musicLevel: "med" })).toBe("high");
+    expect(resolveSfxLevelFromSave({ soundVolumePreset: "med" })).toBe("high");
     expect(resolveMusicLevelFromSave({ musicLevel: "high" })).toBe("high");
   });
 });

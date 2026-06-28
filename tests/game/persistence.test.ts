@@ -95,6 +95,26 @@ describe("persistence — withSaveMeta and readPersistedFields", () => {
     expect(meta.playerEmoji).toBe("🐱");
   });
 
+  it("preserves normalized audio preferences in every save write", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        bestWave: 3,
+        runsPlayed: 2,
+        colorMode: "dark",
+        musicLevel: "low",
+        sfxLevel: "off",
+      })
+    );
+
+    expect(withSaveMeta({ bestWave: 0, runsPlayed: 0 })).toMatchObject({
+      bestWave: 0,
+      runsPlayed: 0,
+      musicLevel: "low",
+      sfxLevel: "off",
+    });
+  });
+
   it("round-trips pendingConfirm through readPersistedFields", () => {
     localStorage.setItem(
       STORAGE_KEY,

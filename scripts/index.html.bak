@@ -407,13 +407,13 @@
                 class="meta-btn meta-menu-toggle"
                 id="music-level-btn"
                 aria-pressed="true"
-              >Music: Med</button>
+              >Music: High</button>
               <button
                 type="button"
                 class="meta-btn meta-menu-toggle"
                 id="sfx-level-btn"
                 aria-pressed="true"
-              >SFX: Med</button>
+              >SFX: High</button>
             </div>
           </details>
           <details class="meta-more" id="footer-more">
