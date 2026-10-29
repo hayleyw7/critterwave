@@ -1,4 +1,4 @@
-# Critterwave v1.1
+# Critterwave
 
 Choose your critter. Dance for foes. Survive **100 waves**.
 
