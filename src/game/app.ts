@@ -640,6 +640,7 @@ export function bindActions(): void {
       if (!gameState.foe) {
         await beginGame();
       } else {
+        syncBgmForPhase(gameState.phase);
         render();
         persist();
       }
