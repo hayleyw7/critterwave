@@ -11,6 +11,9 @@
   --color-green-950: #166534;
   --color-yellow-50: #fef9c3;
   --color-yellow-300: #fde047;
+  --tutorial-glow-rest: color-mix(in srgb, var(--color-yellow-300) 32%, transparent);
+  --tutorial-glow-peak: color-mix(in srgb, var(--color-yellow-300) 85%, transparent);
+  --tutorial-pulse: 2s ease-in-out 2;
   --color-yellow-400: #facc15;
   --color-yellow-700: #997300;
   --color-amber-800: #854d0e;

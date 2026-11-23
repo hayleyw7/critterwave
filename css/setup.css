@@ -6,11 +6,8 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-5);
-  background: var(--title-screen-background);
-}
-
-html[data-theme="light"] .character-setup {
-  background: var(--bg-deep);
+  background: var(--overlay-scrim);
+  backdrop-filter: blur(3px);
 }
 
 .setup-panel {
@@ -308,17 +305,17 @@ html[data-theme="light"] .character-setup {
   padding: 0 1.1rem;
   border: 2px solid var(--setup-start-border);
   color: var(--setup-start-text);
-  background: var(--setup-start-fill);
+  background: var(--setup-select-bg);
 }
 
 .setup-main-row .cmd-start:hover:not(:disabled) {
-  background: var(--setup-start-fill-hover);
+  background: var(--setup-select-bg-hover);
   border-color: var(--setup-start-border);
   filter: brightness(1.05);
 }
 
 .setup-main-row .cmd-start.cmd-start-ready {
-  background: var(--setup-start-fill-ready);
+  background: var(--setup-select-bg-ready);
 }
 
 .game-shell.setup-active {

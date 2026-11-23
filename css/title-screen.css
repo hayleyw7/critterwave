@@ -55,7 +55,7 @@ html[data-title-seen] .title-screen,
   font-size: var(--title-play-font-size);
   letter-spacing: 0.13em;
   text-transform: inherit;
-  text-shadow: 0 0 4px #fff7ff55;
+  text-shadow: 0 0 4px var(--tutorial-glow-rest);
   cursor: pointer;
 }
 
@@ -69,17 +69,17 @@ html[data-title-seen] .title-screen,
 .title-screen button:focus-visible { outline: 2px solid #fde047; outline-offset: 2px; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .title-screen button { animation: play-glow 2.6s ease-in-out infinite; }
+  .title-screen button { animation: play-glow var(--tutorial-pulse); }
 }
 
 @keyframes play-glow {
   0%, 100% {
     color: var(--play-rest-color, #fff7ff);
-    text-shadow: 0 0 4px #fff7ff55, 0 0 9px #f4b32200;
+    text-shadow: 0 0 4px var(--tutorial-glow-rest);
   }
   50% {
     color: #fff5c0;
-    text-shadow: 0 0 5px #ffe076, 0 0 11px #f4b322d9;
+    text-shadow: 0 0 5px var(--tutorial-glow-peak), 0 0 11px var(--tutorial-glow-peak);
   }
 }
 

@@ -24,6 +24,8 @@ test("first visit requires Play, leaves title and picker silent and then starts 
   await expect(picker).toBeHidden();
   await expect(page.locator("html")).not.toHaveAttribute("data-audio-notes", /.+/);
   await expect(play).toHaveCSS("animation-name", "play-glow");
+  await expect(play).toHaveCSS("animation-iteration-count", "2");
+  await expect(play).toHaveCSS("animation-duration", "2s");
   await page.evaluate(() => document.fonts.ready);
   const playAt = async (time: number) => {
     await play.evaluate((button, time) => {
@@ -34,7 +36,7 @@ test("first visit requires Play, leaves title and picker silent and then starts 
     return (await play.screenshot()).toString("base64");
   };
   const rest = await playAt(0);
-  const peak = await playAt(1300);
+  const peak = await playAt(1000);
   const amberPixels = await page.evaluate(async ([rest,peak]) => {
     const decode = async (data: string) => {
       const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
@@ -263,4 +265,36 @@ test("arena loading status is shown only during a delayed Fight transition", asy
   await page.evaluate(()=>window.dispatchEvent(new Event("release-test-audio")));
   await expect(page.getByRole("button",{name:"Attack"})).toBeEnabled();
   await expect(waiting).toBeHidden();
+});
+
+test("tutorial highlights pulse twice, stay visible and honor Reduced Motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion:"no-preference" });
+  await page.goto("/");
+  await page.getByRole("button",{name:"Play",exact:true}).click();
+  const fight = page.getByRole("button",{name:"Fight!"});
+  const name = page.getByRole("textbox",{name:"Name"});
+  await fight.click();
+  await expect(name).toHaveAttribute("aria-invalid","true");
+  await expect(name).toHaveCSS("animation-iteration-count","2");
+  await expect(name).toHaveCSS("animation-duration","2s");
+  await name.evaluate(el=>{const a=el.getAnimations().find(a=>a instanceof CSSAnimation)!;a.finish();});
+  await fight.click();
+  expect(await name.evaluate(el=>el.getAnimations().some(a=>a instanceof CSSAnimation && a.playState==="running"))).toBe(false);
+  await expect(name).not.toHaveCSS("box-shadow","none");
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await expect(name).toHaveCSS("animation-name","none");
+  await expect(name).not.toHaveCSS("box-shadow","none");
+  await page.emulateMedia({reducedMotion:"no-preference"});
+  await page.locator(".emoji-pick").first().click();
+  await name.fill("Test Critter");
+  await fight.click();
+  const attack=page.getByRole("button",{name:"Attack"});
+  await expect(attack).toHaveAttribute("data-combat-hint","on");
+  await expect(attack).toHaveCSS("animation-iteration-count","2");
+  await expect(attack).toHaveCSS("animation-duration","2s");
+  await attack.evaluate(el=>{const a=el.getAnimations().find(a=>a instanceof CSSAnimation)!;a.finish();});
+  await expect(attack).not.toHaveCSS("box-shadow","none");
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await expect(attack).toHaveCSS("animation-name","none");
+  await expect(attack).not.toHaveCSS("box-shadow","none");
 });
