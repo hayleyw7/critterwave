@@ -308,17 +308,17 @@ html[data-theme="light"] .character-setup {
   padding: 0 1.1rem;
   border: 2px solid var(--setup-start-border);
   color: var(--setup-start-text);
-  background: var(--setup-select-bg);
+  background: var(--setup-start-fill);
 }
 
 .setup-main-row .cmd-start:hover:not(:disabled) {
-  background: var(--setup-select-bg-hover);
+  background: var(--setup-start-fill-hover);
   border-color: var(--setup-start-border);
   filter: brightness(1.05);
 }
 
 .setup-main-row .cmd-start.cmd-start-ready {
-  background: var(--setup-select-bg-ready);
+  background: var(--setup-start-fill-ready);
 }
 
 .game-shell.setup-active {

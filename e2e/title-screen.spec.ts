@@ -226,9 +226,18 @@ test("arena loading status is shown only during a delayed Fight transition", asy
   await expect(page.getByText("LOADING CRITTERS")).toBeHidden();
   await expect(page.getByText("ENTERING ARENA")).toBeHidden();
   const picker=page.locator("#character-setup");
+  const fight=page.getByRole("button",{name:"Fight!"});
   await expect(picker).toHaveCSS("background-color","rgb(20, 13, 32)");
+  await expect(fight).toHaveCSS("background-color","rgb(26, 15, 46)");
+  await expect(fight).toHaveCSS("border-top-color","rgb(253, 224, 71)");
+  await fight.focus();
+  await expect(fight).toBeFocused();
+  await fight.hover();
+  await expect(fight).toHaveCSS("background-color","rgb(42, 24, 72)");
+  await page.mouse.move(1,1);
   await page.evaluate(()=>{document.documentElement.dataset.theme="light";});
   await expect(picker).toHaveCSS("background-color","rgb(248, 240, 255)");
+  await expect(fight).not.toHaveCSS("background-color",/rgba\(|transparent|\//);
   await page.locator(".emoji-pick").first().click();
   await page.getByRole("textbox",{name:"Name"}).fill("Test Critter");
   await page.getByRole("button",{name:"Fight!"}).click();
