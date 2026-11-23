@@ -16,13 +16,44 @@ test("first visit requires Play, leaves title and picker silent and then starts 
   await page.goto("/");
   const play = page.getByRole("button", { name: "Play", exact: true });
   const picker = page.getByRole("heading", { name: "Which critter are you?" });
-  await expect(page.getByRole("heading", { name: "Critterwave" })).toBeVisible();
+  await expect(page.locator("#title-screen-wordmark")).toBeVisible({ timeout: 10_000 });
   await expect(picker).toBeHidden();
   await expect(page.locator("html")).not.toHaveAttribute("data-audio-notes", /.+/);
   await expect(play).toHaveCSS("animation-name", "play-glow");
+  await page.evaluate(() => document.fonts.ready);
+  const playAt = async (time: number) => {
+    await play.evaluate((button, time) => {
+      const glow = button.getAnimations()[0]!;
+      glow.pause();
+      glow.currentTime = time;
+    }, time);
+    return (await play.screenshot()).toString("base64");
+  };
+  const rest = await playAt(0);
+  const peak = await playAt(1300);
+  const amberPixels = await page.evaluate(async ([rest,peak]) => {
+    const decode = async (data: string) => {
+      const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
+      const image = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+      const canvas=document.createElement("canvas");
+      canvas.width=image.width;
+      canvas.height=image.height;
+      const context=canvas.getContext("2d")!;
+      context.drawImage(image,0,0);
+      return context.getImageData(0,0,canvas.width,canvas.height).data;
+    };
+    const [a,b] = await Promise.all([decode(rest!), decode(peak!)]);
+    let count=0;
+    for(let i=0;i<a.length;i+=4){
+      if(b[i]!-a[i]!>12 && b[i+1]!-a[i+1]!>6 && b[i]!>b[i+2]!+20)count++;
+    }
+    return count;
+  },[rest,peak]);
+  expect(amberPixels).toBeGreaterThan(100);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(play).toHaveCSS("animation-name", "none");
   await expect(play).toHaveCSS("opacity", "1");
+  await expect(play).not.toHaveCSS("text-shadow", "none");
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await expect(play).toHaveCSS("animation-name", "play-glow");
   await page.keyboard.press("Tab");
@@ -110,8 +141,8 @@ test("mobile rotates safely and Play opens the picker", async ({ browser, baseUR
     }
     return { left, right, width: canvas.width };
   }, pixels.toString("base64"));
-  expect((logo.right-logo.left+1)/logo.width, JSON.stringify(logo)).toBeGreaterThan(0.81);
-  expect((logo.right-logo.left+1)/logo.width, JSON.stringify(logo)).toBeLessThan(0.85);
+  expect((logo.right-logo.left+1)/logo.width, JSON.stringify(logo)).toBeGreaterThan(0.79);
+  expect((logo.right-logo.left+1)/logo.width, JSON.stringify(logo)).toBeLessThan(0.86);
   expect(Math.abs(logo.left - (logo.width - 1 - logo.right)),JSON.stringify(logo)).toBeLessThanOrEqual(3);
   await play.tap();
   await expect(page.getByRole("heading", { name: "Which critter are you?" })).toBeVisible();

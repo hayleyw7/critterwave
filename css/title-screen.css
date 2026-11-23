@@ -42,6 +42,7 @@ html:has(.title-screen:not([hidden])) {
   font-size: clamp(1.25rem, 3vw, 1.6rem);
   letter-spacing: 0.13em;
   text-transform: inherit;
+  text-shadow: 0 0 4px #fff7ff55;
   cursor: pointer;
 }
 
@@ -51,16 +52,22 @@ html:has(.title-screen:not([hidden])) {
   .title-screen button { margin-top: clamp(1rem, 7vh, 3rem); }
 }
 
-.title-screen button:hover { color: #fde047; }
+.title-screen button:hover { color: #fde047; --play-rest-color: #fde047; }
 .title-screen button:focus-visible { outline: 2px solid #fde047; outline-offset: 2px; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .title-screen button { animation: play-glow 3.6s ease-in-out infinite; }
+  .title-screen button { animation: play-glow 2.6s ease-in-out infinite; }
 }
 
 @keyframes play-glow {
-  0%, 100% { text-shadow: 0 0 3px #fff7ff20; }
-  50% { text-shadow: 0 0 10px #fff7ff68; }
+  0%, 100% {
+    color: var(--play-rest-color, #fff7ff);
+    text-shadow: 0 0 4px #fff7ff55, 0 0 9px #f4b32200;
+  }
+  50% {
+    color: #fff5c0;
+    text-shadow: 0 0 5px #ffe076, 0 0 11px #f4b322d9;
+  }
 }
 
 .portrait-notice { display: none; }
