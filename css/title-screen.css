@@ -1,4 +1,4 @@
-html:has(.title-screen:not([hidden])) {
+html:not([data-title-seen]):has(.title-screen:not([hidden])) {
   background: #140d20;
 }
 
@@ -15,7 +15,18 @@ html:has(.title-screen:not([hidden])) {
   text-transform: uppercase;
 }
 
+html[data-title-seen] .title-screen,
 .title-screen[hidden] { display: none; }
+
+#title-screen-error {
+  position: absolute;
+  inset-inline: 16px;
+  top: 76%;
+  margin: 0;
+  text-align: center;
+  font-size: 1.125rem;
+  text-transform: none;
+}
 
 .title-screen h1 {
   grid-row: 2;

@@ -816,3 +816,5 @@ export async function init(): Promise<void> {
   restorePendingConfirmIfNeeded();
   maybeRunDebugWin();
 }
+
+export { unlockAudio };

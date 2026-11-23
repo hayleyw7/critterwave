@@ -1,5 +1,3 @@
-import { init } from "./game/app.js";
-import { unlockAudio } from "./game/audio.js";
 import { INTRO_SEEN_KEY } from "./game/storage-keys.js";
 
 declare global {
@@ -14,25 +12,50 @@ declare global {
 }
 
 const titleScreen = document.getElementById("title-screen")!;
-const play = document.getElementById("title-screen-play")!;
-let introSeen = false;
-try {
-  introSeen = localStorage.getItem(INTRO_SEEN_KEY) === "1";
-} catch {
-  // A blocked browser can still enter the game.
-}
-if (introSeen) {
-  void init();
-} else {
-  titleScreen.hidden = false;
-  play.addEventListener("click", () => {
-    try {
-      localStorage.setItem(INTRO_SEEN_KEY, "1");
-    } catch {
-      // Continue without persistence when storage is unavailable.
+const play = document.getElementById("title-screen-play") as HTMLButtonElement;
+const titleError = document.getElementById("title-screen-error")!;
+const page = document.documentElement;
+const introSeen = page.hasAttribute("data-title-seen");
+
+// Render the title independently of the game module graph. Preload the graph so a
+// normal Play click can still boot immediately and use the click's audio activation.
+const game = import("./game/app.js").then(
+  runtime => ({ runtime }),
+  (error: unknown) => ({ error })
+);
+
+async function enterGame(fromPlay: boolean): Promise<void> {
+  play.disabled = true;
+  titleScreen.setAttribute("aria-busy", "true");
+  try {
+    const result = await game;
+    if ("error" in result) throw result.error;
+    const startup = result.runtime.init();
+    if (fromPlay) void result.runtime.unlockAudio();
+    await startup;
+    if (fromPlay) {
+      try {
+        localStorage.setItem(INTRO_SEEN_KEY, "1");
+      } catch {
+        // Continue without persistence when storage is unavailable.
+      }
     }
     titleScreen.hidden = true;
-    void init();
-    void unlockAudio();
-  }, { once: true });
+  } catch (error) {
+    console.error("Critterwave could not boot", error);
+    page.removeAttribute("data-title-seen");
+    titleScreen.hidden = false;
+    titleError.hidden = false;
+    play.textContent = "Retry";
+    play.disabled = false;
+    play.addEventListener("click", () => location.reload(), { once: true });
+  } finally {
+    titleScreen.removeAttribute("aria-busy");
+  }
+}
+
+if (introSeen) {
+  void enterGame(false);
+} else {
+  play.addEventListener("click", () => void enterGame(true), { once: true });
 }

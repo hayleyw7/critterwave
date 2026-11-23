@@ -3,6 +3,10 @@ import { INTRO_SEEN_KEY, STORAGE_KEY } from "../src/game/storage-keys.js";
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
+test.beforeEach(({ page }) => {
+  page.on("console", message => { if (message.type() === "error") console.error(message.text()); });
+});
+
 test("first visit requires Play, leaves title and picker silent and then starts music", async ({ page }) => {
   await page.addInitScript(() => {
     const proto = AudioContext.prototype;
@@ -147,4 +151,45 @@ test("mobile rotates safely and Play opens the picker", async ({ browser, baseUR
   await play.tap();
   await expect(page.getByRole("heading", { name: "Which critter are you?" })).toBeVisible();
   await context.close();
+});
+
+test("title appears and accepts Play while the game module is still downloading", async ({ page }) => {
+  let resumeDownload!: () => void;
+  const download = new Promise<void>(resolve => { resumeDownload = resolve; });
+  let markRequested!: () => void;
+  const requested = new Promise<void>(resolve => { markRequested = resolve; });
+  await page.route("**/js/game/app.js", async route => {
+    markRequested();
+    await download;
+    await route.continue();
+  });
+  try {
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await requested;
+    const play = page.getByRole("button", { name: "Play", exact: true });
+    await expect(play).toBeVisible();
+    await expect(page.locator("#title-screen-wordmark")).toBeVisible();
+    await play.click();
+    await expect(play).toBeDisabled();
+    await expect(page.getByRole("heading", { name: "Which critter are you?" })).toBeHidden();
+    expect(await page.evaluate(key => localStorage.getItem(key), INTRO_SEEN_KEY)).toBeNull();
+    resumeDownload();
+    await expect(page.getByRole("heading", { name: "Which critter are you?" })).toBeVisible();
+    await expect(play).toBeHidden();
+    expect(await page.evaluate(key => localStorage.getItem(key), INTRO_SEEN_KEY)).toBe("1");
+  } finally { resumeDownload(); }
+});
+
+test("a failed first-load module leaves a retryable title, not a blank screen", async ({ page }) => {
+  await page.route("**/js/game/app.js", route=>route.abort());
+  await page.goto("/");
+  await expect(page.getByRole("button",{name:"Play",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Play",exact:true}).click();
+  await expect(page.getByRole("alert")).toContainText("Couldn’t load the game.");
+  expect(await page.evaluate(key=>localStorage.getItem(key),INTRO_SEEN_KEY)).toBeNull();
+  await page.unroute("**/js/game/app.js");
+  await page.getByRole("button",{name:"Retry"}).click();
+  await expect(page.getByRole("button",{name:"Play",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Play",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Which critter are you?"})).toBeVisible();
 });
