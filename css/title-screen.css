@@ -29,11 +29,6 @@ html:has(.title-screen:not([hidden])) {
   white-space: nowrap;
 }
 
-/* The wordmark is the focal point on phones and narrow embeds. */
-@media (max-width: 650px) {
-  .title-screen h1 { font-size: 16vw; }
-}
-
 .title-screen button {
   grid-row: 3;
   min-width: 86px;
@@ -48,6 +43,12 @@ html:has(.title-screen:not([hidden])) {
   letter-spacing: 0.13em;
   text-transform: inherit;
   cursor: pointer;
+}
+
+/* Offset the trailing letter spacing so the yellow ink, not its box, is centered. */
+@media (max-width: 650px) {
+  .title-screen h1 { font-size: 14.8vw; translate: 0.08em 0; }
+  .title-screen button { margin-top: clamp(1rem, 7vh, 3rem); }
 }
 
 .title-screen button:hover { color: #fde047; }
