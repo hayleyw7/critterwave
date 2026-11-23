@@ -53,6 +53,15 @@ html:has(.title-screen:not([hidden])) {
 .title-screen button:hover { color: #fde047; }
 .title-screen button:focus-visible { outline: 2px solid #fde047; outline-offset: 2px; }
 
+@media (prefers-reduced-motion: no-preference) {
+  .title-screen button { animation: play-glow 3.6s ease-in-out infinite; }
+}
+
+@keyframes play-glow {
+  0%, 100% { text-shadow: 0 0 3px #fff7ff20; }
+  50% { text-shadow: 0 0 10px #fff7ff68; }
+}
+
 .portrait-notice { display: none; }
 
 @media (orientation: landscape) and (pointer: coarse) and (hover: none) {

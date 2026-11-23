@@ -19,6 +19,12 @@ test("first visit requires Play, leaves title and picker silent and then starts 
   await expect(page.getByRole("heading", { name: "Critterwave" })).toBeVisible();
   await expect(picker).toBeHidden();
   await expect(page.locator("html")).not.toHaveAttribute("data-audio-notes", /.+/);
+  await expect(play).toHaveCSS("animation-name", "play-glow");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(play).toHaveCSS("animation-name", "none");
+  await expect(play).toHaveCSS("opacity", "1");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(play).toHaveCSS("animation-name", "play-glow");
   await page.keyboard.press("Tab");
   await expect(play).toBeFocused();
   await page.keyboard.press("Enter");
