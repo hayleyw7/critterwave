@@ -173,6 +173,8 @@ test("title appears and accepts Play while the game module is still downloading"
     await expect(play).toBeDisabled();
     const loading = page.getByText("LOADING CRITTERS");
     await expect(loading).toBeVisible();
+    await expect(loading.locator(".transition-critter")).toHaveText("⏳");
+    await expect(loading.locator(".transition-critter")).toHaveCSS("background-color","rgba(0, 0, 0, 0)");
     const playFont = await play.evaluate(el=>[getComputedStyle(el).fontFamily,getComputedStyle(el).fontSize]);
     await expect(loading).toHaveCSS("font-family",playFont[0]!);
     await expect(loading).toHaveCSS("font-size",playFont[1]!);
@@ -228,6 +230,7 @@ test("arena loading status is shown only during a delayed Fight transition", asy
   await page.getByRole("button",{name:"Fight!"}).click();
   const waiting=page.getByText("ENTERING ARENA");
   await expect(waiting).toBeVisible();
+  await expect(waiting.locator(".transition-critter")).toHaveText("⏳");
   const play=page.locator("#title-screen-play");
   const playFont=await play.evaluate(el=>[getComputedStyle(el).fontFamily,getComputedStyle(el).fontSize]);
   await expect(waiting).toHaveCSS("font-family",playFont[0]!);
