@@ -225,11 +225,16 @@ test("arena loading status is shown only during a delayed Fight transition", asy
   await page.getByRole("button",{name:"Play",exact:true}).click();
   await expect(page.getByText("LOADING CRITTERS")).toBeHidden();
   await expect(page.getByText("ENTERING ARENA")).toBeHidden();
+  const picker=page.locator("#character-setup");
+  await expect(picker).toHaveCSS("background-color","rgb(20, 13, 32)");
+  await page.evaluate(()=>{document.documentElement.dataset.theme="light";});
+  await expect(picker).toHaveCSS("background-color","rgb(248, 240, 255)");
   await page.locator(".emoji-pick").first().click();
   await page.getByRole("textbox",{name:"Name"}).fill("Test Critter");
   await page.getByRole("button",{name:"Fight!"}).click();
   const waiting=page.getByText("ENTERING ARENA");
   await expect(waiting).toBeVisible();
+  await expect(waiting).toHaveCSS("background-color","rgb(20, 13, 32)");
   await expect(waiting.locator(".transition-critter")).toHaveText("⏳");
   const play=page.locator("#title-screen-play");
   const playFont=await play.evaluate(el=>[getComputedStyle(el).fontFamily,getComputedStyle(el).fontSize]);
@@ -238,8 +243,11 @@ test("arena loading status is shown only during a delayed Fight transition", asy
   for (const width of [320,390]) {
     await page.setViewportSize({width,height:740});
     const bounds = (await waiting.boundingBox())!;
-    expect(bounds.x).toBeGreaterThan(0);
-    expect(bounds.x+bounds.width).toBeLessThan(width);
+    expect(bounds.x).toBe(0);
+    expect(bounds.width).toBe(width);
+    expect(bounds.height).toBe(740);
+    const textFits = await waiting.evaluate(el=>el.scrollWidth<=el.clientWidth);
+    expect(textFits).toBe(true);
   }
   await expect(waiting.locator(".transition-critter")).toHaveCSS("animation-name","none");
   await expect(page.getByRole("button",{name:"Fight!"})).toBeDisabled();

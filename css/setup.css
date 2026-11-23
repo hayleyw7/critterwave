@@ -6,8 +6,11 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-5);
-  background: var(--overlay-scrim);
-  backdrop-filter: blur(3px);
+  background: var(--title-screen-background);
+}
+
+html[data-theme="light"] .character-setup {
+  background: var(--bg-deep);
 }
 
 .setup-panel {

@@ -1,7 +1,7 @@
-:root { --title-play-font-size: clamp(1.25rem, 3vw, 1.6rem); }
+:root { --title-play-font-size: clamp(1.25rem, 3vw, 1.6rem); --title-screen-background: #140d20; }
 
 html:not([data-title-seen]):has(.title-screen:not([hidden])) {
-  background: #140d20;
+  background: var(--title-screen-background);
 }
 
 .title-screen {
@@ -11,7 +11,7 @@ html:not([data-title-seen]):has(.title-screen:not([hidden])) {
   display: grid;
   grid-template-rows: 1fr auto auto 1fr;
   place-items: center;
-  background: #140d20;
+  background: var(--title-screen-background);
   color: #fff7ff;
   font-family: "VT323", monospace;
   text-transform: uppercase;
@@ -96,7 +96,7 @@ html[data-title-seen] .title-screen,
     place-items: center;
     padding: 20px;
     text-align: center;
-    background: #140d20;
+    background: var(--title-screen-background);
     color: #fff7ff;
     font: 1.5rem "VT323", monospace;
   }
@@ -135,13 +135,17 @@ html[data-title-seen] .title-screen,
   line-height: 1.15;
   letter-spacing: 0.04em;
   position: fixed;
-  top: 50%;
+  inset: 0;
   z-index: 1;
-  transform: translateY(-50%);
-  color: var(--text);
-  background: var(--panel);
-  border: 2px solid var(--panel-edge);
-  box-shadow: 0 0 0 100vmax var(--overlay-scrim);
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 16px;
+  justify-content: center;
+  color: #fff7ff;
+  background: var(--title-screen-background);
+  border-radius: 0;
+  pointer-events: auto;
 }
 
 .transition-critter {
