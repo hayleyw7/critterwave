@@ -1,3 +1,5 @@
+:root { --title-play-font-size: clamp(1.25rem, 3vw, 1.6rem); }
+
 html:not([data-title-seen]):has(.title-screen:not([hidden])) {
   background: #140d20;
 }
@@ -50,7 +52,7 @@ html[data-title-seen] .title-screen,
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  font-size: var(--title-play-font-size);
   letter-spacing: 0.13em;
   text-transform: inherit;
   text-shadow: 0 0 4px #fff7ff55;
@@ -98,4 +100,81 @@ html[data-title-seen] .title-screen,
     color: #fff7ff;
     font: 1.5rem "VT323", monospace;
   }
+}
+
+.transition-status[hidden] { display: none; }
+
+.transition-status {
+  position: absolute;
+  inset-inline: 0;
+  margin: 0 auto;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  color: var(--heading-accent);
+  font-family: var(--font-ui);
+  text-transform: none;
+  text-align: center;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+#loading-critters {
+  font-size: var(--title-play-font-size);
+  line-height: normal;
+  letter-spacing: 0.13em;
+  top: 76%;
+  color: #fff7ff;
+}
+
+#loading-arena {
+  font-size: var(--title-play-font-size);
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  position: fixed;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  color: var(--text);
+  background: var(--panel);
+  border: 2px solid var(--panel-edge);
+  box-shadow: 0 0 0 100vmax var(--overlay-scrim);
+}
+
+.transition-critter {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 15px;
+  color: var(--heading-accent);
+  background:
+    linear-gradient(currentColor 0 0) 3px 0 / 3px 3px,
+    linear-gradient(currentColor 0 0) 12px 0 / 3px 3px,
+    linear-gradient(currentColor 0 0) 0 3px / 18px 12px;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.transition-critter::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 4px;
+  width: 3px;
+  height: 3px;
+  color: var(--bg-deep);
+  background: currentColor;
+  box-shadow: 7px 0 currentColor;
+}
+
+#loading-critters .transition-critter { color: #fde047; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .transition-critter { animation: loading-critter-hop .85s steps(1, end) infinite; }
+}
+
+@keyframes loading-critter-hop {
+  50% { transform: translateY(-2px); }
 }

@@ -171,11 +171,23 @@ test("title appears and accepts Play while the game module is still downloading"
     await expect(page.locator("#title-screen-wordmark")).toBeVisible();
     await play.click();
     await expect(play).toBeDisabled();
+    const loading = page.getByText("LOADING CRITTERS");
+    await expect(loading).toBeVisible();
+    const playFont = await play.evaluate(el=>[getComputedStyle(el).fontFamily,getComputedStyle(el).fontSize]);
+    await expect(loading).toHaveCSS("font-family",playFont[0]!);
+    await expect(loading).toHaveCSS("font-size",playFont[1]!);
+    for (const width of [320,390]) {
+      await page.setViewportSize({width,height:740});
+      const bounds = (await loading.boundingBox())!;
+      expect(bounds.x).toBeGreaterThan(0);
+      expect(bounds.x+bounds.width).toBeLessThan(width);
+    }
     await expect(page.getByRole("heading", { name: "Which critter are you?" })).toBeHidden();
     expect(await page.evaluate(key => localStorage.getItem(key), INTRO_SEEN_KEY)).toBeNull();
     resumeDownload();
     await expect(page.getByRole("heading", { name: "Which critter are you?" })).toBeVisible();
     await expect(play).toBeHidden();
+    await expect(page.getByText("LOADING CRITTERS")).toBeHidden();
     expect(await page.evaluate(key => localStorage.getItem(key), INTRO_SEEN_KEY)).toBe("1");
   } finally { resumeDownload(); }
 });
@@ -192,4 +204,43 @@ test("a failed first-load module leaves a retryable title, not a blank screen", 
   await expect(page.getByRole("button",{name:"Play",exact:true})).toBeVisible();
   await page.getByRole("button",{name:"Play",exact:true}).click();
   await expect(page.getByRole("heading",{name:"Which critter are you?"})).toBeVisible();
+});
+
+test("arena loading status is shown only during a delayed Fight transition", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    const audio = AudioContext.prototype;
+    const nativeResume = audio.resume;
+    const nativeState = Object.getOwnPropertyDescriptor(BaseAudioContext.prototype, "state")!.get!;
+    let release!: () => void;
+    const pending = new Promise<void>(resolve=>{ release=resolve; });
+    let held = true;
+    Object.defineProperty(audio, "state", { get() { return held?"suspended":nativeState.call(this); } });
+    audio.resume = async function () { await pending; return nativeResume.call(this); };
+    window.addEventListener("release-test-audio",()=>{ held=false;release(); },{once:true});
+  });
+  await page.goto("/");
+  await page.getByRole("button",{name:"Play",exact:true}).click();
+  await expect(page.getByText("LOADING CRITTERS")).toBeHidden();
+  await expect(page.getByText("ENTERING ARENA")).toBeHidden();
+  await page.locator(".emoji-pick").first().click();
+  await page.getByRole("textbox",{name:"Name"}).fill("Test Critter");
+  await page.getByRole("button",{name:"Fight!"}).click();
+  const waiting=page.getByText("ENTERING ARENA");
+  await expect(waiting).toBeVisible();
+  const play=page.locator("#title-screen-play");
+  const playFont=await play.evaluate(el=>[getComputedStyle(el).fontFamily,getComputedStyle(el).fontSize]);
+  await expect(waiting).toHaveCSS("font-family",playFont[0]!);
+  await expect(waiting).toHaveCSS("font-size",playFont[1]!);
+  for (const width of [320,390]) {
+    await page.setViewportSize({width,height:740});
+    const bounds = (await waiting.boundingBox())!;
+    expect(bounds.x).toBeGreaterThan(0);
+    expect(bounds.x+bounds.width).toBeLessThan(width);
+  }
+  await expect(waiting.locator(".transition-critter")).toHaveCSS("animation-name","none");
+  await expect(page.getByRole("button",{name:"Fight!"})).toBeDisabled();
+  await page.evaluate(()=>window.dispatchEvent(new Event("release-test-audio")));
+  await expect(page.getByRole("button",{name:"Attack"})).toBeEnabled();
+  await expect(waiting).toBeHidden();
 });

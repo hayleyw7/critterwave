@@ -1,4 +1,5 @@
 import { INTRO_SEEN_KEY } from "./game/storage-keys.js";
+import { delayedTransitionStatus } from "./game/transition-status.js";
 
 declare global {
   interface Window {
@@ -26,7 +27,9 @@ const game = import("./game/app.js").then(
 
 async function enterGame(fromPlay: boolean): Promise<void> {
   play.disabled = true;
-  titleScreen.setAttribute("aria-busy", "true");
+  const done = fromPlay
+    ? delayedTransitionStatus(document.getElementById("loading-critters")!)
+    : () => {};
   try {
     const result = await game;
     if ("error" in result) throw result.error;
@@ -50,7 +53,7 @@ async function enterGame(fromPlay: boolean): Promise<void> {
     play.disabled = false;
     play.addEventListener("click", () => location.reload(), { once: true });
   } finally {
-    titleScreen.removeAttribute("aria-busy");
+    done();
   }
 }
 
