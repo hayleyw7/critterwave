@@ -282,17 +282,23 @@ html[data-theme="light"] .game-over:not(.game-victory) .game-over-tag {
   text-shadow: 2px 2px 0 var(--bg-deep);
 }
 
+.game-over:not(.game-victory) .cmd-restart {
+  background: var(--setup-start-fill);
+}
+
+.game-over:not(.game-victory) .cmd-restart:hover:not(:disabled) {
+  background: var(--setup-start-fill-hover);
+}
+
 html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart {
   border-color: var(--restart-border);
   color: var(--restart-text);
-  background: var(--restart-bg);
   box-shadow: 0 2px 0 color-mix(in srgb, var(--restart-border) 45%, var(--bg-deep));
 }
 
 html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart:hover:not(:disabled) {
   border-color: var(--restart-border);
   color: var(--restart-text);
-  background: color-mix(in srgb, var(--restart-text) 22%, var(--panel));
   filter: none;
 }
 

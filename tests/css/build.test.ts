@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
@@ -14,13 +15,25 @@ function normalizeCss(css: string): string {
 
 describe("css build pipeline", () => {
   it("split-css writes hub imports and non-empty module files", () => {
-    execSync("node scripts/split-css.mjs", { cwd: root, stdio: "pipe" });
+    // The historical migration writes to the source tree it runs from.
+    // Exercise it in a disposable fixture, never over the maintained modules.
+    const fixture = mkdtempSync(join(tmpdir(), "critterwave-css-"));
+    try {
+      mkdirSync(join(fixture, "css"));
+      mkdirSync(join(fixture, "scripts"));
+      for (const file of ["split-css.mjs", "styles.css.bak"]) {
+        copyFileSync(join(root, "scripts", file), join(fixture, "scripts", file));
+      }
+      copyFileSync(join(root, "css", "tokens.css"), join(fixture, "css", "tokens.css"));
+      execSync("node scripts/split-css.mjs", { cwd: fixture, stdio: "pipe" });
 
-    const hub = readFileSync(join(root, "css/styles.css"), "utf8");
-    for (const file of CSS_MODULE_FILES) {
-      if (file === "styles.css") continue;
-      expect(hub).toContain(`@import "${file}";`);
-      expect(readCssModule(file).trim().length).toBeGreaterThan(0);
+      const hub = readFileSync(join(fixture, "css/styles.css"), "utf8");
+      for (const file of CSS_MODULE_FILES) {
+        expect(hub).toContain(`@import "${file}";`);
+        expect(readFileSync(join(fixture,"css",file),"utf8").trim().length).toBeGreaterThan(0);
+      }
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
     }
   });
 

@@ -1,3 +1,4 @@
+import { delayedTransitionStatus } from "./transition-status.js";
 import { setBattleLines } from "../lib/battle-log-dom.js";
 import { blockCombatForScreenEnd } from "../lib/combat-gate.js";
 import { attackTeachText } from "../lib/combat-hints.js";
@@ -631,17 +632,30 @@ export function bindActions(): void {
   });
   bindSetupColorPicker();
 
+  let startingFight = false;
   el.setupStartBtn.addEventListener("click", () => {
+    if (startingFight) return;
+    if (getSetupBlockers().length > 0 || !readHeroNameFromSetup()) {
+      showSetupBlockedHint();
+      return;
+    }
+    startingFight = true;
+    el.setupStartBtn.disabled = true;
+    const done = delayedTransitionStatus(document.getElementById("loading-arena")!);
     void (async () => {
-      await unlockAudio();
-      if (!confirmHeroAndStart()) {
-        return;
-      }
-      if (!gameState.foe) {
-        await beginGame();
-      } else {
-        render();
-        persist();
+      try {
+        await unlockAudio();
+        if (!confirmHeroAndStart()) return;
+        if (!gameState.foe) {
+          await beginGame();
+        } else {
+          render();
+          persist();
+        }
+      } finally {
+        done();
+        startingFight = false;
+        el.setupStartBtn.disabled = false;
       }
     })();
   });

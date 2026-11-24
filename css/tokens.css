@@ -11,6 +11,9 @@
   --color-green-950: #166534;
   --color-yellow-50: #fef9c3;
   --color-yellow-300: #fde047;
+  --tutorial-glow-rest: color-mix(in srgb, var(--color-yellow-300) 32%, transparent);
+  --tutorial-glow-peak: color-mix(in srgb, var(--color-yellow-300) 85%, transparent);
+  --tutorial-pulse: 2s ease-in-out 2;
   --color-yellow-400: #facc15;
   --color-yellow-700: #997300;
   --color-amber-800: #854d0e;
@@ -105,6 +108,9 @@
   --setup-select-bg: rgba(253, 224, 71, 0.12);
   --setup-select-bg-hover: rgba(253, 224, 71, 0.22);
   --setup-select-bg-ready: rgba(253, 224, 71, 0.18);
+  --setup-start-fill: var(--color-purple-925);
+  --setup-start-fill-hover: var(--color-purple-850);
+  --setup-start-fill-ready: var(--color-purple-900);
   --setup-select-glow: rgba(253, 224, 71, 0.35);
   --setup-hint-error: var(--highlight);
   --setup-control-border: var(--cmd-border);
@@ -225,6 +231,9 @@ html[data-theme="light"] {
   --setup-select-bg: color-mix(in srgb, var(--panel-edge) 14%, var(--cmd-bg));
   --setup-select-bg-hover: color-mix(in srgb, var(--panel-edge) 24%, var(--cmd-hover));
   --setup-select-bg-ready: color-mix(in srgb, var(--panel-edge) 20%, var(--cmd-bg));
+  --setup-start-fill: var(--setup-select-bg);
+  --setup-start-fill-hover: var(--setup-select-bg-hover);
+  --setup-start-fill-ready: var(--setup-select-bg-ready);
   --setup-hint-error: var(--danger);
   --setup-control-border: var(--cmd-border);
   --setup-control-border-focus: var(--panel-edge);

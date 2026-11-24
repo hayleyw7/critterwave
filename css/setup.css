@@ -6,8 +6,11 @@
   align-items: center;
   justify-content: center;
   padding: var(--space-5);
-  background: var(--overlay-scrim);
-  backdrop-filter: blur(3px);
+  background: var(--title-screen-background);
+}
+
+html[data-theme="light"] .character-setup {
+  background: var(--bg-deep);
 }
 
 .setup-panel {
@@ -177,24 +180,19 @@
 
 .setup-name-input--highlight {
   border-color: var(--setup-select-border);
-  box-shadow: 0 0 0 2px var(--setup-select-glow);
+  box-shadow: 0 0 0 2px var(--setup-select-glow), 0 0 4px var(--tutorial-glow-rest);
 }
 
 .setup-name-input.setup-name-teach-flash {
-  animation: setup-name-teach-pulse 0.45s ease-out 3;
+  animation: setup-name-teach-pulse var(--tutorial-pulse);
 }
 
 @keyframes setup-name-teach-pulse {
-  0%,
-  100% {
-    border-color: var(--border);
-    box-shadow: none;
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--setup-select-glow), 0 0 4px var(--tutorial-glow-rest);
   }
   50% {
-    border-color: var(--setup-select-border);
-    box-shadow:
-      0 0 0 2px var(--setup-select-glow),
-      0 0 12px var(--setup-select-glow);
+    box-shadow: 0 0 0 2px var(--setup-select-glow), 0 0 11px var(--tutorial-glow-peak);
   }
 }
 
@@ -273,7 +271,7 @@
 
 .emoji-pick.selected {
   border-color: var(--setup-select-border);
-  background: var(--setup-select-bg);
+  background: var(--panel);
 }
 
 .emoji-pick-glyph,
@@ -305,17 +303,17 @@
   padding: 0 1.1rem;
   border: 2px solid var(--setup-start-border);
   color: var(--setup-start-text);
-  background: var(--setup-select-bg);
+  background: var(--setup-start-fill);
 }
 
 .setup-main-row .cmd-start:hover:not(:disabled) {
-  background: var(--setup-select-bg-hover);
+  background: var(--setup-start-fill-hover);
   border-color: var(--setup-start-border);
   filter: brightness(1.05);
 }
 
 .setup-main-row .cmd-start.cmd-start-ready {
-  background: var(--setup-select-bg-ready);
+  background: var(--setup-start-fill-ready);
 }
 
 .game-shell.setup-active {

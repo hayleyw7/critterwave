@@ -5,3 +5,5 @@ export const LEGACY_STORAGE_KEYS = [
   "critterwave-v0.7",
   "critterwave-v6",
 ] as const;
+
+export const INTRO_SEEN_KEY = "critterwave-intro-seen";

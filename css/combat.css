@@ -162,7 +162,8 @@
   z-index: 2;
   border-color: var(--hint-flash-border) !important;
   transition: none;
-  animation: cmd-hint-pulse 0.75s ease-in-out infinite;
+  box-shadow: inset 0 0 0 2px var(--hint-flash-border), 0 0 4px var(--tutorial-glow-rest);
+  animation: cmd-hint-pulse var(--tutorial-pulse);
 }
 
 .command-menu .cmd {
@@ -295,9 +296,9 @@
 @keyframes cmd-hint-pulse {
   0%,
   100% {
-    box-shadow: inset 0 0 0 2px var(--hint-flash-border);
+    box-shadow: inset 0 0 0 2px var(--hint-flash-border), 0 0 4px var(--tutorial-glow-rest);
   }
   50% {
-    box-shadow: inset 0 0 0 3px var(--focus-ring);
+    box-shadow: inset 0 0 0 2px var(--hint-flash-border), 0 0 11px var(--tutorial-glow-peak);
   }
 }

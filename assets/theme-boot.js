@@ -1,4 +1,17 @@
 (function () {
+  var deviceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  function syncDeviceMotion() {
+    document.documentElement.toggleAttribute("data-reduced-motion", deviceMotion.matches);
+  }
+  syncDeviceMotion();
+  deviceMotion.addEventListener("change", syncDeviceMotion);
+  try {
+    if (localStorage.getItem("critterwave-intro-seen") === "1") {
+      document.documentElement.setAttribute("data-title-seen", "");
+    }
+  } catch (_error) {
+    /* The title still works when browser storage is blocked. */
+  }
   var key = "critterwave-v1.1";
   var legacyKeys = ["critterwave-v1.0", "critterwave-v0.7", "critterwave-v6"];
   var raw = localStorage.getItem(key);

@@ -137,3 +137,31 @@ test.describe("wave victory heal", () => {
     );
   });
 });
+
+
+test("Try Again uses the opaque Fight palette in both themes", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/?debug=lose");
+  const button = page.getByRole("button", { name: "Try Again?" });
+  await expect(button).toBeVisible();
+  for (const theme of ["dark", "light"]) {
+    await page.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
+    const palettes = await button.evaluate(el => {
+      const probe = document.createElement("div");
+      document.body.append(probe);
+      const sample = (style: string) => {
+        probe.style.backgroundColor = style;
+        return getComputedStyle(probe).backgroundColor;
+      };
+      const values = [sample("var(--setup-start-fill)"), sample("var(--setup-start-fill-hover)")];
+      probe.remove();
+      return values;
+    });
+    await page.mouse.move(1, 1);
+    await expect(button).toHaveCSS("background-color", palettes[0]!);
+    await expect(button).toHaveCSS("border-top-color", "rgb(253, 224, 71)");
+    await button.hover();
+    await expect(button).toHaveCSS("background-color", palettes[1]!);
+    await expect(button).toHaveCSS("border-top-color", "rgb(253, 224, 71)");
+  }
+});

@@ -1,5 +1,7 @@
 # Critterwave
 
+![Critterwave cover](images/og-image.png)
+
 Choose your critter. Dance for foes. Survive **100 waves**.
 
 A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, and beat the campaign.
@@ -8,31 +10,31 @@ A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, a
 
 ## Features
 
-- Turn-based combat in the browser — no install
-- **100 waves** to win; **101** hand-picked alliterative foes (critters and fantasy creatures)
-- **Levels 1–10** — classic RPG pacing: stay Lv 1 for waves 1–10, level up at **11, 21, 31…**; HP, ATK, and max heal grow with you
-- Foe **LV** varies around yours — easier critters fight below your level, tougher ones above (same rules from wave 1)
-- Pick any roster emoji as your hero, name them, and choose a **card color** — the setup grid only shows **full rows** (column count follows your window width)
-- **Light and dark themes** — footer toggle (persists in this browser); tuned contrast for HUD, battle log, damage pops, and footer stats; browser and PWA install chrome follow the active theme
-- **Heal** (1–**7** HP at Lv 1, **+1** max per level) on your turn — main way to recover HP; foe may counterattack; does not build HYPE
-- **Dance** for random foe reactions — HYPE for you and/or the foe when the line grants it, or neither (max **5 HYPE** each; **+1 ATK per HYPE**)
+- Turn-based combat in the browser · no install
+- Win **100 waves** against **101** hand-picked alliterative foes (critters and fantasy creatures)
+- **Levels 1–10** · classic RPG pacing: stay Lv 1 for waves 1–10, level up at **11, 21, 31…**. HP, ATK, and max heal grow with you
+- Foe **LV** varies around yours · easier critters fight below your level, tougher ones above (same rules from wave 1)
+- Pick any roster emoji as your hero, name them, and choose a **card color** · the setup grid only shows **full rows** (the column count follows your window width)
+- **Light and dark themes** · The footer toggle remembers your choice. The browser and installed app also use the active theme
+- **Heal** (1–**7** HP at Lv 1, **+1** max per level) on your turn. It’s the main way to recover HP. Foe may counterattack. It does not build HYPE
+- **Dance** for random foe reactions · HYPE for you and/or the foe when the line grants it, or neither (max **5 HYPE** each, with **+1 ATK per HYPE**)
 - Taking damage drops **1 HYPE** (yours or theirs when they get hit)
-- **Partial heal after each wave victory** — regain **30%** of missing max HP (rounded up); sparkle + floating heal number when you actually gained HP; wave 1 start and beating all 100 waves still fully top you up
+- **Partial heal after each wave victory** · regain **30%** of missing max HP (rounded up). A sparkle and floating number show how much HP you regain. The start of wave 1 and beating all 100 waves still fully top you up
 - Shuffled foe order each run
 - **Scores persist** in this browser (high score, runs played)
 - Procedural **music and sound effects** with separate High / Low / Off controls
-- **Combat hints** on early fights — see [Combat hints](#combat-hints) below
-- **Mid-run save** — refresh and your fight continues (with a “restored” message)
-- Retro **CRT scanlines** — subtle in both light and dark mode
+- **Combat hints** on early fights · see [Combat hints](#combat-hints) below
+- **Mid-run save** · refresh and your fight continues (with a “restored” message)
+- Retro **CRT scanlines** · subtle in both light and dark mode
 
 ## Controls
 
 | Action | Notes |
 |--------|--------|
-| Attack | Foe may counterattack; counter damage drops 1 HYPE |
-| Heal | Random **1–heal max** (up to **7** at Lv 1, +1/level); foe may counterattack; does not build HYPE |
-| Dance | Random reactions; HYPE for you and/or foe when granted; +1 ATK per HYPE |
-| Run | Flee this foe — same heal roll as **Heal**, same wave, next foe, lose all HYPE; **not on wave 100** |
+| Attack | Foe may counterattack. Counter damage drops 1 HYPE |
+| Heal | Random **1–heal max** (up to **7** at Lv 1, +1/level). Foe may counterattack. It does not build HYPE |
+| Dance | Random reactions can grant you or your foe HYPE. Each HYPE grants +1 ATK |
+| Run | Flee this foe · same heal roll as **Heal**, same wave, next foe, lose all HYPE. **not on wave 100** |
 
 ## Combat hints
 
@@ -40,13 +42,13 @@ Hints teach the four actions during your first run (each dismisses after you use
 
 | When | What you see |
 |------|----------------|
-| **Setup** | Subtitle under “Which critter are you?” — *Defeat all 100 waves to win!* |
-| **First fight** | **Attack** gets a pulsing yellow **outline** until your first strike (no popup) |
-| **Low HP** (~60% or below) | **Heal** outline + tooltip: *Restore HP — foe will hit back.* |
-| **After a wasted heal** (or wave 12+ at full HP with 0 hype) | **Dance** outline + tooltip: *Dance may add HYPE — makes hits stronger, for you and/or the foe.* |
-| **Lethal HP** (foe’s hit would KO you) | **Run** outline + tooltip: *Run away — heal a little, face the next foe, and lose all HYPE.* |
+| **Setup** | Subtitle under “Which critter are you?” · *Defeat all 100 waves to win!* |
+| **First fight** | **Attack** pulses twice, then keeps a steady yellow **outline** until your first strike (no popup) |
+| **Low HP** (~60% or below) | **Heal** outline + tooltip: *Restore HP · foe will hit back.* |
+| **After a wasted heal** (or wave 12+ at full HP with 0 hype) | **Dance** outline + tooltip: *Dance may add HYPE · makes hits stronger, for you and/or the foe.* |
+| **Lethal HP** (foe’s hit would KO you) | **Run** outline + tooltip: *Run away · heal a little, face the next foe, and lose all HYPE.* |
 
-Highlighted buttons use an **outline pulse only** — button colors stay the same. Hint state is saved with your run.
+Highlighted buttons pulse twice, then keep a steady outline. With motion off, the outline is steady from the start. Hint state is saved with your run.
 
 ## Footer
 
@@ -54,8 +56,8 @@ Highlighted buttons use an **outline pulse only** — button colors stay the sam
 |---------|----------------|
 | **High Score** | Highest wave you’ve reached this browser (updates on game over or full win). |
 | **Runs Played** | How many runs you’ve finished (game over or victory). |
-| **Light / Dark** | Switches palette (including foe card accents), `theme-color`, and PWA manifest; persists in this browser. |
-| **Sound options** | Sets music and sound effects independently to High, Low, or Off; persists in this browser. |
+| **Light / Dark** | Switches palette (including foe card accents), `theme-color`, and PWA manifest. The choice persists in this browser. |
+| **Sound options** | Sets music and sound effects independently to High, Low, or Off. The choice persists in this browser. |
 | **New Run** | New hero and fresh run. High score and runs played are kept. Confirm dialog restores if you refresh mid-prompt. |
 | **Clear Data** | Deletes your critter and all saved history on this browser. Confirm dialog restores if you refresh mid-prompt. |
 
@@ -63,17 +65,17 @@ Highlighted buttons use an **outline pulse only** — button colors stay the sam
 
 Stored under `critterwave-v1.1` in the browser (migrates automatically from `critterwave-v1.0`, `critterwave-v0.7`, and `critterwave-v6`):
 
-- **High score** — highest wave number you’ve reached (updates when you die or beat all 100 waves)
-- **Runs played** — how many runs you’ve finished (game over or full win)
-- **Light / dark** — `colorMode` for the footer theme toggle
-- **Audio levels** — independent music and sound-effect levels
-- **Hero** — emoji, name, and card color from your last run
-- **Active run** — HP, your hype and foe hype, current foe, wave, turn, combat-hint progress, shuffled foe order, and any open **New Run** / **Clear Data** confirm (until game over or victory)
+- **High score** · highest wave number you’ve reached (updates when you die or beat all 100 waves)
+- **Runs played** · how many runs you’ve finished (game over or full win)
+- **Light / dark** · `colorMode` for the footer theme toggle
+- **Audio levels** · independent music and sound-effect levels
+- **Hero** · emoji, name, and card color from your last run
+- **Active run** · HP, your hype and foe hype, current foe, wave, turn, combat-hint progress, shuffled foe order, and any open **New Run** / **Clear Data** confirm (until game over or victory)
 
 ## Project layout
 
 ```
-index.html              # assembled entry page (generated — see below)
+index.html              # assembled entry page (generated · see below)
 html/
   index.template.html   # shell + partial placeholders
   partials/             # setup, combat, app chrome, game-over, …
@@ -82,7 +84,7 @@ css/
   *.css                 # tokens, base, setup, presentation, combat, …
 assets/theme-boot.js    # applies saved light/dark before first paint (v1.1 save, legacy fallback)
 src/
-  game.ts               # thin entry — imports game/app init
+  game.ts               # thin entry · imports game/app init
   game/
     app.ts              # boot, setup, footer, confirm wiring
     app-help.ts         # help modal open/close/bind
@@ -110,8 +112,8 @@ src/
   data/                 # foe roster
   content/              # dance lines
   ui/                   # victory celebration
-js/                     # compiled output (npm run build — gitignored)
-dist/                   # Pages deploy artifact (npm run build:site — gitignored)
+js/                     # compiled output (npm run build · gitignored)
+dist/                   # Pages deploy artifact (npm run build:site · gitignored)
 scripts/
   build-html.mjs        # html/partials → index.html
   split-css.mjs         # regen css modules from styles.css.bak oracle
@@ -124,12 +126,10 @@ e2e/                    # Playwright browser tests
 .github/workflows/      # deploy + CI
 ```
 
-## Local play
+## Font credit
 
-```bash
-npm install
-npm run build
-npm run dev
-```
+[VT323](https://fonts.google.com/specimen/VT323) by the VT323 Project Authors is licensed under the [SIL Open Font License 1.1](fonts/OFL.txt).
 
-Open [http://localhost:3000](http://localhost:3000).
+## License
+
+**All rights reserved.** Except as permitted by applicable law or under GitHub’s Terms of Service, no rights are granted to reproduce, modify, distribute, sublicense, or otherwise use Critterwave’s original code, artwork, audio, or documentation without the prior written permission of the rights holder. See [LICENSE](LICENSE).
