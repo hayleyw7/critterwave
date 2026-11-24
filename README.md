@@ -131,6 +131,10 @@ e2e/                    # Playwright browser tests
 
 [VT323](https://fonts.google.com/specimen/VT323) by the VT323 Project Authors is licensed under the [SIL Open Font License 1.1](fonts/OFL.txt).
 
+## Privacy
+
+[Critterwave Privacy Policy](https://hayleyw7.github.io/critterwave/privacy/)
+
 ## License
 
 **All rights reserved.** Except as permitted by applicable law or under GitHub’s Terms of Service, no rights are granted to reproduce, modify, distribute, sublicense, or otherwise use Critterwave’s original code, artwork, audio, or documentation without the prior written permission of the rights holder. See [LICENSE](LICENSE).
