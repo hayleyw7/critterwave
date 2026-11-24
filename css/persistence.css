@@ -6,16 +6,9 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: var(--overlay-scrim);
-  backdrop-filter: blur(3px);
+  background: var(--bg-deep);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-}
-
-/* The New Run confirmation hides the battle, just like Help. */
-.confirm-overlay:not(.confirm-danger) {
-  background: var(--bg-deep);
-  backdrop-filter: none;
 }
 
 .confirm-overlay.hidden {

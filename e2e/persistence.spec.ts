@@ -72,6 +72,41 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
     await expect(page.getByLabel("Combat actions")).toBeVisible();
   });
 
+  for (const colorMode of ["dark", "light"] as const) {
+    test(`clear data obscures the battle in ${colorMode} mode`, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await startFreshRun(page);
+      if (colorMode === "light") {
+        await page.getByRole("button", { name: "Switch to light mode" }).click();
+      }
+      await expect(page.locator("html")).toHaveAttribute("data-theme", colorMode);
+      await clickFooterMenuButton(page, "Clear Data");
+
+      const overlay = page.locator("#confirm-overlay");
+      await expect(overlay).toHaveClass(/confirm-danger/);
+      await expect(page.getByRole("heading", { name: "Delete everything?" })).toBeVisible();
+      await expect(overlay).toHaveCSS("backdrop-filter", "none");
+      const backdrop = await overlay.evaluate((node) => {
+        const root = getComputedStyle(document.documentElement);
+        const bounds = node.getBoundingClientRect();
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d")!;
+        const actual = getComputedStyle(node).backgroundColor;
+        ctx.fillStyle = actual;
+        ctx.fillRect(0, 0, 1, 1);
+        const alpha = ctx.getImageData(0, 0, 1, 1).data[3];
+        const probe = document.createElement("span");
+        probe.style.backgroundColor = root.getPropertyValue("--bg-deep");
+        document.body.append(probe);
+        const expected = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return { actual, expected, alpha, fullViewport: bounds.x === 0 && bounds.y === 0 &&
+          bounds.width === window.innerWidth && bounds.height === window.innerHeight };
+      });
+      expect(backdrop).toMatchObject({ actual: backdrop.expected, alpha: 255, fullViewport: true });
+    });
+  }
+
   test("clear data confirm survives reload", async ({ page }) => {
     await startFreshRun(page);
     await clickFooterMenuButton(page, "Clear Data");
