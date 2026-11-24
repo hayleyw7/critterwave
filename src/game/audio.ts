@@ -689,7 +689,7 @@ export function cycleMusicLevel(): void {
 
 export function cycleSfxLevel(): void {
   el.footerMore.open = false;
-  sfxLevel = nextChannelLevel(sfxLevel);
+  sfxLevel = nextChannelLevel(sfxLevel, "sfx");
   applyGainLevels();
   updateAudioToggleUi();
   if (sfxLevel !== "off" && unlocked) {

@@ -72,7 +72,7 @@ import { clickFooterMenuButton, openMoreOptions } from "./helpers/app.js";
   });
 
 test.describe("ui labels", () => {
-  test("sound controls cycle high, low, and off", async ({ page }) => {
+  test("music mutes directly from high and cycles through low and medium", async ({ page }) => {
     await startFreshRun(page);
     await page.getByRole("button", { name: "Sound options" }).click();
 
@@ -80,9 +80,15 @@ test.describe("ui labels", () => {
     const sfx = page.locator("#sfx-level-btn");
     await expect(music).toHaveText("Music: High");
     await music.click();
+    await expect(music).toHaveText("Music: Off");
+    await expect(music).toHaveAttribute("aria-pressed", "false");
+    await music.click();
     await expect(music).toHaveText("Music: Low");
     await music.click();
-    await expect(music).toHaveText("Music: Off");
+    await expect(music).toHaveText("Music: Medium");
+    await page.reload();
+    await page.getByRole("button", { name: "Sound options" }).click();
+    await expect(music).toHaveText("Music: Medium");
     await music.click();
     await expect(music).toHaveText("Music: High");
 
