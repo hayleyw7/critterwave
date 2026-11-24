@@ -4,7 +4,6 @@ export const SOUND_CHANNEL_LEVEL_CYCLE = [
     "medium",
     "high",
 ];
-const SFX_CHANNEL_LEVEL_CYCLE = ["high", "low", "off"];
 export function parseSoundChannelLevel(value) {
     if (value === "high" || value === "medium" || value === "low" || value === "off") {
         return value;
@@ -23,8 +22,8 @@ export function parseSoundVolumePreset(value) {
 function channelLevelFromLegacyPreset(value) {
     return parseSoundVolumePreset(value) === "low" ? "low" : "high";
 }
-export function nextChannelLevel(current, channel = "music") {
-    const levels = channel === "music" ? SOUND_CHANNEL_LEVEL_CYCLE : SFX_CHANNEL_LEVEL_CYCLE;
+export function nextChannelLevel(current) {
+    const levels = SOUND_CHANNEL_LEVEL_CYCLE;
     const index = levels.indexOf(current);
     const nextIndex = index < 0 ? 0 : (index + 1) % levels.length;
     return levels[nextIndex];
@@ -53,6 +52,7 @@ export function channelLevelMultiplier(level, channel) {
         case "low":
             return 0.65;
         case "medium":
+            return 0.82;
         case "high":
             return 1;
     }
@@ -70,7 +70,7 @@ export function resolveMusicLevelFromSave(fields) {
 export function resolveSfxLevelFromSave(fields) {
     const direct = parseSoundChannelLevel(fields.sfxLevel);
     if (direct) {
-        return direct === "medium" ? "high" : direct;
+        return direct;
     }
     if (fields.sfxMuted === true || fields.soundMuted === true) {
         return "off";

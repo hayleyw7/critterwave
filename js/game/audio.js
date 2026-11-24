@@ -552,7 +552,7 @@ export function cycleMusicLevel() {
 }
 export function cycleSfxLevel() {
     el.footerMore.open = false;
-    sfxLevel = nextChannelLevel(sfxLevel, "sfx");
+    sfxLevel = nextChannelLevel(sfxLevel);
     applyGainLevels();
     updateAudioToggleUi();
     if (sfxLevel !== "off" && unlocked) {
