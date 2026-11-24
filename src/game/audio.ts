@@ -658,7 +658,7 @@ export function updateAudioToggleUi(): void {
   el.musicLevelBtn.setAttribute("aria-pressed", musicLevel === "off" ? "false" : "true");
   el.musicLevelBtn.setAttribute(
     "aria-label",
-    `Music volume ${musicLabel}. Click to change.`
+    `Music: ${musicLabel}. Click to change.`
   );
   el.musicLevelBtn.classList.toggle("sound-level-off", musicLevel === "off");
 
@@ -666,7 +666,7 @@ export function updateAudioToggleUi(): void {
   el.sfxLevelBtn.setAttribute("aria-pressed", sfxLevel === "off" ? "false" : "true");
   el.sfxLevelBtn.setAttribute(
     "aria-label",
-    `Sound effects volume ${sfxLabel}. Click to change.`
+    `SFX: ${sfxLabel}. Sound effects volume. Click to change.`
   );
   el.sfxLevelBtn.classList.toggle("sound-level-off", sfxLevel === "off");
 

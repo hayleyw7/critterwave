@@ -86,7 +86,6 @@
   --scrollbar-thumb-hover: var(--color-purple-450);
   --scrollbar-border: var(--color-purple-300);
   --overlay-scrim: rgba(10, 6, 18, 0.92);
-  --overlay-scrim-gameover: rgba(10, 6, 18, 0.88);
   --overlay-scrim-victory: rgba(10, 6, 18, 0.52);
   --battle-text: var(--text);
   --battle-hero-text: var(--hero);
@@ -100,7 +99,7 @@
   --new-run-text: var(--hero);
   --new-run-border: var(--color-green-300);
   --new-run-hover-text: var(--color-cyan-100);
-  --new-run-hover-bg: rgba(34, 197, 94, 0.22);
+  --new-run-hover-bg: color-mix(in srgb, #22c55e 22%, var(--panel));
   --setup-start-text: var(--gold);
   --setup-start-border: var(--gold);
   --setup-select-border: var(--highlight);
@@ -125,7 +124,7 @@
   --confirm-danger-text: var(--color-rose-200);
   --confirm-danger-shadow: #500;
   --meta-danger-hover-text: var(--color-rose-200);
-  --meta-danger-hover-bg: rgba(251, 113, 133, 0.28);
+  --meta-danger-hover-bg: color-mix(in srgb, var(--color-rose-400) 28%, var(--panel));
   --meta-btn-bg: var(--cmd-bg);
   --meta-btn-border: var(--cmd-border);
   --meta-btn-hover-bg: var(--cmd-hover);
@@ -199,7 +198,7 @@ html[data-theme="light"] {
   --hp-bg: var(--color-purple-250);
   --danger: var(--color-rose-700);
   --highlight: var(--color-yellow-300);
-  --gold: var(--panel-edge);
+  --gold: var(--heading-accent);
   --dialog: #e0d4f8;
   --cmd-bg: var(--color-purple-200);
   --cmd-hover: var(--color-purple-350);
@@ -209,7 +208,6 @@ html[data-theme="light"] {
   --scrollbar-thumb-hover: var(--color-purple-650);
   --scrollbar-border: var(--color-purple-300);
   --overlay-scrim: rgba(248, 240, 255, 0.92);
-  --overlay-scrim-gameover: rgba(235, 227, 248, 0.9);
   --overlay-scrim-victory: rgba(235, 227, 248, 0.72);
   --battle-text: var(--text);
   --battle-hero-text: var(--hero-dark);
@@ -224,8 +222,8 @@ html[data-theme="light"] {
   --new-run-border: var(--hero);
   --new-run-hover-text: var(--color-green-900);
   --new-run-hover-bg: rgba(34, 197, 94, 0.14);
-  --setup-start-text: var(--color-purple-700);
-  --setup-start-border: var(--panel-edge);
+  --setup-start-text: var(--text);
+  --setup-start-border: var(--color-purple-700);
   --setup-select-border: var(--panel-edge);
   --setup-select-ring: var(--panel-light);
   --setup-select-bg: color-mix(in srgb, var(--panel-edge) 14%, var(--cmd-bg));

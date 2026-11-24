@@ -83,6 +83,8 @@ export type GameSnapshot = {
   turn: number;
   wave: number;
   phase: "combat" | "gameover" | "victory";
+  /** Whether this finished run set a new high score. Absent for legacy saves. */
+  isNewRecord?: boolean;
   hypeLevel: number;
   foeHypeLevel: number;
   /** Shuffled foe sequence for this run (foe template ids). */

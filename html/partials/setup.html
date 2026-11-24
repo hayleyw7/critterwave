@@ -5,7 +5,7 @@
             <span class="mobile-stack-part">Which critter</span> <span class="mobile-stack-part">are you?</span>
           </h2>
           <p class="setup-subtitle" id="setup-subtitle"></p>
-          <div class="emoji-picker" id="hero-picker" role="listbox" aria-label="Which critter are you?"></div>
+          <div class="emoji-picker" id="hero-picker" role="group" aria-label="Which critter are you?"></div>
         </div>
         <div class="setup-footer">
           <div class="setup-main-row">
@@ -30,7 +30,7 @@
                   type="button"
                   id="hero-color-toggle"
                   class="setup-color-toggle"
-                  aria-haspopup="listbox"
+                  aria-controls="hero-color-popup"
                   aria-expanded="false"
                   aria-labelledby="hero-color-label"
                 >
@@ -39,7 +39,7 @@
                 <div
                   id="hero-color-popup"
                   class="setup-color-popup hidden"
-                  role="listbox"
+                  role="group"
                   aria-labelledby="hero-color-label"
                 >
                   <div id="hero-color-swatches" class="setup-color-swatches"></div>

@@ -12,6 +12,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* The New Run confirmation hides the battle, just like Help. */
+.confirm-overlay:not(.confirm-danger) {
+  background: var(--bg-deep);
+  backdrop-filter: none;
+}
+
 .confirm-overlay.hidden {
   display: none;
 }

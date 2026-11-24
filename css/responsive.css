@@ -43,7 +43,9 @@
     width: 100%;
     min-width: 0;
   }
+}
 
+@media (max-width: 615px) {
   .action-panel {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;

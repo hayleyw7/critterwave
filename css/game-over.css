@@ -40,12 +40,12 @@
   justify-content: center;
   padding: var(--space-4);
   overflow-y: auto;
-  background: var(--overlay-scrim-gameover);
-  backdrop-filter: blur(2px);
+  background: var(--bg-deep);
 }
 
 .game-over.game-victory {
   background: var(--overlay-scrim-victory);
+  backdrop-filter: blur(2px);
 }
 
 .victory-emoji-layer {
@@ -275,7 +275,7 @@ html[data-theme="light"] .game-over:not(.game-victory) .game-over-panel {
   font-size: 1.75rem;
   color: var(--game-over-accent, var(--danger));
   text-shadow: 2px 2px 0 var(--confirm-danger-shadow);
-  animation: game-over-blink 1s step-end infinite;
+  animation: game-over-blink 1s step-end 2;
 }
 
 html[data-theme="light"] .game-over:not(.game-victory) .game-over-tag {
@@ -291,15 +291,13 @@ html[data-theme="light"] .game-over:not(.game-victory) .game-over-tag {
 }
 
 html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart {
-  border-color: var(--restart-border);
-  color: var(--restart-text);
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--restart-border) 45%, var(--bg-deep));
+  border-color: var(--setup-start-border);
+  color: var(--setup-start-text);
+  background: var(--setup-start-fill-ready);
 }
 
 html[data-theme="light"] .game-over:not(.game-victory) .cmd-restart:hover:not(:disabled) {
-  border-color: var(--restart-border);
-  color: var(--restart-text);
-  filter: none;
+  filter: brightness(1.05);
 }
 
 html[data-theme="light"] .game-over.game-victory .cmd-restart {
@@ -314,6 +312,12 @@ html[data-theme="light"] .game-over.game-victory .cmd-restart:hover:not(:disable
   color: var(--victory-accent);
   background: color-mix(in srgb, var(--victory-accent) 22%, var(--panel));
   filter: none;
+}
+
+@media (max-width: 768px) {
+  .game-over-new-record {
+    display: block;
+  }
 }
 
 @keyframes game-over-blink {

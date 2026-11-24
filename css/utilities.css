@@ -16,7 +16,11 @@ html[data-reduced-motion] {
     content: none;
   }
 
-  .damage-pop {
+  .damage-pop:not(.hype-pop) {
+    display: none;
+  }
+
+  .damage-pop.hype-pop {
     transform: translateX(-50%);
   }
 

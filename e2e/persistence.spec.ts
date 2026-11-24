@@ -23,11 +23,11 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
     await page.reload();
     await expect(page.locator("#music-level-btn")).toHaveAttribute(
       "aria-label",
-      /Music volume Low/
+      /Music: Low/
     );
     await expect(page.locator("#sfx-level-btn")).toHaveAttribute(
       "aria-label",
-      /Sound effects volume Off/
+      /SFX: Off. Sound effects volume/
     );
   });
 
@@ -126,11 +126,11 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
     await page.reload();
     await expect(page.locator("#music-level-btn")).toHaveAttribute(
       "aria-label",
-      /Music volume Low/
+      /Music: Low/
     );
     await expect(page.locator("#sfx-level-btn")).toHaveAttribute(
       "aria-label",
-      /Sound effects volume Off/
+      /SFX: Off. Sound effects volume/
     );
   });
 

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator } from "@playwright/test";
 import { INTRO_SEEN_KEY, STORAGE_KEY } from "../src/game/storage-keys.js";
 
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -322,14 +322,17 @@ test("tutorial highlights pulse twice, stay visible and honor Reduced Motion", a
 });
 
 for (const scenario of [
-  { name: "desktop motion", reducedMotion: "no-preference", width: 1280 },
-  { name: "desktop reduced motion", reducedMotion: "reduce", width: 1280 },
-  { name: "mobile reduced motion", reducedMotion: "reduce", width: 390 },
+  { name: "desktop motion", reducedMotion: "no-preference", width: 1280, motion: null },
+  { name: "desktop reduced motion", reducedMotion: "reduce", width: 1280, motion: null },
+  { name: "mobile reduced motion", reducedMotion: "reduce", width: 390, motion: null },
+  { name: "explicit Off despite device motion", reducedMotion: "no-preference", width: 390, motion: "off" },
+  { name: "explicit On despite device reduce", reducedMotion: "reduce", width: 390, motion: "on" },
 ] as const) {
   test(`battle feedback and turn progression with ${scenario.name}`, async ({ page }) => {
     await page.setViewportSize({ width: scenario.width, height: 810 });
     await page.emulateMedia({ reducedMotion: scenario.reducedMotion });
-    const reduced = scenario.reducedMotion === "reduce";
+    const reduced = scenario.motion === "off" || (scenario.motion === null && scenario.reducedMotion === "reduce");
+    if (scenario.motion) await page.addInitScript(value => localStorage.setItem("critterwave-motion", value), scenario.motion);
     await page.goto("/");
     await page.getByRole("button", { name: "Play", exact: true }).click();
     await page.locator(".emoji-pick").first().click();
@@ -347,6 +350,7 @@ for (const scenario of [
         spriteAnimation: getComputedStyle(sprite).animationName,
         popAnimation: getComputedStyle(pop).animationName,
         pop: pop.textContent,
+        popDisplay: getComputedStyle(pop).display,
         markOpacity: getComputedStyle(mark).opacity,
         hpTransition: getComputedStyle(stage.querySelector(".foe-hp")!).transitionDuration,
       };
@@ -354,6 +358,8 @@ for (const scenario of [
     expect(feedback.spriteAnimation).toBe(reduced ? "none" : "hero-lunge");
     expect(feedback.popAnimation).toBe(reduced ? "none" : "damage-float");
     expect(feedback.pop).toMatch(/^-\d+/);
+    expect(feedback.popDisplay === "none").toBe(reduced);
+    await expect(page.locator("#battle-text")).toContainText(`${feedback.pop!.slice(1)} damage`);
     expect(feedback.hpTransition).toBe(reduced ? "0s" : "0.2s");
     if (reduced) expect(feedback.markOpacity).toBe("1");
     await expect(foeHp).not.toHaveText(before!);
@@ -367,3 +373,224 @@ for (const scenario of [
     await expect(attack).toBeEnabled();
   });
 }
+
+
+async function expectOpaqueDialog(overlay: Locator, panelSelector: string) {
+  await expect(overlay).toHaveCSS("backdrop-filter", "none");
+  const png = await overlay.screenshot({ animations: "disabled", scale: "css" });
+  const result = await overlay.evaluate(async (el, { source, panelSelector }) => {
+    const picture = new Image();
+    picture.src = "data:image/png;base64," + source;
+    await picture.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = picture.width;
+    canvas.height = picture.height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(picture, 0, 0);
+    const panel = el.querySelector(panelSelector)!;
+    const panelBounds = panel.getBoundingClientRect();
+    const edge = [...ctx.getImageData(2, 2, 1, 1).data];
+    const panelPixel = [...ctx.getImageData(Math.ceil(panelBounds.left + 5), Math.ceil(panelBounds.top + 5), 1, 1).data];
+    ctx.fillStyle = getComputedStyle(el).backgroundColor;
+    ctx.fillRect(0, 0, 1, 1);
+    ctx.fillStyle = getComputedStyle(panel).backgroundColor;
+    ctx.fillRect(1, 0, 1, 1);
+    return { edge, panelPixel, bg: [...ctx.getImageData(0, 0, 1, 1).data], panelBg: [...ctx.getImageData(1, 0, 1, 1).data] };
+  }, { source: png.toString("base64"), panelSelector });
+  expect(result.edge).toEqual(result.bg);
+  expect(result.panelPixel).toEqual(result.panelBg);
+  expect(result.bg[3]).toBe(255);
+  expect(result.panelBg[3]).toBe(255);
+}
+
+test("Accessibility Motion overrides or follows device and survives reload", async ({ page }) => {
+  await page.setViewportSize({width: 390, height: 800});
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const root = page.locator("html");
+  const play = page.getByRole("button", { name: "Play", exact: true });
+  await expect(play).toHaveCSS("animation-name", "none");
+  await play.click();
+  await page.locator(".emoji-pick").first().click();
+  await page.getByRole("textbox", { name: "Name" }).fill("Test Critter");
+  await page.getByRole("button", { name: "Fight!" }).click();
+  await expect(page.getByRole("button", { name: "Attack", exact: true })).toBeEnabled();
+  const openHelp = () => page.getByRole("button", { name: "How to play", exact: true }).click();
+  await openHelp();
+  const typography = await page.locator(".help-section-title").evaluateAll(headings => headings.map(heading => {
+    const css = getComputedStyle(heading);
+    return [css.fontFamily, css.fontSize, css.fontWeight, css.lineHeight, css.marginTop, css.marginBottom];
+  }));
+  expect(typography).toHaveLength(3);
+  expect(typography[1]).toEqual(typography[0]);
+  expect(typography[2]).toEqual(typography[0]);
+  const group = page.getByRole("group", { name: "Accessibility Motion:", exact: true });
+  await expect(page.locator("#help-motion-title")).toHaveText("Motion:");
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    const row = await page.locator(".help-motion-row").evaluate(el => {
+      const siblings = [...el.querySelectorAll("#help-motion-title, .motion-choice")];
+      const boxes = siblings.map(child => child.getBoundingClientRect());
+      return { centers: boxes.map(box => (box.top + box.bottom) / 2), fits: el.scrollWidth <= el.clientWidth };
+    });
+    expect(row.centers).toHaveLength(4);
+    expect(Math.max(...row.centers) - Math.min(...row.centers)).toBeLessThan(1);
+    expect(row.fits).toBe(true);
+  }
+  await page.setViewportSize({ width: 390, height: 800 });
+  const on = group.getByRole("radio", { name: "On", exact: true });
+  const off = group.getByRole("radio", { name: "Off", exact: true });
+  const follow = group.getByRole("radio", { name: "Device", exact: true });
+  const footerHelp = page.locator(".help-footer-controls");
+  await expect(page.locator("#help-panel")).toContainText("lose HYPE, and face a new foe.");
+  await expect(footerHelp).toHaveText("Sound/Theme: Toggle with ♪ or ☀☾ on the battle screen.");
+  await expect(footerHelp.locator(':scope > [aria-hidden="true"]')).toHaveText(["♪", "☀☾"]);
+  const loader = page.locator(".transition-critter").first();
+
+  await expect(follow).toBeChecked();
+  for (const theme of ["dark", "light"] as const) {
+    if (theme === "light") {
+      await page.getByRole("button", { name: "Close help" }).click();
+      await page.getByRole("button", { name: "Switch to light mode" }).click();
+      await openHelp();
+    }
+    await expectOpaqueDialog(page.locator("#help-overlay"), "#help-panel");
+    await expect(group.locator("xpath=ancestor::li")).toHaveCSS("list-style-type", "disc");
+    await expect(footerHelp).toHaveCSS("list-style-type", "disc");
+    const helpIcons = footerHelp.locator(':scope > [aria-hidden="true"]');
+    await expect(helpIcons).toHaveText(["♪", "☀☾"], { useInnerText: true });
+    if (theme === "light") {
+      for (const [index, selector] of ["#footer-sound .sound-menu-toggle-icon", "#theme-toggle .theme-toggle-icon"].entries()) {
+        await expect(page.locator(selector)).toHaveCSS("color", "rgb(26, 15, 46)");
+        const footer = await page.locator(selector).evaluate(el => ({ text: el.textContent!, color: getComputedStyle(el).color }));
+        expect(footer.text).toBe(index === 0 ? "♪" : "☾");
+        await expect(helpIcons.nth(index)).toHaveCSS("color", footer.color);
+        await expect(helpIcons.nth(index)).toHaveCSS("text-shadow", "none");
+      }
+    } else {
+      for (const glyph of await helpIcons.all()) await expect(glyph).toHaveCSS("color", "rgb(255, 255, 255)");
+    }
+    const actionColors = page.locator(".help-list").filter({ hasText: /Attack:/ });
+    const heading = page.locator("#help-title");
+    const normalText = await page.locator(".help-section-title").first().evaluate(el => getComputedStyle(el).color);
+    await expect(heading).toHaveCSS("color", normalText);
+    const introColor = await page.locator(".help-goal").evaluate(el => getComputedStyle(el).color);
+    await expect(page.locator("#help-motion-title")).toHaveCSS("color", introColor);
+    await expect(footerHelp.locator(".help-setting-label")).toHaveCSS("color", introColor);
+    for (const [choice, action] of [["on", "heal"], ["off", "attack"], ["device", ""]]) {
+      const expected = action
+        ? await actionColors.locator(`.help-action-${action}`).evaluate(el => getComputedStyle(el).color)
+        : normalText;
+      const option = group.locator(`.motion-${choice}`);
+      await expect(option).toHaveCSS("color", expected);
+      await option.hover();
+      await expect(option).toHaveCSS("color", expected);
+      await page.mouse.move(1, 1);
+    }
+    await expect(footerHelp).toHaveCSS("color", normalText);
+    await expect(footerHelp.locator("span:not([aria-hidden])")).toHaveCount(1);
+    await expect(follow).toBeVisible();
+    await expect(follow).toBeChecked();
+    await expect(follow).toHaveCSS("opacity", "1");
+    for (const option of [".motion-on", ".motion-off", ".motion-device"]) {
+      const choice = group.locator(option);
+      for (const hover of [false, true]) {
+        if (hover) await choice.hover();
+        if (hover) {
+          await expect(choice).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+        } else {
+          await expect(choice).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+        }
+        await expect(choice).toHaveCSS("border-top-width", "0px");
+        await expect(choice).toHaveCSS("border-right-width", "0px");
+        await expect(choice).toHaveCSS("border-bottom-width", "0px");
+        await expect(choice).toHaveCSS("border-left-width", "0px");
+        await expect(choice).toHaveCSS("box-shadow", "none");
+      }
+      await page.mouse.move(1, 1);
+    }
+    await expect(on).toBeVisible();
+    await expect(on).not.toBeChecked();
+    await expect(group.locator(".motion-check")).toHaveCount(0);
+  }
+  await page.keyboard.press("Tab");
+  await expect(follow).toBeFocused();
+  await expect(group.locator(".motion-device")).toHaveCSS("outline-style", "solid");
+  await page.keyboard.press("ArrowRight");
+  await expect(on).toBeChecked();
+  await expect(root).not.toHaveAttribute("data-reduced-motion", "");
+  await expect(loader).toHaveCSS("animation-name", "loading-critter-hop");
+  await page.reload();
+  await expect(on).toBeChecked();
+  await expect(root).not.toHaveAttribute("data-reduced-motion", "");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await off.check();
+  await expect(root).toHaveAttribute("data-reduced-motion", "");
+  await expect(loader).toHaveCSS("animation-name", "none");
+  await page.reload();
+  await expect(off).toBeChecked();
+  await expect(root).toHaveAttribute("data-reduced-motion", "");
+  await follow.check();
+  await expect(root).not.toHaveAttribute("data-reduced-motion", "");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(root).toHaveAttribute("data-reduced-motion", "");
+  expect(await page.evaluate(() => localStorage.getItem("critterwave-motion"))).toBeNull();
+  await page.reload();
+  await expect(follow).toBeChecked();
+  await expect(root).toHaveAttribute("data-reduced-motion", "");
+});
+
+test("the restart icon opens the existing New Run confirmation", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page.locator(".emoji-pick").first().click();
+  await page.getByRole("textbox", { name: "Name" }).fill("Test Critter");
+  await page.getByRole("button", { name: "Fight!" }).click();
+  await expect(page.getByRole("button", { name: "Attack", exact: true })).toBeEnabled();
+  const menu = page.getByRole("button", { name: "New Run and data options", exact: true });
+  await expect(menu).toHaveText("↻");
+  await menu.click();
+  await page.getByRole("button", { name: "New Run", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Start a new run?" });
+  await expect(dialog).toBeVisible();
+  await expectOpaqueDialog(dialog, "#confirm-panel");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await menu.click();
+  await page.getByRole("button", { name: "New Run", exact: true }).click();
+  await expectOpaqueDialog(dialog, "#confirm-panel");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("button", { name: "Attack", exact: true })).toBeEnabled();
+});
+
+
+test("Help fits typical phones without scrolling, and scrolls on short windows", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page.locator(".emoji-pick").first().click();
+  await page.getByRole("textbox", { name: "Name" }).fill("Test Critter");
+  await page.getByRole("button", { name: "Fight!" }).click();
+  await page.getByRole("button", { name: "How to play" }).click();
+  const panel = page.locator("#help-panel");
+  const dimensions = () => panel.evaluate(async el => {
+    await document.fonts.ready;
+    const bounds = el.getBoundingClientRect();
+    return { top: bounds.top, bottom: bounds.bottom, overflow: el.scrollHeight - el.clientHeight };
+  });
+  for (const [width, height] of [[390, 844], [360, 780], [375, 667]]) {
+    await page.setViewportSize({ width: width!, height: height! });
+    const size = await dimensions();
+    expect(size.top).toBeGreaterThanOrEqual(16);
+    expect(size.bottom).toBeLessThanOrEqual(height! - 16);
+    expect(size.overflow, `Help overflow at ${width}×${height}`).toBeLessThanOrEqual(1);
+  }
+  await page.setViewportSize({ width: 390, height: 440 });
+  expect((await dimensions()).overflow).toBeGreaterThan(1);
+  await panel.locator(".help-footer-controls").scrollIntoViewIfNeeded();
+  await expect(panel.locator(".help-footer-controls")).toBeInViewport();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(panel).toHaveCSS("max-height", "612px");
+});

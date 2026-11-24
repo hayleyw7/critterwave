@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
 export async function openMoreOptions(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Game options" }).click();
+  await page.getByRole("button", { name: "New Run and data options" }).click();
 }
 
 export async function clickFooterMenuButton(
@@ -9,5 +9,5 @@ export async function clickFooterMenuButton(
   name: "New Run" | "Clear Data"
 ): Promise<void> {
   await openMoreOptions(page);
-  await page.getByRole("button", { name }).click();
+  await page.getByRole("button", { name, exact: true }).click();
 }

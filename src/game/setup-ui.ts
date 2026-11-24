@@ -59,7 +59,7 @@ export function syncHeroColorSwatchSelection(): void {
   )) {
     btn.classList.toggle("selected", btn.dataset.theme === gameState.pendingHeroColorTheme);
     btn.setAttribute(
-      "aria-checked",
+      "aria-pressed",
       btn.dataset.theme === gameState.pendingHeroColorTheme ? "true" : "false"
     );
   }
@@ -74,10 +74,9 @@ export function buildHeroColorSwatches(onDraftChange?: () => void): void {
     btn.className = "setup-color-swatch";
     btn.dataset.theme = theme.id;
     btn.style.setProperty("--swatch-color", theme.accent);
-    btn.setAttribute("role", "radio");
     btn.setAttribute("aria-label", theme.label);
     btn.setAttribute(
-      "aria-checked",
+      "aria-pressed",
       theme.id === gameState.pendingHeroColorTheme ? "true" : "false"
     );
     if (theme.id === gameState.pendingHeroColorTheme) {
@@ -89,6 +88,7 @@ export function buildHeroColorSwatches(onDraftChange?: () => void): void {
       syncHeroColorSwatchSelection();
       updateHeroColorTogglePreview();
       closeHeroColorPopup();
+      el.heroColorToggle.focus();
       onDraftChange?.();
     });
     el.heroColorSwatches.appendChild(btn);

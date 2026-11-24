@@ -23,6 +23,7 @@ A tiny browser RPG: pick a critter hero, fight alliterative foes, heal, dance, a
 - Shuffled foe order each run
 - **Scores persist** in this browser (high score, runs played)
 - Procedural **music and sound effects** with separate High / Low / Off controls
+- **Motion** controls under Help → Accessibility: On, Off, or Device
 - **Combat hints** on early fights · see [Combat hints](#combat-hints) below
 - **Mid-run save** · refresh and your fight continues (with a “restored” message)
 - Retro **CRT scanlines** · subtle in both light and dark mode
