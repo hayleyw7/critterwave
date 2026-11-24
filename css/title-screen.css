@@ -68,9 +68,7 @@ html[data-title-seen] .title-screen,
 .title-screen button:hover { color: #fde047; --play-rest-color: #fde047; }
 .title-screen button:focus-visible { outline: 2px solid #fde047; outline-offset: 2px; }
 
-@media (prefers-reduced-motion: no-preference) {
-  .title-screen button { animation: play-glow var(--tutorial-pulse); }
-}
+html:not([data-reduced-motion]) .title-screen button { animation: play-glow var(--tutorial-pulse); }
 
 @keyframes play-glow {
   0%, 100% {
@@ -153,9 +151,7 @@ html[data-title-seen] .title-screen,
   font: 1em/1 "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .transition-critter { animation: loading-critter-hop .85s steps(1, end) infinite; }
-}
+html:not([data-reduced-motion]) .transition-critter { animation: loading-critter-hop .85s steps(1, end) infinite; }
 
 @keyframes loading-critter-hop {
   50% { transform: translateY(-2px); }

@@ -304,3 +304,113 @@ test("tutorial highlights pulse twice, stay visible and honor Reduced Motion", a
   await expect(attack).toHaveCSS("animation-name","none");
   await expect(attack).not.toHaveCSS("box-shadow","none");
 });
+
+for (const scenario of [
+  { name: "desktop motion", reducedMotion: "no-preference", width: 1280 },
+  { name: "desktop reduced motion", reducedMotion: "reduce", width: 1280 },
+  { name: "mobile reduced motion", reducedMotion: "reduce", width: 390 },
+] as const) {
+  test(`battle feedback and turn progression with ${scenario.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: scenario.width, height: 810 });
+    await page.emulateMedia({ reducedMotion: scenario.reducedMotion });
+    const reduced = scenario.reducedMotion === "reduce";
+    await page.goto("/");
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await page.locator(".emoji-pick").first().click();
+    await page.getByRole("textbox", { name: "Name" }).fill("Test Critter");
+    await page.getByRole("button", { name: "Fight!" }).click();
+    const attack = page.getByRole("button", { name: "Attack", exact: true });
+    const foeHp = page.locator("#foe-hp-text");
+    const before = await foeHp.textContent();
+    await attack.click();
+    const feedback = await page.locator("#battle-stage").evaluate(stage => {
+      const sprite = stage.querySelector(".hero-lunge")!;
+      const pop = stage.querySelector(".damage-pop")!;
+      const mark = stage.querySelector(".hit-mark-active, .hit-mark-active-kill")!;
+      return {
+        spriteAnimation: getComputedStyle(sprite).animationName,
+        popAnimation: getComputedStyle(pop).animationName,
+        pop: pop.textContent,
+        markOpacity: getComputedStyle(mark).opacity,
+        hpTransition: getComputedStyle(stage.querySelector(".foe-hp")!).transitionDuration,
+      };
+    });
+    expect(feedback.spriteAnimation).toBe(reduced ? "none" : "hero-lunge");
+    expect(feedback.popAnimation).toBe(reduced ? "none" : "damage-float");
+    expect(feedback.pop).toMatch(/^-\d+/);
+    expect(feedback.hpTransition).toBe(reduced ? "0s" : "0.2s");
+    if (reduced) expect(feedback.markOpacity).toBe("1");
+    await expect(foeHp).not.toHaveText(before!);
+    await expect(page.locator(".foe-lunge")).toBeAttached();
+    await expect(attack).toBeEnabled();
+    const run = page.getByRole("button", { name: "Run", exact: true });
+    const foe = page.locator("#foe-name");
+    const priorFoe = await foe.textContent();
+    await run.click();
+    await expect(foe).not.toHaveText(priorFoe!);
+    await expect(attack).toBeEnabled();
+  });
+}
+
+
+test("Accessibility Motion overrides or follows device and survives reload", async ({ page }) => {
+  await page.setViewportSize({width: 390, height: 800});
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const root = page.locator("html");
+  const play = page.getByRole("button", { name: "Play", exact: true });
+  await expect(play).toHaveCSS("animation-name", "none");
+  await play.click();
+  await page.locator(".emoji-pick").first().click();
+  await page.getByRole("textbox", { name: "Name" }).fill("Test Critter");
+  await page.getByRole("button", { name: "Fight!" }).click();
+  await expect(page.getByRole("button", { name: "Attack", exact: true })).toBeEnabled();
+  const openHelp = () => page.getByRole("button", { name: "How to play", exact: true }).click();
+  await openHelp();
+  const group = page.getByRole("group", { name: "Accessibility Motion" });
+  const on = group.getByRole("radio", { name: "On", exact: true });
+  const off = group.getByRole("radio", { name: "Off", exact: true });
+  const follow = group.getByRole("radio", { name: "Follow device" });
+  const loader = page.locator(".transition-critter").first();
+
+  await expect(follow).toBeChecked();
+  await on.check();
+  await expect(root).not.toHaveAttribute("data-reduced-motion", "");
+  await expect(loader).toHaveCSS("animation-name", "loading-critter-hop");
+  await page.reload();
+  await expect(on).toBeChecked();
+  await expect(root).not.toHaveAttribute("data-reduced-motion", "");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await off.check();
+  await expect(root).toHaveAttribute("data-reduced-motion", "");
+  await expect(loader).toHaveCSS("animation-name", "none");
+  await page.reload();
+  await expect(off).toBeChecked();
+  await expect(root).toHaveAttribute("data-reduced-motion", "");
+  await follow.check();
+  await expect(root).not.toHaveAttribute("data-reduced-motion", "");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(root).toHaveAttribute("data-reduced-motion", "");
+  expect(await page.evaluate(() => localStorage.getItem("critterwave-motion"))).toBeNull();
+  await page.reload();
+  await expect(follow).toBeChecked();
+  await expect(root).toHaveAttribute("data-reduced-motion", "");
+});
+
+test("the restart icon opens the existing New Run confirmation", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page.locator(".emoji-pick").first().click();
+  await page.getByRole("textbox", { name: "Name" }).fill("Test Critter");
+  await page.getByRole("button", { name: "Fight!" }).click();
+  await expect(page.getByRole("button", { name: "Attack", exact: true })).toBeEnabled();
+  const menu = page.getByRole("button", { name: "New Run and data options", exact: true });
+  await expect(menu).toHaveText("↻");
+  await menu.click();
+  await page.getByRole("button", { name: "New Run", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Start a new run?" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("button", { name: "Attack", exact: true })).toBeEnabled();
+});

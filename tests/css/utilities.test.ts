@@ -9,7 +9,7 @@ describe("css/utilities.css", () => {
   });
 
   it("disables motion-heavy animations when reduced motion is requested", () => {
-    expect(utilities).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(utilities).toContain("html[data-reduced-motion]");
     expect(utilities).toContain(".command-menu .cmd.cmd-hint-flash");
   });
 });

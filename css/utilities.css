@@ -1,4 +1,35 @@
-@media (prefers-reduced-motion: reduce) {
+html[data-reduced-motion] {
+  /* Keep the battle's timing and feedback, without moving or flashing it. */
+  .battle-stage,
+  .battle-stage *,
+  .battle-stage::before,
+  .battle-stage::after,
+  .battle-stage *::before,
+  .battle-stage *::after,
+  .cmd-teach-popup,
+  .game-over-tag {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .battle-stage.stage-flash-gold::after {
+    content: none;
+  }
+
+  .damage-pop {
+    transform: translateX(-50%);
+  }
+
+  .hit-mark:is(.hit-mark-active, .hit-mark-active-kill),
+  .hero-death-knockback .hit-mark-hero,
+  .hero-heal .heal-mark-hero {
+    opacity: 1;
+  }
+
+  .hp-low :is(.player-hp, .foe-hp) {
+    filter: brightness(1.25);
+  }
+
   .victory-emoji {
     animation: none !important;
   }

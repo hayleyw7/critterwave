@@ -97,6 +97,14 @@
             <li><span class="help-term help-action-dance">Dance:</span> HYPE may increase for you, the foe, or both.</li>
             <li><span class="help-term help-action-run">Run:</span> Escape the current foe, regain a little HP, lose HYPE, and face a new foe.</li>
           </ul>
+
+          <h3 id="help-accessibility" class="help-section-title">Accessibility</h3>
+          <fieldset class="help-motion" aria-labelledby="help-accessibility help-motion-title">
+            <legend id="help-motion-title">Motion</legend>
+            <label><input type="radio" name="game-motion" value="on" /> On</label>
+            <label><input type="radio" name="game-motion" value="off" /> Off</label>
+            <label><input type="radio" name="game-motion" value="device" checked /> Follow device</label>
+          </fieldset>
         </div>
       </div>
     </div>
@@ -430,9 +438,9 @@
             <summary
               class="meta-btn meta-btn-icon meta-more-toggle"
               role="button"
-              aria-label="Game options"
-              title="Game options"
-            >⚙</summary>
+              aria-label="New Run and data options"
+              title="New Run and data options"
+            >↻</summary>
             <div class="meta-menu">
               <button type="button" class="meta-btn meta-btn-success" id="quit-btn">New Run</button>
               <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">
@@ -444,6 +452,6 @@
       </footer>
     </div>
 
-    <script type="module" src="js/game.js?v=1795477340114"></script>
+    <script type="module" src="js/game.js?v=1795479033082"></script>
   </body>
 </html>

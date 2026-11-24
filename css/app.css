@@ -246,3 +246,16 @@
   border-color: var(--danger);
   background: var(--meta-danger-hover-bg);
 }
+
+.help-motion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.9rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.help-motion label {
+  white-space: nowrap;
+}
