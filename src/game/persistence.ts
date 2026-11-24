@@ -212,6 +212,7 @@ export function loadSnapshot(): GameSnapshot | null {
 
 export function normalizeSnapshot(snap: GameSnapshot): GameSnapshot {
   const snapWave = sanitizeWave(snap.wave, CAMPAIGN_WAVES);
+  const phase = sanitizeGamePhase(snap.phase);
   const playerEmoji =
     typeof snap.player?.emoji === "string" ? snap.player.emoji : DEFAULT_HERO_EMOJI;
   const snapPlayer = sanitizeSnapshotPlayer(
@@ -230,7 +231,8 @@ export function normalizeSnapshot(snap: GameSnapshot): GameSnapshot {
     foe: foeNormalized,
     turn: sanitizeTurn(snap.turn),
     wave: snapWave,
-    phase: sanitizeGamePhase(snap.phase),
+    phase,
+    isNewRecord: phase === "gameover" && snap.isNewRecord === true,
     hypeLevel: sanitizeHypeLevel(snap.hypeLevel),
     foeHypeLevel: sanitizeHypeLevel(snap.foeHypeLevel),
     foeOrderIds: sanitizeIdList(snap.foeOrderIds, FOE_IDS),
@@ -334,6 +336,7 @@ export function getSnapshot(): GameSnapshot {
     turn: gameState.turn,
     wave: gameState.wave,
     phase: gameState.phase,
+    isNewRecord: gameState.phase === "gameover" && gameState.isNewRecord,
     hypeLevel: gameState.hypeLevel,
     foeHypeLevel: gameState.foeHypeLevel,
     foeOrderIds: gameState.foeOrder.map((f) => f.id),
@@ -357,6 +360,7 @@ export function applySnapshot(snapshot: GameSnapshot): void {
   gameState.wave = snapshot.wave;
   gameState.waveAttempt = 1;
   gameState.phase = snapshot.phase;
+  gameState.isNewRecord = snapshot.phase === "gameover" && snapshot.isNewRecord === true;
   gameState.hypeLevel = clampHype(snapshot.hypeLevel ?? 0);
   gameState.foeHypeLevel = clampHype(snapshot.foeHypeLevel ?? 0);
   gameState.displayedPlayerHype = gameState.hypeLevel;

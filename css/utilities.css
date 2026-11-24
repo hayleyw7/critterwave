@@ -1,4 +1,39 @@
-@media (prefers-reduced-motion: reduce) {
+html[data-reduced-motion] {
+  /* Keep the battle's timing and feedback, without moving or flashing it. */
+  .battle-stage,
+  .battle-stage *,
+  .battle-stage::before,
+  .battle-stage::after,
+  .battle-stage *::before,
+  .battle-stage *::after,
+  .cmd-teach-popup,
+  .game-over-tag {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .battle-stage.stage-flash-gold::after {
+    content: none;
+  }
+
+  .damage-pop:not(.hype-pop) {
+    display: none;
+  }
+
+  .damage-pop.hype-pop {
+    transform: translateX(-50%);
+  }
+
+  .hit-mark:is(.hit-mark-active, .hit-mark-active-kill),
+  .hero-death-knockback .hit-mark-hero,
+  .hero-heal .heal-mark-hero {
+    opacity: 1;
+  }
+
+  .hp-low :is(.player-hp, .foe-hp) {
+    filter: brightness(1.25);
+  }
+
   .victory-emoji {
     animation: none !important;
   }
@@ -12,7 +47,7 @@
   .command-menu .cmd.cmd-hint-flash {
     animation: none;
     border-color: var(--hint-flash-border) !important;
-    box-shadow: inset 0 0 0 2px var(--hint-flash-border);
+    box-shadow: inset 0 0 0 2px var(--hint-flash-border), 0 0 4px var(--tutorial-glow-rest);
   }
 
   .hype-stat-wrap.hype-first-dance-flash .hype-bar {
@@ -57,7 +92,7 @@
   .setup-name-input.setup-name-teach-flash {
     animation: none;
     border-color: var(--setup-select-border);
-    box-shadow: 0 0 0 2px var(--setup-select-glow);
+    box-shadow: 0 0 0 2px var(--setup-select-glow), 0 0 4px var(--tutorial-glow-rest);
   }
 }
 

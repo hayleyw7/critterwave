@@ -1,7 +1,6 @@
 import { COLOR_THEMES } from "../lib/color-themes.js";
 import { formatSetupBlockerMessage, getSetupBlockers as getSetupBlockersForInput } from "../lib/game-logic.js";
 import { applyHeroColorTheme } from "./colors.js";
-import { SETUP_NAME_TEACH_FLASH_MS } from "./constants.js";
 import { el } from "./dom.js";
 import { getHeroColorThemeDefinition, readHeroNameFromSetup } from "./hero-setup.js";
 import { gameState } from "./state.js";
@@ -60,7 +59,7 @@ export function syncHeroColorSwatchSelection(): void {
   )) {
     btn.classList.toggle("selected", btn.dataset.theme === gameState.pendingHeroColorTheme);
     btn.setAttribute(
-      "aria-checked",
+      "aria-pressed",
       btn.dataset.theme === gameState.pendingHeroColorTheme ? "true" : "false"
     );
   }
@@ -75,10 +74,9 @@ export function buildHeroColorSwatches(onDraftChange?: () => void): void {
     btn.className = "setup-color-swatch";
     btn.dataset.theme = theme.id;
     btn.style.setProperty("--swatch-color", theme.accent);
-    btn.setAttribute("role", "radio");
     btn.setAttribute("aria-label", theme.label);
     btn.setAttribute(
-      "aria-checked",
+      "aria-pressed",
       theme.id === gameState.pendingHeroColorTheme ? "true" : "false"
     );
     if (theme.id === gameState.pendingHeroColorTheme) {
@@ -90,6 +88,7 @@ export function buildHeroColorSwatches(onDraftChange?: () => void): void {
       syncHeroColorSwatchSelection();
       updateHeroColorTogglePreview();
       closeHeroColorPopup();
+      el.heroColorToggle.focus();
       onDraftChange?.();
     });
     el.heroColorSwatches.appendChild(btn);
@@ -113,6 +112,7 @@ export function updateSetupStartButton(): void {
     "setup-name-input--highlight",
     gameState.setupHintForced && nameMissing
   );
+  el.heroNameInput.classList.toggle("setup-name-teach-flash", gameState.setupHintForced && nameMissing);
   el.heroNameInput.setAttribute(
     "aria-invalid",
     gameState.setupHintForced && nameMissing ? "true" : "false"
@@ -140,20 +140,10 @@ export function updateSetupStartButton(): void {
   el.setupHint.classList.add("setup-hint-error");
 }
 
-export function playSetupNameTeachFlash(): void {
-  el.heroNameInput.classList.remove("setup-name-teach-flash");
-  void el.heroNameInput.offsetWidth;
-  el.heroNameInput.classList.add("setup-name-teach-flash");
-  window.setTimeout(() => {
-    el.heroNameInput.classList.remove("setup-name-teach-flash");
-  }, SETUP_NAME_TEACH_FLASH_MS);
-}
-
 export function showSetupBlockedHint(): void {
   gameState.setupHintForced = true;
   updateSetupStartButton();
   if (!readHeroNameFromSetup()) {
-    playSetupNameTeachFlash();
     el.heroNameInput.focus();
   } else {
     el.heroPicker.focus();

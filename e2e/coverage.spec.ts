@@ -92,7 +92,7 @@ test.describe("persistence — confirm dialog", () => {
   test("blocks combat actions while confirm is open", async ({ page }) => {
     await startFreshRun(page);
     await openMoreOptions(page);
-    await page.getByRole("button", { name: "New Run" }).click();
+    await page.getByRole("button", { name: "New Run", exact: true }).click();
     await expect(page.locator("#confirm-overlay")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Start a new run?" })).toBeVisible();
 

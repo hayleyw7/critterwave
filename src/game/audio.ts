@@ -1,5 +1,4 @@
 import { el } from "./dom.js";
-import { gameState } from "./state.js";
 import type { GamePhase } from "../lib/save-validation.js";
 import { readPersistedFields, withSaveMeta } from "./persistence.js";
 import {
@@ -154,6 +153,7 @@ let bgmWetDelay: DelayNode | null = null;
 let bgmWetGain: GainNode | null = null;
 let sfxGain: GainNode | null = null;
 let musicLevel: SoundChannelLevel = "high";
+let bgmPhase: GamePhase | "setup" = "setup";
 let sfxLevel: SoundChannelLevel = "high";
 let unlocked = false;
 let currentTrack: BgmTrack = "none";
@@ -642,7 +642,7 @@ export async function unlockAudio(): Promise<boolean> {
   }
   unlocked = true;
   applyGainLevels();
-  syncBgmForPhase(gameState.phase);
+  syncBgmForPhase(bgmPhase);
   return true;
 }
 
@@ -658,7 +658,7 @@ export function updateAudioToggleUi(): void {
   el.musicLevelBtn.setAttribute("aria-pressed", musicLevel === "off" ? "false" : "true");
   el.musicLevelBtn.setAttribute(
     "aria-label",
-    `Music volume ${musicLabel}. Click to change.`
+    `Music: ${musicLabel}. Click to change.`
   );
   el.musicLevelBtn.classList.toggle("sound-level-off", musicLevel === "off");
 
@@ -666,7 +666,7 @@ export function updateAudioToggleUi(): void {
   el.sfxLevelBtn.setAttribute("aria-pressed", sfxLevel === "off" ? "false" : "true");
   el.sfxLevelBtn.setAttribute(
     "aria-label",
-    `Sound effects volume ${sfxLabel}. Click to change.`
+    `SFX: ${sfxLabel}. Sound effects volume. Click to change.`
   );
   el.sfxLevelBtn.classList.toggle("sound-level-off", sfxLevel === "off");
 
@@ -682,7 +682,7 @@ export function cycleMusicLevel(): void {
     stopBgmTimer();
     currentTrack = "none";
   } else if (unlocked) {
-    syncBgmForPhase(gameState.phase);
+    syncBgmForPhase(bgmPhase);
   }
   persistAudioPrefs();
 }
@@ -707,6 +707,7 @@ export function toggleSfxMuted(): void {
 }
 
 export function syncBgmForPhase(phase: GamePhase | "setup"): void {
+  bgmPhase = phase;
   if (!unlocked || musicLevel === "off") {
     stopBgmTimer();
     currentTrack = "none";

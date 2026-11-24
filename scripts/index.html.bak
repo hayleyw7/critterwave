@@ -44,9 +44,17 @@
     <link rel="manifest" href="site.webmanifest" />
     <script src="assets/theme-boot.js"></script>
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/title-screen.css" />
   </head>
   <body class="is-booting">
     <div class="crt-overlay" aria-hidden="true"></div>
+    <aside class="portrait-notice" aria-label="Portrait orientation required">Rotate your device to portrait.</aside>
+    <main id="title-screen" class="title-screen" aria-labelledby="title-screen-wordmark">
+      <h1 id="title-screen-wordmark">Critterwave</h1>
+      <button id="title-screen-play" type="button">Play</button>
+      <p id="loading-critters" class="transition-status" role="status" hidden><span class="transition-critter" aria-hidden="true">⏳</span>LOADING CRITTERS</p>
+      <p id="title-screen-error" role="alert" hidden>Couldn’t load the game. Try again.</p>
+    </main>
 
     <div class="confirm-overlay hidden" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
       <div class="confirm-panel" id="confirm-panel">
@@ -89,6 +97,21 @@
             <li><span class="help-term help-action-dance">Dance:</span> HYPE may increase for you, the foe, or both.</li>
             <li><span class="help-term help-action-run">Run:</span> Escape the current foe, regain a little HP, lose HYPE, and face a new foe.</li>
           </ul>
+
+          <h3 id="help-accessibility" class="help-section-title">Accessibility</h3>
+          <ul class="help-list">
+            <li>
+              <div class="help-motion-row">
+                <span id="help-motion-title" class="help-setting-label">Motion:</span>
+                <fieldset class="help-motion" aria-labelledby="help-accessibility help-motion-title">
+                  <label class="meta-btn motion-choice motion-on"><input type="radio" name="game-motion" value="on" /> On</label>
+                  <label class="meta-btn motion-choice motion-off"><input type="radio" name="game-motion" value="off" /> Off</label>
+                  <label class="meta-btn motion-choice motion-device"><input type="radio" name="game-motion" value="device" checked /> Device</label>
+                </fieldset>
+              </div>
+            </li>
+            <li class="help-footer-controls"><span class="help-setting-label">Sound/Theme:</span> Toggle with <span aria-hidden="true">♪</span> or <span aria-hidden="true">☀☾</span> on the battle screen.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -100,7 +123,7 @@
             <span class="mobile-stack-part">Which critter</span> <span class="mobile-stack-part">are you?</span>
           </h2>
           <p class="setup-subtitle" id="setup-subtitle"></p>
-          <div class="emoji-picker" id="hero-picker" role="listbox" aria-label="Which critter are you?"></div>
+          <div class="emoji-picker" id="hero-picker" role="group" aria-label="Which critter are you?"></div>
         </div>
         <div class="setup-footer">
           <div class="setup-main-row">
@@ -125,7 +148,7 @@
                   type="button"
                   id="hero-color-toggle"
                   class="setup-color-toggle"
-                  aria-haspopup="listbox"
+                  aria-controls="hero-color-popup"
                   aria-expanded="false"
                   aria-labelledby="hero-color-label"
                 >
@@ -134,7 +157,7 @@
                 <div
                   id="hero-color-popup"
                   class="setup-color-popup hidden"
-                  role="listbox"
+                  role="group"
                   aria-labelledby="hero-color-label"
                 >
                   <div id="hero-color-swatches" class="setup-color-swatches"></div>
@@ -144,6 +167,7 @@
             <button type="button" class="cmd cmd-start" id="setup-start-btn">Fight!</button>
           </div>
         </div>
+        <p id="loading-arena" class="transition-status" role="status" hidden><span class="transition-critter" aria-hidden="true">⏳</span>ENTERING ARENA</p>
         <p class="setup-hint" id="setup-hint" role="status" aria-live="polite" hidden></p>
       </div>
     </div>
@@ -421,9 +445,9 @@
             <summary
               class="meta-btn meta-btn-icon meta-more-toggle"
               role="button"
-              aria-label="Game options"
-              title="Game options"
-            >⚙</summary>
+              aria-label="New Run and data options"
+              title="New Run and data options"
+            >↻</summary>
             <div class="meta-menu">
               <button type="button" class="meta-btn meta-btn-success" id="quit-btn">New Run</button>
               <button type="button" class="meta-btn meta-btn-danger" id="reset-stats-btn">

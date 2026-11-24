@@ -33,10 +33,7 @@ export function syncPwaManifest(mode: ColorMode): void {
 }
 
 export function prefersReducedMotion(): boolean {
-  return (
-    typeof matchMedia !== "undefined" &&
-    matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
+  return document.documentElement.hasAttribute("data-reduced-motion");
 }
 
 export function applyColorMode(mode: ColorMode): void {

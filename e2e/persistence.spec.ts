@@ -23,11 +23,11 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
     await page.reload();
     await expect(page.locator("#music-level-btn")).toHaveAttribute(
       "aria-label",
-      /Music volume Low/
+      /Music: Low/
     );
     await expect(page.locator("#sfx-level-btn")).toHaveAttribute(
       "aria-label",
-      /Sound effects volume Off/
+      /SFX: Off. Sound effects volume/
     );
   });
 
@@ -126,11 +126,11 @@ import { clearSave, clickCombatRun, startFreshRun, STORAGE_KEY } from "./helpers
     await page.reload();
     await expect(page.locator("#music-level-btn")).toHaveAttribute(
       "aria-label",
-      /Music volume Low/
+      /Music: Low/
     );
     await expect(page.locator("#sfx-level-btn")).toHaveAttribute(
       "aria-label",
-      /Sound effects volume Off/
+      /SFX: Off. Sound effects volume/
     );
   });
 
@@ -206,22 +206,23 @@ test.describe("combat hints — save persistence", () => {
 
 test.describe("persistence — storage key migration", () => {
   test("migrates legacy v6 save to v1.1 on boot", async ({ page }) => {
-    await page.goto("/");
-    await page.evaluate(() => {
-      localStorage.clear();
+    await page.addInitScript(() => {
+      localStorage.removeItem("critterwave-v1.1");
+      localStorage.removeItem("critterwave-intro-seen");
       localStorage.setItem(
         "critterwave-v6",
         JSON.stringify({ bestWave: 8, runsPlayed: 2, colorMode: "dark" })
       );
     });
-    await page.reload();
-
+    await page.goto("/");
+    await page.getByRole("button", { name: "Play", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Which critter are you?" })).toBeVisible();
+    await expect(page.locator("#stat-best-wave")).toHaveText("8");
     const keys = await page.evaluate(() => ({
       current: localStorage.getItem("critterwave-v1.1"),
       legacy: localStorage.getItem("critterwave-v6"),
     }));
     expect(keys.current).toContain('"bestWave":8');
     expect(keys.legacy).toBeNull();
-    await expect(page.locator("#stat-best-wave")).toHaveText("8");
   });
 });

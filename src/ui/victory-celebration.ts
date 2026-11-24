@@ -151,15 +151,19 @@ export function startVictoryCelebration(
     emojis.filter((emoji) => emoji !== playerEmoji)
   );
 
+  startBackdrop(layer);
+}
+
+function startBackdrop(layer: HTMLElement): void {
   layer.classList.remove("hidden");
   layerEl = layer;
+  layer.textContent = "";
 
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  if (document.documentElement.hasAttribute("data-reduced-motion")) {
     spawnStaticBackdrop(layer, victoryEmojis);
     return;
   }
 
-  layer.textContent = "";
   particles = [];
   spawnCount = 0;
   running = true;
@@ -190,3 +194,10 @@ export function stopVictoryCelebration(layer?: HTMLElement): void {
 
   layer?.classList.add("hidden");
 }
+
+window.addEventListener("critterwave-motion-change", () => {
+  const layer = layerEl;
+  if (!layer) return;
+  stopVictoryCelebration();
+  startBackdrop(layer);
+});

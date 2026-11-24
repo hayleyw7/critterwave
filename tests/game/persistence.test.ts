@@ -15,6 +15,14 @@ import { gameState } from "../../src/game/state.js";
 import type { GameSnapshot } from "../../src/game/types.js";
 
 describe("persistence — normalizeSnapshot", () => {
+  it("accepts the record flag only for explicitly marked Game Over snapshots", () => {
+    const legacy = { wave: 2, phase: "gameover" } as GameSnapshot;
+    expect(normalizeSnapshot(legacy).isNewRecord).toBe(false);
+    expect(normalizeSnapshot({ ...legacy, isNewRecord: true }).isNewRecord).toBe(true);
+    expect(normalizeSnapshot({ ...legacy, isNewRecord: "true" as unknown as boolean }).isNewRecord).toBe(false);
+    expect(normalizeSnapshot({ ...legacy, phase: "combat", isNewRecord: true }).isNewRecord).toBe(false);
+  });
+
   it("normalizes foe and hype fields from snapshot data", () => {
     const snap = normalizeSnapshot({
       wave: 2,

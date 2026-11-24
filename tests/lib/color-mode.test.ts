@@ -74,11 +74,11 @@ describe("runColorModeTransition", () => {
   afterEach(() => {
     vi.useRealTimers();
     document.documentElement.classList.remove("color-mode-changing");
+    document.documentElement.removeAttribute("data-reduced-motion");
   });
 
   it("runs update immediately when reduced motion is requested", () => {
-    const originalMatchMedia = window.matchMedia;
-    window.matchMedia = (() => ({ matches: true })) as typeof window.matchMedia;
+    document.documentElement.setAttribute("data-reduced-motion", "");
 
     let ran = false;
     runColorModeTransition(() => {
@@ -89,7 +89,6 @@ describe("runColorModeTransition", () => {
       false
     );
 
-    window.matchMedia = originalMatchMedia;
   });
 
   it("applies the theme update synchronously while the CSS transition class settles", () => {

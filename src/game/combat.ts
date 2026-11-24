@@ -294,17 +294,25 @@ export function startWave(): void {
   persist();
 }
 
-export function gameOverSummaryText(currentWave: number, isNewRecord = false): string {
+export function renderGameOverSummary(currentWave: number, isNewRecord: boolean): void {
   const completedWave = Math.max(0, currentWave - 1);
   const waveText = completedWave === 1 ? "1 wave" : `${completedWave} waves`;
   const summary = `You beat ${waveText}.`;
-  return isNewRecord ? `NEW RECORD! ${summary}` : summary;
+  if (!isNewRecord) {
+    el.gameOverSummary.textContent = summary;
+    return;
+  }
+  const record = document.createElement("span");
+  record.className = "game-over-new-record";
+  record.textContent = "NEW RECORD!";
+  el.gameOverSummary.replaceChildren(record, " ", summary);
 }
 
 export function updateRecordsOnGameOver(): boolean {
   const save = loadSave();
   const completedWave = Math.max(0, gameState.wave - 1);
   const isNewRecord = completedWave > save.bestWave;
+  gameState.isNewRecord = isNewRecord;
   const bestWave = Math.max(save.bestWave, completedWave);
   const runsPlayed = save.runsPlayed + 1;
 
@@ -323,7 +331,7 @@ export function updateRecordsOnGameOver(): boolean {
     )
   );
 
-  el.gameOverSummary.textContent = gameOverSummaryText(gameState.wave, isNewRecord);
+  renderGameOverSummary(gameState.wave, isNewRecord);
   return isNewRecord;
 }
 
@@ -745,6 +753,7 @@ export function onRun(): void {
 }
 
 export function resetGame(): void {
+  gameState.isNewRecord = false;
   gameState.turn = 1;
   gameState.wave = 1;
   gameState.defeatVerbIndex = 0;

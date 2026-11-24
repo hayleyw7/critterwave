@@ -34,6 +34,7 @@ export const gameState = {
   hypeLevel: 0,
   foeHypeLevel: 0,
   phase: "combat" as GameSnapshot["phase"],
+  isNewRecord: false,
   combatHints: createCombatHintsState(),
   pendingHeroEmoji: DEFAULT_HERO_EMOJI,
   pendingHeroLabel: DEFAULT_HERO_LABEL,

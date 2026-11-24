@@ -1,3 +1,4 @@
+import { delayedTransitionStatus } from "./transition-status.js";
 import { setBattleLines } from "../lib/battle-log-dom.js";
 import { blockCombatForScreenEnd } from "../lib/combat-gate.js";
 import { attackTeachText } from "../lib/combat-hints.js";
@@ -11,7 +12,7 @@ import {
   logWaveStart,
   revealBattleLog,
 } from "./battle-log.js";
-import { resetGame, endGame, winCampaign, gameOverSummaryText, onAttack, onHeal, onDance, onRun, canUseCombatActions, applyCombatGateState, combatGateState } from "./combat.js";
+import { resetGame, endGame, winCampaign, renderGameOverSummary, onAttack, onHeal, onDance, onRun, canUseCombatActions, applyCombatGateState, combatGateState } from "./combat.js";
 import { applyHeroColorTheme } from "./colors.js";
 import { CAMPAIGN_WAVES, SKIP_EXIT_FLUSH_KEY, STORAGE_KEY } from "./constants.js";
 import { FOES, HEROES } from "./data.js";
@@ -372,7 +373,9 @@ function syncPendingHeroAfterPickerTrim(trimmed: readonly string[]): void {
   gameState.pendingHeroEmoji = next;
   gameState.pendingHeroLabel = getHeroLabelForEmoji(next);
   for (const btn of el.heroPicker.querySelectorAll<HTMLButtonElement>(".emoji-pick")) {
-    btn.classList.toggle("selected", btn.dataset.emoji === next);
+    const selected = btn.dataset.emoji === next;
+    btn.classList.toggle("selected", selected);
+    btn.setAttribute("aria-pressed", String(selected));
   }
 }
 
@@ -427,6 +430,7 @@ export function buildHeroPicker(): void {
     btn.dataset.emoji = hero.emoji;
     btn.dataset.label = hero.label;
     btn.setAttribute("aria-label", hero.label);
+    btn.setAttribute("aria-pressed", String(hero.emoji === gameState.pendingHeroEmoji));
     const glyph = document.createElement("span");
     glyph.className = "emoji-pick-glyph";
     glyph.setAttribute("aria-hidden", "true");
@@ -438,8 +442,10 @@ export function buildHeroPicker(): void {
     btn.addEventListener("click", () => {
       for (const other of el.heroPicker.querySelectorAll(".emoji-pick")) {
         other.classList.remove("selected");
+        other.setAttribute("aria-pressed", "false");
       }
       btn.classList.add("selected");
+      btn.setAttribute("aria-pressed", "true");
         gameState.pendingHeroEmoji = hero.emoji;
         gameState.pendingHeroLabel = hero.label;
         updateSetupStartButton();
@@ -520,6 +526,7 @@ export function applyNewRun(): void {
   persistStatsOnly();
   gameState.foe = null;
   gameState.phase = "combat";
+  gameState.isNewRecord = false;
   stopVictoryCelebration(el.victoryEmojiLayer);
   el.gameOver.classList.add("hidden");
   showSetup();
@@ -533,6 +540,7 @@ export function applyClearData(): void {
   renderRecords();
   gameState.foe = null;
   gameState.phase = "combat";
+  gameState.isNewRecord = false;
   stopVictoryCelebration(el.victoryEmojiLayer);
   el.gameOver.classList.add("hidden");
   showSetup();
@@ -631,17 +639,31 @@ export function bindActions(): void {
   });
   bindSetupColorPicker();
 
+  let startingFight = false;
   el.setupStartBtn.addEventListener("click", () => {
+    if (startingFight) return;
+    if (getSetupBlockers().length > 0 || !readHeroNameFromSetup()) {
+      showSetupBlockedHint();
+      return;
+    }
+    startingFight = true;
+    el.setupStartBtn.disabled = true;
+    const done = delayedTransitionStatus(document.getElementById("loading-arena")!);
     void (async () => {
-      await unlockAudio();
-      if (!confirmHeroAndStart()) {
-        return;
-      }
-      if (!gameState.foe) {
-        await beginGame();
-      } else {
-        render();
-        persist();
+      try {
+        await unlockAudio();
+        if (!confirmHeroAndStart()) return;
+        if (!gameState.foe) {
+          await beginGame();
+        } else {
+          syncBgmForPhase(gameState.phase);
+          render();
+          persist();
+        }
+      } finally {
+        done();
+        startingFight = false;
+        el.setupStartBtn.disabled = false;
       }
     })();
   });
@@ -735,7 +757,7 @@ export async function beginGame(): Promise<void> {
       if (gameState.battleLogHistory.length === 0) {
         logEndTitle("GAME OVER");
       }
-      el.gameOverSummary.textContent = gameOverSummaryText(snapshot.wave);
+      renderGameOverSummary(snapshot.wave, gameState.isNewRecord);
     }
     syncBgmForPhase(snapshot.phase);
     render();
@@ -815,3 +837,5 @@ export async function init(): Promise<void> {
   restorePendingConfirmIfNeeded();
   maybeRunDebugWin();
 }
+
+export { unlockAudio };
