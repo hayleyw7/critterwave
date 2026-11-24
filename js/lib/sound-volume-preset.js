@@ -1,10 +1,12 @@
 export const SOUND_CHANNEL_LEVEL_CYCLE = [
-    "high",
-    "low",
     "off",
+    "low",
+    "medium",
+    "high",
 ];
+const SFX_CHANNEL_LEVEL_CYCLE = ["high", "low", "off"];
 export function parseSoundChannelLevel(value) {
-    if (value === "high" || value === "low" || value === "off") {
+    if (value === "high" || value === "medium" || value === "low" || value === "off") {
         return value;
     }
     if (value === "med") {
@@ -21,10 +23,11 @@ export function parseSoundVolumePreset(value) {
 function channelLevelFromLegacyPreset(value) {
     return parseSoundVolumePreset(value) === "low" ? "low" : "high";
 }
-export function nextChannelLevel(current) {
-    const index = SOUND_CHANNEL_LEVEL_CYCLE.indexOf(current);
-    const nextIndex = index < 0 ? 0 : (index + 1) % SOUND_CHANNEL_LEVEL_CYCLE.length;
-    return SOUND_CHANNEL_LEVEL_CYCLE[nextIndex];
+export function nextChannelLevel(current, channel = "music") {
+    const levels = channel === "music" ? SOUND_CHANNEL_LEVEL_CYCLE : SFX_CHANNEL_LEVEL_CYCLE;
+    const index = levels.indexOf(current);
+    const nextIndex = index < 0 ? 0 : (index + 1) % levels.length;
+    return levels[nextIndex];
 }
 export function channelLevelLabel(level) {
     if (level === "off") {
@@ -40,6 +43,8 @@ export function channelLevelMultiplier(level, channel) {
         switch (level) {
             case "low":
                 return 0.56;
+            case "medium":
+                return 0.9;
             case "high":
                 return 1.4;
         }
@@ -47,6 +52,7 @@ export function channelLevelMultiplier(level, channel) {
     switch (level) {
         case "low":
             return 0.65;
+        case "medium":
         case "high":
             return 1;
     }
@@ -64,7 +70,7 @@ export function resolveMusicLevelFromSave(fields) {
 export function resolveSfxLevelFromSave(fields) {
     const direct = parseSoundChannelLevel(fields.sfxLevel);
     if (direct) {
-        return direct;
+        return direct === "medium" ? "high" : direct;
     }
     if (fields.sfxMuted === true || fields.soundMuted === true) {
         return "off";
