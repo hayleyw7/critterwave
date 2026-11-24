@@ -19,7 +19,7 @@ const page = document.documentElement;
 const introSeen = page.hasAttribute("data-title-seen");
 
 // Render the title independently of the game module graph. Preload the graph so a
-// normal Play click can still boot immediately.
+// normal Play click can still boot immediately and use the click's audio activation.
 const game = import("./game/app.js").then(
   runtime => ({ runtime }),
   (error: unknown) => ({ error })
@@ -34,6 +34,7 @@ async function enterGame(fromPlay: boolean): Promise<void> {
     const result = await game;
     if ("error" in result) throw result.error;
     const startup = result.runtime.init();
+    if (fromPlay) void result.runtime.unlockAudio();
     await startup;
     if (fromPlay) {
       try {

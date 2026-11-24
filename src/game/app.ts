@@ -649,6 +649,7 @@ export function bindActions(): void {
         if (!gameState.foe) {
           await beginGame();
         } else {
+          syncBgmForPhase(gameState.phase);
           render();
           persist();
         }
@@ -829,3 +830,5 @@ export async function init(): Promise<void> {
   restorePendingConfirmIfNeeded();
   maybeRunDebugWin();
 }
+
+export { unlockAudio };
