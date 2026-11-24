@@ -72,7 +72,7 @@ import { clickFooterMenuButton, openMoreOptions } from "./helpers/app.js";
   });
 
 test.describe("ui labels", () => {
-  test("music mutes directly from high and cycles through low and medium", async ({ page }) => {
+  test("music and sound effects mute directly from high and cycle through low and medium", async ({ page }) => {
     await startFreshRun(page);
     await page.getByRole("button", { name: "Sound options" }).click();
 
@@ -94,9 +94,17 @@ test.describe("ui labels", () => {
 
     await expect(sfx).toHaveText("SFX: High");
     await sfx.click();
+    await expect(sfx).toHaveText("SFX: Off");
+    await expect(sfx).toHaveAttribute("aria-pressed", "false");
+    await sfx.click();
     await expect(sfx).toHaveText("SFX: Low");
     await sfx.click();
-    await expect(sfx).toHaveText("SFX: Off");
+    await expect(sfx).toHaveText("SFX: Medium");
+    await page.reload();
+    await page.getByRole("button", { name: "Sound options" }).click();
+    await expect(sfx).toHaveText("SFX: Medium");
+    await sfx.click();
+    await expect(sfx).toHaveText("SFX: High");
   });
 
   test("shows high score and new run labels", async ({ page }) => {
