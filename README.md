@@ -1,6 +1,6 @@
 # Critterwave
 
-![Critterwave cover](images/og-image.png)
+![Critterwave wordmark with PLAY beneath it](images/og-image.png)
 
 Choose your critter. Dance for foes. Survive **100 waves**.
 
