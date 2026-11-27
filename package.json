@@ -20,9 +20,9 @@
   },
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
-    "happy-dom": "^20.11.1",
+    "@playwright/test": "^1.65.1",
+    "happy-dom": "^21.0.4",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^5.1.1"
   }
 }
